@@ -1,74 +1,75 @@
 <?php
-// Start session
-session_start();
 
-/**
- * Define very basic constants
- */
-define("ENVIRONMENT", "production"); // [development|production|installation]
-define("KEY", "NULL"); // [License key]
+declare(strict_types=1);
 
+require __DIR__ . '/core/bootstrap.php';
 
-/**
- * Check ENVIRONMENT
- */
-if (ENVIRONMENT == "installation") {
-    header("Location: ./install");
-    exit;
-} else if (ENVIRONMENT == "development") {
-    error_reporting(1);
-} else if (ENVIRONMENT == "production") {
-    error_reporting(0);
-} else if (ENVIRONMENT == "demo") {
-    error_reporting(0);
-} else {
-    header('HTTP/1.1 503 Service Unavailable.', true, 503);
-    echo 'Environment is invalid. Please contact developer for more information.';
-    exit;
-}
+use Core\Router;
 
+$router = new Router();
 
+// Public routes
+$router->get('/', 'HomeController@index');
+$router->get('/movies', 'CatalogController@movies');
+$router->get('/series', 'CatalogController@series');
+$router->get('/channels', 'CatalogController@channels');
+$router->get('/kids', 'CatalogController@kids');
+$router->get('/search', 'CatalogController@search');
 
-// Path to root directory of app.
-define("ROOTPATH", dirname(__FILE__));
+$router->get('/login', 'AuthController@showLogin');
+$router->post('/login', 'AuthController@login');
+$router->get('/register', 'AuthController@showRegister');
+$router->post('/register', 'AuthController@register');
+$router->post('/logout', 'AuthController@logout');
+$router->get('/password/forgot', 'AuthController@showForgot');
+$router->post('/password/forgot', 'AuthController@sendReset');
+$router->get('/password/reset', 'AuthController@showReset');
+$router->post('/password/reset', 'AuthController@reset');
 
-// Path to app folder.
-define("PATH",          ROOTPATH."/app");
-define("UPLOADPATH",    ROOTPATH."/public/upload");
-define("CACHEPATH",     ROOTPATH."/app/cache");
+$router->get('/media/{slug}', 'MediaController@show');
+$router->post('/media/{id}/play', 'MediaController@play');
+$router->post('/media/{id}/track', 'MediaController@track');
 
-// Check if SSL enabled.
-$ssl = isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] && $_SERVER["HTTPS"] != "off" 
-     ? true 
-     : false;
-define("SSL_ENABLED", $ssl);
+// User cabinet
+$router->get('/cabinet', 'UserController@dashboard');
+$router->get('/cabinet/history', 'UserController@history');
+$router->get('/cabinet/my-list', 'UserController@myList');
+$router->post('/cabinet/my-list/toggle', 'UserController@toggleMyList');
 
-// URL of the application root. 
-// This is not the URL of the app directory.
-$app_url = (SSL_ENABLED ? "https" : "http")
-         . "://"
-         . $_SERVER["SERVER_NAME"]
-         . (dirname($_SERVER["SCRIPT_NAME"]) == DIRECTORY_SEPARATOR ? "" : "/")
-         . trim(str_replace("\\", "/", dirname($_SERVER["SCRIPT_NAME"])), "/");
-define("APP", $app_url);
-define("DOMAIN", $_SERVER["HTTP_HOST"]);
+// Subscription
+$router->get('/subscribe', 'SubscriptionController@show');
+$router->post('/subscribe', 'SubscriptionController@create');
+$router->post('/webhooks/payment', 'SubscriptionController@webhook');
 
-// Define Base Path (for routing)
-$base_path = trim(str_replace("\\", "/", dirname($_SERVER["SCRIPT_NAME"])), "/");
-$base_path = $base_path ? "/" . $base_path : "";
-define("BASEPATH", 		$base_path);
-define("DASHBOARD",    	$app_url.'/admin');
-define("ASSETS",    	$app_url.'/public/assets');
-define("UPLOAD",    	$app_url.'/public/upload'); 
-define("LOCAL",     	$app_url.'/public/static');
-define("THEME",         $app_url.'/app/theme/assets');
+// Admin routes
+$router->group('/admin', function (Router $r) {
+	$r->get('', 'Admin\\DashboardController@index');
+	$r->get('/login', 'Admin\\AuthController@showLogin');
+	$r->post('/login', 'Admin\\AuthController@login');
+	$r->post('/logout', 'Admin\\AuthController@logout');
 
-// Required libraries, config files and helpers...
-require_once PATH.'/autoload.php';
-require_once PATH.'/config/config.php';
-require_once PATH."/helper/helper.php";
+	$r->get('/movies', 'Admin\\MoviesController@index');
+	$r->get('/movies/create', 'Admin\\MoviesController@create');
+	$r->post('/movies', 'Admin\\MoviesController@store');
+	$r->get('/movies/{id}/edit', 'Admin\\MoviesController@edit');
+	$r->post('/movies/{id}', 'Admin\\MoviesController@update');
+	$r->post('/movies/{id}/delete', 'Admin\\MoviesController@destroy');
 
+	$r->get('/series', 'Admin\\SeriesController@index');
+	$r->get('/series/create', 'Admin\\SeriesController@create');
+	$r->post('/series', 'Admin\\SeriesController@store');
+	$r->get('/series/{id}/edit', 'Admin\\SeriesController@edit');
+	$r->post('/series/{id}', 'Admin\\SeriesController@update');
+	$r->post('/series/{id}/delete', 'Admin\\SeriesController@destroy');
 
-// Run the app...
-$App = new App;
-$App->process(); 
+	$r->get('/users', 'Admin\\UsersController@index');
+	$r->get('/users/{id}/edit', 'Admin\\UsersController@edit');
+	$r->post('/users/{id}', 'Admin\\UsersController@update');
+
+	$r->get('/subscriptions', 'Admin\\SubscriptionsController@index');
+	$r->post('/subscriptions/{id}/cancel', 'Admin\\SubscriptionsController@cancel');
+
+	$r->get('/stats', 'Admin\\StatsController@index');
+});
+
+$router->dispatch(); 
