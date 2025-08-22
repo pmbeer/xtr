@@ -1,74 +1,50 @@
 <?php
-// Start session
-session_start();
 
-/**
- * Define very basic constants
- */
-define("ENVIRONMENT", "production"); // [development|production|installation]
-define("KEY", "NULL"); // [License key]
+declare(strict_types=1);
 
+// Front Controller
+// Initializes the application and dispatches the request
 
-/**
- * Check ENVIRONMENT
- */
-if (ENVIRONMENT == "installation") {
-    header("Location: ./install");
-    exit;
-} else if (ENVIRONMENT == "development") {
-    error_reporting(1);
-} else if (ENVIRONMENT == "production") {
-    error_reporting(0);
-} else if (ENVIRONMENT == "demo") {
-    error_reporting(0);
-} else {
-    header('HTTP/1.1 503 Service Unavailable.', true, 503);
-    echo 'Environment is invalid. Please contact developer for more information.';
-    exit;
-}
+require __DIR__ . '/core/bootstrap.php';
 
+use Core\Router;
 
+$router = new Router();
 
-// Path to root directory of app.
-define("ROOTPATH", dirname(__FILE__));
+// Public routes
+$router->get('/', 'HomeController@index');
+$router->get('/movies', 'ContentController@movies');
+$router->get('/series', 'ContentController@series');
+$router->get('/tv', 'ContentController@tv');
+$router->get('/kids', 'ContentController@kids');
+$router->get('/search', 'ContentController@search');
+$router->get('/movie', 'ContentController@movie');
+$router->get('/series/view', 'ContentController@seriesView');
 
-// Path to app folder.
-define("PATH",          ROOTPATH."/app");
-define("UPLOADPATH",    ROOTPATH."/public/upload");
-define("CACHEPATH",     ROOTPATH."/app/cache");
+// Auth routes
+$router->get('/login', 'AuthController@loginForm');
+$router->post('/login', 'AuthController@login');
+$router->get('/register', 'AuthController@registerForm');
+$router->post('/register', 'AuthController@register');
+$router->post('/logout', 'AuthController@logout');
+$router->get('/password/forgot', 'AuthController@forgotForm');
+$router->post('/password/forgot', 'AuthController@forgot');
+$router->get('/password/reset', 'AuthController@resetForm');
+$router->post('/password/reset', 'AuthController@reset');
 
-// Check if SSL enabled.
-$ssl = isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] && $_SERVER["HTTPS"] != "off" 
-     ? true 
-     : false;
-define("SSL_ENABLED", $ssl);
+// Subscription/payment stub
+$router->get('/subscribe', 'SubscriptionController@plans');
+$router->post('/subscribe/checkout', 'SubscriptionController@checkout');
+$router->get('/subscribe/success', 'SubscriptionController@success');
 
-// URL of the application root. 
-// This is not the URL of the app directory.
-$app_url = (SSL_ENABLED ? "https" : "http")
-         . "://"
-         . $_SERVER["SERVER_NAME"]
-         . (dirname($_SERVER["SCRIPT_NAME"]) == DIRECTORY_SEPARATOR ? "" : "/")
-         . trim(str_replace("\\", "/", dirname($_SERVER["SCRIPT_NAME"])), "/");
-define("APP", $app_url);
-define("DOMAIN", $_SERVER["HTTP_HOST"]);
+// Admin routes
+$router->get('/admin', 'AdminController@dashboard');
+$router->get('/admin/movies', 'AdminController@movies');
+$router->post('/admin/movies/create', 'AdminController@createMovie');
+$router->post('/admin/movies/update', 'AdminController@updateMovie');
+$router->post('/admin/movies/delete', 'AdminController@deleteMovie');
+$router->get('/admin/users', 'AdminController@users');
+$router->post('/admin/users/update', 'AdminController@updateUser');
+$router->get('/admin/subscriptions', 'AdminController@subscriptions');
 
-// Define Base Path (for routing)
-$base_path = trim(str_replace("\\", "/", dirname($_SERVER["SCRIPT_NAME"])), "/");
-$base_path = $base_path ? "/" . $base_path : "";
-define("BASEPATH", 		$base_path);
-define("DASHBOARD",    	$app_url.'/admin');
-define("ASSETS",    	$app_url.'/public/assets');
-define("UPLOAD",    	$app_url.'/public/upload'); 
-define("LOCAL",     	$app_url.'/public/static');
-define("THEME",         $app_url.'/app/theme/assets');
-
-// Required libraries, config files and helpers...
-require_once PATH.'/autoload.php';
-require_once PATH.'/config/config.php';
-require_once PATH."/helper/helper.php";
-
-
-// Run the app...
-$App = new App;
-$App->process(); 
+$router->dispatch($_SERVER['REQUEST_METHOD'], parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/'); 
