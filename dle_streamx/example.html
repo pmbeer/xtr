@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wink.ru Style Template - Пример</title>
+    <meta name="description" content="Демонстрация возможностей шаблона Wink.ru для DLE 16.0">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="modal.css">
+    
+    <style>
+        /* Demo specific styles */
+        .demo-section {
+            margin: 3rem 0;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .demo-title {
+            color: #ff6b35;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .demo-description {
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .demo-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .demo-card:hover {
+            border-color: rgba(255, 107, 53, 0.3);
+            transform: translateY(-5px);
+        }
+        
+        .demo-card h3 {
+            color: white;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+        
+        .demo-card p {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+        
+        .demo-features {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .demo-features li {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .demo-features li::before {
+            content: "✓";
+            color: #ff6b35;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-top">
+            <div class="logo">:: WINK</div>
+            <div class="header-actions">
+                <button class="search-btn" title="Поиск">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button class="profile-btn" title="Профиль">
+                    <i class="fas fa-user"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Promotional Banner -->
+        <div class="promo-banner">
+            <div class="promo-text">
+                Бесплатный просмотр топовых фильмов и сериалов для всех — не пропустите!
+            </div>
+            <a href="#" class="promo-btn">Смотреть</a>
+        </div>
+        
+        <!-- Navigation -->
+        <nav class="nav-main">
+            <ul class="nav-list">
+                <li class="nav-item"><a href="#home">Главная</a></li>
+                <li class="nav-item"><a href="#features">Возможности</a></li>
+                <li class="nav-item"><a href="#components">Компоненты</a></li>
+                <li class="nav-item"><a href="#responsive">Адаптивность</a></li>
+                <li class="nav-item"><a href="#customization">Кастомизация</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <h1 class="hero-title">Wink.ru Style Template</h1>
+            <p class="hero-subtitle">
+                Современный шаблон для DLE 16.0 в стиле кинопортала Wink.ru. 
+                Темная тема, оранжевые акценты и адаптивный дизайн для всех устройств.
+            </p>
+            <a href="#features" class="btn btn-primary">Узнать больше</a>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="demo-section">
+            <h2 class="demo-title">Основные возможности</h2>
+            <p class="demo-description">
+                Шаблон включает в себя все необходимые компоненты для современного кинопортала
+            </p>
+            
+            <div class="demo-grid">
+                <div class="demo-card">
+                    <h3><i class="fas fa-palette"></i> Дизайн</h3>
+                    <p>Современный дизайн в стиле Wink.ru с темной темой и оранжевыми акцентами</p>
+                    <ul class="demo-features">
+                        <li>Темная тема (#0a0a0a, #1a1a1a)</li>
+                        <li>Оранжевые акценты (#ff6b35, #ff8c42)</li>
+                        <li>Плавные анимации и переходы</li>
+                        <li>Кастомные скроллбары</li>
+                    </ul>
+                </div>
+                
+                <div class="demo-card">
+                    <h3><i class="fas fa-mobile-alt"></i> Адаптивность</h3>
+                    <p>Полностью адаптивный дизайн для всех устройств и разрешений</p>
+                    <ul class="demo-features">
+                        <li>Мобильные устройства (320px+)</li>
+                        <li>Планшеты (768px+)</li>
+                        <li>Десктоп (1024px+)</li>
+                        <li>Большие экраны (1200px+)</li>
+                    </ul>
+                </div>
+                
+                <div class="demo-card">
+                    <h3><i class="fas fa-code"></i> Технологии</h3>
+                    <p>Использование современных веб-технологий для лучшей производительности</p>
+                    <ul class="demo-features">
+                        <li>CSS Grid и Flexbox</li>
+                        <li>CSS переменные</li>
+                        <li>Intersection Observer API</li>
+                        <li>ES6+ JavaScript</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Components Section -->
+        <section id="components" class="demo-section">
+            <h2 class="demo-title">Компоненты шаблона</h2>
+            <p class="demo-description">
+                Готовые компоненты для различных типов страниц и функциональности
+            </p>
+            
+            <div class="demo-grid">
+                <div class="demo-card">
+                    <h3><i class="fas fa-home"></i> Главная страница</h3>
+                    <p>Главный шаблон с hero-секцией, промо-баннером и навигацией</p>
+                    <ul class="demo-features">
+                        <li>Hero-секция с призывом к действию</li>
+                        <li>Промо-баннер в стиле Wink.ru</li>
+                        <li>Адаптивная навигация</li>
+                        <li>Секции с контентом</li>
+                    </ul>
+                </div>
+                
+                <div class="demo-card">
+                    <h3><i class="fas fa-film"></i> Страницы фильмов</h3>
+                    <p>Шаблоны для отображения карточек и полных страниц фильмов</p>
+                    <ul class="demo-features">
+                        <li>Карточки фильмов (shortstory.tpl)</li>
+                        <li>Полные страницы (fullstory.tpl)</li>
+                        <li>Hero-секция с постером</li>
+                        <li>Информация о фильме</li>
+                    </ul>
+                </div>
+                
+                <div class="demo-card">
+                    <h3><i class="fas fa-folder"></i> Категории</h3>
+                    <p>Шаблон категорий с фильтрами, сортировкой и переключением видов</p>
+                    <ul class="demo-features">
+                        <li>Фильтры и сортировка</li>
+                        <li>Переключение сетка/список</li>
+                        <li>Поиск в категории</li>
+                        <li>Пагинация</li>
+                    </ul>
+                </div>
+                
+                <div class="demo-card">
+                    <h3><i class="fas fa-search"></i> Поиск</h3>
+                    <p>Расширенный поиск с множественными фильтрами и настройками</p>
+                    <ul class="demo-features">
+                        <li>Поиск по названию</li>
+                        <li>Фильтры по категории, году, жанру</li>
+                        <li>Сортировка результатов</li>
+                        <li>Популярные запросы</li>
+                    </ul>
+                </div>
+                
+                <div class="demo-card">
+                    <h3><i class="fas fa-comments"></i> Комментарии</h3>
+                    <p>Система комментариев с рейтингами и модерацией</p>
+                    <ul class="demo-features">
+                        <li>Добавление комментариев</li>
+                        <li>Система рейтингов</li>
+                        <li>Сортировка комментариев</li>
+                        <li>Модерация контента</li>
+                    </ul>
+                </div>
+                
+                <div class="demo-card">
+                    <h3><i class="fas fa-user"></i> Профили пользователей</h3>
+                    <p>Профили пользователей с табами и статистикой</p>
+                    <ul class="demo-features">
+                        <li>Информация о пользователе</li>
+                        <li>Табы: обзор, публикации, комментарии</li>
+                        <li>Статистика активности</li>
+                        <li>Настройки профиля</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Responsive Section -->
+        <section id="responsive" class="demo-section">
+            <h2 class="demo-title">Адаптивный дизайн</h2>
+            <p class="demo-description">
+                Шаблон автоматически адаптируется под различные устройства и разрешения экрана
+            </p>
+            
+            <div class="demo-grid">
+                <div class="demo-card">
+                    <h3><i class="fas fa-desktop"></i> Десктоп (1200px+)</h3>
+                    <p>Полная функциональность с максимальным количеством колонок</p>
+                    <ul class="demo-features">
+                        <li>Сетка 3-4 колонки</li>
+                        <li>Боковые панели</li>
+                        <li>Полная навигация</li>
+                        <li>Hover эффекты</li>
+                    </ul>
+                </div>
+                
+                <div class="demo-card">
+                    <h3><i class="fas fa-tablet-alt"></i> Планшет (768px+)</h3>
+                    <p>Адаптированная версия с сохранением основной функциональности</p>
+                    <ul class="demo-features">
+                        <li>Сетка 2-3 колонки</li>
+                        <li>Адаптированная навигация</li>
+                        <li>Оптимизированные формы</li>
+                        <li>Touch-friendly элементы</li>
+                    </ul>
+                </div>
+                
+                <div class="demo-card">
+                    <h3><i class="fas fa-mobile-alt"></i> Мобильные (320px+)</h3>
+                    <p>Мобильная версия с одноколоночной сеткой и оптимизированным интерфейсом</p>
+                    <ul class="demo-features">
+                        <li>Одноколоночная сетка</li>
+                        <li>Мобильное меню</li>
+                        <li>Оптимизированные кнопки</li>
+                        <li>Touch-friendly интерфейс</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Customization Section -->
+        <section id="customization" class="demo-section">
+            <h2 class="demo-title">Кастомизация</h2>
+            <p class="demo-description">
+                Легкая настройка цветов, стилей и функциональности под ваши потребности
+            </p>
+            
+            <div class="demo-grid">
+                <div class="demo-card">
+                    <h3><i class="fas fa-palette"></i> Цветовая схема</h3>
+                    <p>Быстрое изменение цветов через CSS переменные</p>
+                    <ul class="demo-features">
+                        <li>Основные цвета</li>
+                        <li>Акцентные цвета</li>
+                        <li>Фоновые цвета</li>
+                        <li>Цвета текста</li>
+                    </ul>
+                </div>
+                
+                <div class="demo-card">
+                    <h3><i class="fas fa-edit"></i> Стили</h3>
+                    <p>Гибкая система стилей с возможностью переопределения</p>
+                    <ul class="demo-features">
+                        <li>Модульная структура CSS</li>
+                        <li>Утилитарные классы</li>
+                        <li>Компонентные стили</li>
+                        <li>Адаптивные стили</li>
+                    </ul>
+                </div>
+                
+                <div class="demo-card">
+                    <h3><i class="fas fa-cogs"></i> Функциональность</h3>
+                    <p>Расширение функциональности через JavaScript модули</p>
+                    <ul class="demo-features">
+                        <li>Модульная архитектура</li>
+                        <li>События и обработчики</li>
+                        <li>API для расширений</li>
+                        <li>Плагинная система</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Call to Action -->
+        <section class="text-center mb-4">
+            <div class="hero-section" style="background: linear-gradient(135deg, #ff6b35, #ff8c42);">
+                <h2 class="hero-title" style="color: white; -webkit-text-fill-color: white;">Готовы начать?</h2>
+                <p class="hero-subtitle" style="color: rgba(255, 255, 255, 0.9);">
+                    Установите шаблон и создайте современный кинопортал в стиле Wink.ru
+                </p>
+                <a href="#installation" class="btn btn-secondary">Установить шаблон</a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>О шаблоне</h3>
+                <p>Современный шаблон для DLE 16.0 в стиле кинопортала Wink.ru</p>
+            </div>
+            <div class="footer-section">
+                <h3>Возможности</h3>
+                <a href="#features">Основные функции</a>
+                <a href="#components">Компоненты</a>
+                <a href="#responsive">Адаптивность</a>
+                <a href="#customization">Кастомизация</a>
+            </div>
+            <div class="footer-section">
+                <h3>Поддержка</h3>
+                <a href="#installation">Установка</a>
+                <a href="#configuration">Настройка</a>
+                <a href="#troubleshooting">Решение проблем</a>
+            </div>
+            <div class="footer-section">
+                <h3>Технологии</h3>
+                <a href="#css">CSS3</a>
+                <a href="#javascript">JavaScript ES6+</a>
+                <a href="#html5">HTML5</a>
+                <a href="#responsive">Responsive Design</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Wink.ru Style Template. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="script.js"></script>
+    <script>
+        // Demo specific functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Smooth scrolling for navigation links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+            
+            // Add animation for demo cards
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '0';
+                        entry.target.style.transform = 'translateY(30px)';
+                        
+                        setTimeout(() => {
+                            entry.target.style.transition = 'all 0.6s ease';
+                            entry.target.style.opacity = '1';
+                            entry.target.style.transform = 'translateY(0)';
+                        }, 100);
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.demo-card').forEach(card => {
+                observer.observe(card);
+            });
+        });
+    </script>
+</body>
+</html>
