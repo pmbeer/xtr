@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Демо новостей - Wink.ru Style</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0a;
+            color: white;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .demo-title {
+            font-size: 2.5rem;
+            color: #ff6b35;
+            margin-bottom: 1rem;
+        }
+
+        .demo-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+        }
+
+        /* News Grid Header */
+        .news-grid-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .news-grid-header h2 {
+            color: #ff6b35;
+            font-size: 1.8rem;
+            margin: 0;
+        }
+
+        .view-options {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .view-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .view-btn:hover,
+        .view-btn.active {
+            background: #ff6b35;
+            border-color: #ff6b35;
+        }
+
+        /* News Grid */
+        .news-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .news-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .news-card:hover {
+            border-color: rgba(255, 107, 53, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-image {
+            position: relative;
+            width: 120px;
+            height: 90px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .news-card:hover .card-image img {
+            transform: scale(1.05);
+        }
+
+        .card-category {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            background: rgba(255, 107, 53, 0.9);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .card-content {
+            padding: 1rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            margin-bottom: 0.5rem;
+        }
+
+        .card-title a {
+            color: white;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1.3;
+            transition: color 0.3s ease;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-title a:hover {
+            color: #ff6b35;
+        }
+
+        .card-excerpt {
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.4;
+            margin-bottom: 0.8rem;
+            font-size: 0.85rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .card-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.75rem;
+        }
+
+        .card-meta i {
+            color: #ff6b35;
+            font-size: 0.7rem;
+        }
+
+        /* News card animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Staggered animation for news cards */
+        .news-card:nth-child(1) { animation-delay: 0.1s; }
+        .news-card:nth-child(2) { animation-delay: 0.2s; }
+        .news-card:nth-child(3) { animation-delay: 0.3s; }
+        .news-card:nth-child(4) { animation-delay: 0.4s; }
+        .news-card:nth-child(5) { animation-delay: 0.5s; }
+
+        /* Compact news layout */
+        .news-card.compact {
+            padding: 0.5rem;
+        }
+
+        .news-card.compact .card-image {
+            width: 100px;
+            height: 75px;
+        }
+
+        .news-card.compact .card-content {
+            padding: 0.8rem;
+        }
+
+        .news-card.compact .card-title a {
+            font-size: 0.9rem;
+        }
+
+        .news-card.compact .card-excerpt {
+            font-size: 0.8rem;
+            -webkit-line-clamp: 2;
+        }
+
+        .news-card.compact .card-meta {
+            font-size: 0.7rem;
+        }
+
+        /* Grid layout for compact view */
+        .news-grid.grid-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .news-grid.grid-view .news-card {
+            flex-direction: column;
+        }
+
+        .news-grid.grid-view .news-card .card-image {
+            width: 100%;
+            height: 200px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .news-grid-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+            
+            .news-grid {
+                gap: 1rem;
+            }
+            
+            .news-card {
+                flex-direction: column;
+            }
+            
+            .card-image {
+                width: 100%;
+                height: 200px;
+            }
+            
+            .news-grid.grid-view {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .demo-title {
+                font-size: 2rem;
+            }
+            
+            .card-content {
+                padding: 0.8rem;
+            }
+            
+            .card-title a {
+                font-size: 0.9rem;
+            }
+            
+            .card-excerpt {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-header">
+            <h1 class="demo-title">Демо карточек новостей</h1>
+            <p class="demo-subtitle">Горизонтальный дизайн в стиле Wink.ru</p>
+        </div>
+
+        <!-- News Grid Header -->
+        <div class="news-grid-header">
+            <h2>Все новости</h2>
+            <div class="view-options">
+                <button class="view-btn active" data-view="list">
+                    <i class="fas fa-list"></i>
+                </button>
+                <button class="view-btn" data-view="compact">
+                    <i class="fas fa-th-large"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- News Grid -->
+        <div class="news-grid">
+            <!-- News Item 1 -->
+            <article class="news-card">
+                <div class="card-image">
+                    <img src="https://via.placeholder.com/120x90/ff6b35/ffffff?text=Новость+1" alt="Новость 1">
+                    <div class="card-category">Фильмы</div>
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">
+                        <a href="#">Новый трейлер "Мстители: Финал" набрал миллионы просмотров</a>
+                    </h3>
+                    <p class="card-excerpt">Поклонники Marvel с нетерпением ждут премьеры финальной части саги о Мстителях. Трейлер уже побил все рекорды по просмотрам.</p>
+                    <div class="card-meta">
+                        <span class="author">
+                            <i class="fas fa-user"></i>
+                            Редактор
+                        </span>
+                        <span class="date">
+                            <i class="fas fa-calendar"></i>
+                            15.01.2024
+                        </span>
+                        <span class="views">
+                            <i class="fas fa-eye"></i>
+                            15.2K
+                        </span>
+                    </div>
+                </div>
+            </article>
+
+            <!-- News Item 2 -->
+            <article class="news-card">
+                <div class="card-image">
+                    <img src="https://via.placeholder.com/120x90/ff8c42/ffffff?text=Новость+2" alt="Новость 2">
+                    <div class="card-category">Сериалы</div>
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">
+                        <a href="#">Netflix анонсировал новый сезон "Очень странных дел"</a>
+                    </h3>
+                    <p class="card-excerpt">Популярный сериал возвращается с новым сезоном. Создатели обещают еще больше загадок и приключений.</p>
+                    <div class="card-meta">
+                        <span class="author">
+                            <i class="fas fa-user"></i>
+                            Автор
+                        </span>
+                        <span class="date">
+                            <i class="fas fa-calendar"></i>
+                            14.01.2024
+                        </span>
+                        <span class="views">
+                            <i class="fas fa-eye"></i>
+                            12.8K
+                        </span>
+                    </div>
+                </div>
+            </article>
+
+            <!-- News Item 3 -->
+            <article class="news-card">
+                <div class="card-image">
+                    <img src="https://via.placeholder.com/120x90/ff6b35/ffffff?text=Новость+3" alt="Новость 3">
+                    <div class="card-category">Премьеры</div>
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">
+                        <a href="#">Выход в прокат нового фильма Кристофера Нолана</a>
+                    </h3>
+                    <p class="card-excerpt">Известный режиссер готовит к выходу новый блокбастер. Фильм обещает стать одним из главных событий года.</p>
+                    <div class="card-meta">
+                        <span class="author">
+                            <i class="fas fa-user"></i>
+                            Критик
+                        </span>
+                        <span class="date">
+                            <i class="fas fa-calendar"></i>
+                            13.01.2024
+                        </span>
+                        <span class="views">
+                            <i class="fas fa-eye"></i>
+                            18.5K
+                        </span>
+                    </div>
+                </div>
+            </article>
+
+            <!-- News Item 4 -->
+            <article class="news-card">
+                <div class="card-image">
+                    <img src="https://via.placeholder.com/120x90/ff8c42/ffffff?text=Новость+4" alt="Новость 4">
+                    <div class="card-category">Интервью</div>
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">
+                        <a href="#">Эксклюзивное интервью с Томом Холландом</a>
+                    </h3>
+                    <p class="card-excerpt">Актер рассказал о съемках нового фильма о Человеке-пауке и поделился планами на будущее.</p>
+                    <div class="card-meta">
+                        <span class="author">
+                            <i class="fas fa-user"></i>
+                            Журналист
+                        </span>
+                        <span class="date">
+                            <i class="fas fa-calendar"></i>
+                            12.01.2024
+                        </span>
+                        <span class="views">
+                            <i class="fas fa-eye"></i>
+                            22.1K
+                        </span>
+                    </div>
+                </div>
+            </article>
+
+            <!-- News Item 5 -->
+            <article class="news-card">
+                <div class="card-image">
+                    <img src="https://via.placeholder.com/120x90/ff6b35/ffffff?text=Новость+5" alt="Новость 5">
+                    <div class="card-category">Обзоры</div>
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">
+                        <a href="#">Рецензия на новый фильм "Дюна" Дени Вильнева</a>
+                    </h3>
+                    <p class="card-excerpt">Эпическая научно-фантастическая сага покорила критиков и зрителей. Разбираем, что делает фильм особенным.</p>
+                    <div class="card-meta">
+                        <span class="author">
+                            <i class="fas fa-user"></i>
+                            Кинокритик
+                        </span>
+                        <span class="date">
+                            <i class="fas fa-calendar"></i>
+                            11.01.2024
+                        </span>
+                        <span class="views">
+                            <i class="fas fa-eye"></i>
+                            19.7K
+                        </span>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <script>
+        // View toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // View toggle functionality
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const view = this.dataset.view;
+                    const newsGrid = document.querySelector('.news-grid');
+                    const newsCards = document.querySelectorAll('.news-card');
+                    
+                    if (view === 'compact') {
+                        newsCards.forEach(card => card.classList.add('compact'));
+                        newsGrid.classList.add('grid-view');
+                    } else {
+                        newsCards.forEach(card => card.classList.remove('compact'));
+                        newsGrid.classList.remove('grid-view');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

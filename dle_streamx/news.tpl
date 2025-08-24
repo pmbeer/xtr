@@ -77,6 +77,19 @@
                         </div>
                     </article>
 
+                    <!-- News Grid Header -->
+                    <div class="news-grid-header">
+                        <h2>Все новости</h2>
+                        <div class="view-options">
+                            <button class="view-btn active" data-view="list">
+                                <i class="fas fa-list"></i>
+                            </button>
+                            <button class="view-btn" data-view="compact">
+                                <i class="fas fa-th-large"></i>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- News Grid -->
                     <div class="news-grid">
                         <!-- News Item -->
@@ -89,6 +102,7 @@
                                 <h3 class="card-title">
                                     <a href="{full-link}">{title}</a>
                                 </h3>
+                                <p class="card-excerpt">{short-story}</p>
                                 <div class="card-meta">
                                     <span class="author">
                                         <i class="fas fa-user"></i>
@@ -98,20 +112,9 @@
                                         <i class="fas fa-calendar"></i>
                                         {date}
                                     </span>
-                                </div>
-                                <p class="card-excerpt">{short-story}</p>
-                                <div class="card-stats">
                                     <span class="views">
                                         <i class="fas fa-eye"></i>
                                         {views}
-                                    </span>
-                                    <span class="comments">
-                                        <i class="fas fa-comments"></i>
-                                        {comments-num}
-                                    </span>
-                                    <span class="rating">
-                                        <i class="fas fa-thumbs-up"></i>
-                                        {rating}
                                     </span>
                                 </div>
                             </div>
@@ -414,30 +417,69 @@
     gap: 0.8rem;
 }
 
+/* News Grid Header */
+.news-grid-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.news-grid-header h2 {
+    color: #ff6b35;
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+.view-options {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.view-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.8rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.view-btn:hover,
+.view-btn.active {
+    background: #ff6b35;
+    border-color: #ff6b35;
+}
+
 /* News Grid */
 .news-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
     margin-bottom: 3rem;
 }
 
 .news-card {
     background: #1a1a1a;
     border-radius: 12px;
-    overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.1);
     transition: all 0.3s ease;
+    display: flex;
+    overflow: hidden;
 }
 
 .news-card:hover {
     border-color: rgba(255, 107, 53, 0.3);
-    transform: translateY(-3px);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
 .card-image {
     position: relative;
-    aspect-ratio: 16/10;
+    width: 120px;
+    height: 90px;
+    flex-shrink: 0;
     overflow: hidden;
 }
 
@@ -454,30 +496,34 @@
 
 .card-category {
     position: absolute;
-    top: 0.8rem;
-    left: 0.8rem;
+    top: 0.5rem;
+    left: 0.5rem;
     background: rgba(255, 107, 53, 0.9);
     color: white;
-    padding: 0.3rem 0.8rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.7rem;
     font-weight: 600;
 }
 
 .card-content {
-    padding: 1.5rem;
+    padding: 1rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .card-title {
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .card-title a {
     color: white;
     text-decoration: none;
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 600;
-    line-height: 1.4;
+    line-height: 1.3;
     transition: color 0.3s ease;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -489,10 +535,21 @@
     color: #ff6b35;
 }
 
+.card-excerpt {
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.4;
+    margin-bottom: 0.8rem;
+    font-size: 0.85rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
 .card-meta {
     display: flex;
     gap: 1rem;
-    margin-bottom: 1rem;
+    align-items: center;
     flex-wrap: wrap;
 }
 
@@ -501,7 +558,7 @@
     align-items: center;
     gap: 0.3rem;
     color: rgba(255, 255, 255, 0.6);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
 }
 
 .card-meta i {
@@ -509,35 +566,79 @@
     font-size: 0.7rem;
 }
 
-.card-excerpt {
-    color: rgba(255, 255, 255, 0.7);
-    line-height: 1.5;
-    margin-bottom: 1rem;
-    font-size: 0.9rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+/* News card hover effects */
+.news-card:hover .card-image {
+    transform: scale(1.02);
 }
 
-.card-stats {
-    display: flex;
-    gap: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.card-stats span {
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 0.8rem;
-}
-
-.card-stats i {
+.news-card:hover .card-title a {
     color: #ff6b35;
+}
+
+/* News card animations */
+.news-card {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Staggered animation for news cards */
+.news-card:nth-child(1) { animation-delay: 0.1s; }
+.news-card:nth-child(2) { animation-delay: 0.2s; }
+.news-card:nth-child(3) { animation-delay: 0.3s; }
+.news-card:nth-child(4) { animation-delay: 0.4s; }
+.news-card:nth-child(5) { animation-delay: 0.5s; }
+
+/* Compact news layout */
+.news-card.compact {
+    padding: 0.5rem;
+}
+
+.news-card.compact .card-image {
+    width: 100px;
+    height: 75px;
+}
+
+.news-card.compact .card-content {
+    padding: 0.8rem;
+}
+
+.news-card.compact .card-title a {
+    font-size: 0.9rem;
+}
+
+.news-card.compact .card-excerpt {
+    font-size: 0.8rem;
+    -webkit-line-clamp: 2;
+}
+
+.news-card.compact .card-meta {
     font-size: 0.7rem;
+}
+
+/* Grid layout for compact view */
+.news-grid.grid-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.news-grid.grid-view .news-card {
+    flex-direction: column;
+}
+
+.news-grid.grid-view .news-card .card-image {
+    width: 100%;
+    height: 200px;
 }
 
 /* Load More */
@@ -741,9 +842,28 @@
         gap: 2rem;
     }
     
+    .news-grid-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
     .news-grid {
+        gap: 1rem;
+    }
+    
+    .news-card {
+        flex-direction: column;
+    }
+    
+    .card-image {
+        width: 100%;
+        height: 200px;
+    }
+    
+    .news-grid.grid-view {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
+        gap: 1rem;
     }
     
     .article-content {
@@ -840,8 +960,29 @@ function subscribeNewsletter(event) {
     }, 1000);
 }
 
-// Category filtering
+// View toggle functionality
 document.addEventListener('DOMContentLoaded', function() {
+    // View toggle functionality
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const view = this.dataset.view;
+            const newsGrid = document.querySelector('.news-grid');
+            const newsCards = document.querySelectorAll('.news-card');
+            
+            if (view === 'compact') {
+                newsCards.forEach(card => card.classList.add('compact'));
+                newsGrid.classList.add('grid-view');
+            } else {
+                newsCards.forEach(card => card.classList.remove('compact'));
+                newsGrid.classList.remove('grid-view');
+            }
+        });
+    });
+
+    // Category filtering
     const categoryBtns = document.querySelectorAll('.category-btn');
     
     categoryBtns.forEach(btn => {
