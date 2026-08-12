@@ -27,6 +27,16 @@ struct PredictionOverlayView: View {
         .floatingWindow()
     }
 
+    private var pipelineRow: some View {
+        HStack(spacing: 4) {
+            Image(systemName: coordinator.pipelineStep.icon)
+                .font(.caption2)
+            Text(coordinator.pipelineStep.displayName)
+                .font(.caption2)
+        }
+        .foregroundStyle(.secondary)
+    }
+
     private var learningBadge: some View {
         HStack {
             Image(systemName: "brain")
@@ -77,6 +87,8 @@ struct PredictionOverlayView: View {
             Text(coordinator.currentPlayerBehavior.summary)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
+
+            pipelineRow
         }
     }
 

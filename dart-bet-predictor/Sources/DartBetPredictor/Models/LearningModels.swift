@@ -142,6 +142,10 @@ struct LearningStats: Codable, Equatable {
     var recentWindow: [Bool] = []
     var strategyWeights: [String: Double] = [:]
     var targetAccuracy: Double = 0.99
+    var currentStreak: Int = 0
+    var bestStreak: Int = 0
+    var learningIterations: Int = 0
+    var adaptiveLearningRate: Double = 0.15
 
     var overallAccuracy: Double {
         guard totalPredictions > 0 else { return 0 }
@@ -163,5 +167,20 @@ struct LearningStats: Codable, Equatable {
 
     var overallAccuracyPercent: Int {
         Int((overallAccuracy * 100).rounded())
+    }
+
+    var streakDisplay: String {
+        currentStreak > 0 ? "серия \(currentStreak)✓" : "—"
+    }
+
+    /// Фаза обучения для UI.
+    var learningPhase: String {
+        if totalPredictions < 5 { return "Сбор данных"
+        }
+        if recentAccuracy >= 0.85 { return "Высокая точность"
+        }
+        if recentAccuracy >= 0.55 { return "Активное обучение"
+        }
+        return "Калибровка"
     }
 }

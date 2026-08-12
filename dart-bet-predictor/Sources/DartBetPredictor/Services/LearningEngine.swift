@@ -13,9 +13,10 @@ final class LearningEngine: ObservableObject {
     private var behaviorOutcomes: [String: [Int: Int]] = [:]
     private var sectorScores: [Int: Double] = [:]
     private var pendingPrediction: PendingPrediction?
+    private let sectorModel = SectorProbabilityModel.shared
 
     private let recentWindowSize = 50
-    private let learningRate = 0.15
+    private var baseLearningRate = 0.15
     private let explorationRate = 0.08
     private let storageURL: URL
 
@@ -73,6 +74,18 @@ final class LearningEngine: ObservableObject {
         if stats.recentWindow.count > recentWindowSize {
             stats.recentWindow.removeLast()
         }
+
+        updateStreak(correct: correct)
+        stats.learningIterations += 1
+        adaptLearningRate()
+
+        sectorModel.learn(
+            actual: actual,
+            contextKey: pending.features.contextKey,
+            behaviorKey: behaviorDuringRound.behaviorKey,
+            predictedBet: pending.betType,
+            predictedNumber: pending.number
+        )
 
         lastLearningMessage = correct
             ? "Верно! Точность: \(stats.recentAccuracyPercent)% → цель 99%"
@@ -135,8 +148,19 @@ final class LearningEngine: ObservableObject {
             }
         }
 
-        let sectorBet = sectorScoreRecommendation(history: history, behavior: behavior)
+        let sectorBet = sectorModelRecommendation(features: features, behavior: behavior)
         if let sec = sectorBet {
+            let key = betKey(sec)
+            if var existing = scored[key] {
+                existing.1 += sec.confidence * 2.5
+                scored[key] = existing
+            } else {
+                scored[key] = (sec, sec.confidence * 2.5)
+            }
+        }
+
+        let legacySector = sectorScoreRecommendation(history: history, behavior: behavior)
+        if let sec = legacySector {
             let key = betKey(sec)
             if var existing = scored[key] {
                 existing.1 += sec.confidence * 1.2
@@ -174,11 +198,67 @@ final class LearningEngine: ObservableObject {
         contextTransitions.removeAll()
         behaviorOutcomes.removeAll()
         sectorScores.removeAll()
+        sectorModel.reset()
         pendingPrediction = nil
         recentOutcomes.removeAll()
         initializeStrategyWeights()
         lastLearningMessage = "Обучение сброшено"
         save()
+    }
+
+    private func updateStreak(correct: Bool) {
+        if correct {
+            stats.currentStreak += 1
+            stats.bestStreak = max(stats.bestStreak, stats.currentStreak)
+        } else {
+            stats.currentStreak = 0
+        }
+    }
+
+    private func adaptLearningRate() {
+        let accuracy = stats.recentAccuracy
+        let gap = stats.targetAccuracy - accuracy
+        if gap > 0.5 {
+            stats.adaptiveLearningRate = min(0.25, baseLearningRate * 1.3)
+        } else if gap > 0.2 {
+            stats.adaptiveLearningRate = baseLearningRate
+        } else if accuracy > 0.9 {
+            stats.adaptiveLearningRate = max(0.05, baseLearningRate * 0.6)
+        } else {
+            stats.adaptiveLearningRate = max(0.08, baseLearningRate * 0.85)
+        }
+    }
+
+    private var learningRate: Double { stats.adaptiveLearningRate }
+
+    private func sectorModelRecommendation(
+        features: PredictionFeatures,
+        behavior: PlayerBehaviorSnapshot
+    ) -> BetRecommendation? {
+        guard let (sectorKey, prob) = sectorModel.topSector(
+            contextKey: features.contextKey,
+            behaviorKey: features.behaviorKey
+        ), prob >= 0.12 else { return nil }
+
+        guard let sector = DartSector.from(detected: sectorKey) else { return nil }
+
+        if sectorKey == 25 {
+            return BetRecommendation(
+                betType: .bullseye, number: nil, confidence: prob,
+                reason: "Модель: булл \(Int(prob * 100))%",
+                strategy: "Нейромодель"
+            )
+        }
+
+        if prob >= 0.18 {
+            return BetRecommendation(
+                betType: .number, number: sectorKey, confidence: prob,
+                reason: "Модель: сектор \(sectorKey) (\(Int(prob * 100))%)",
+                strategy: "Нейромодель"
+            )
+        }
+
+        return groupRecommendation(for: sector, confidence: prob, prefix: "Модель")
     }
 
     // MARK: - Learning core
@@ -407,14 +487,23 @@ final class LearningEngine: ObservableObject {
         var contextTransitions: [String: [Int: Int]]
         var behaviorOutcomes: [String: [Int: Int]]
         var sectorScores: [Int: Double]
+        var sectorContextProbs: [String: [Int: Double]]?
+        var sectorBehaviorProbs: [String: [Int: Double]]?
+        var sectorGlobalProbs: [Int: Double]?
+        var sectorSamples: Int?
     }
 
     private func save() {
+        let exported = sectorModel.exportState()
         let state = PersistedState(
             stats: stats,
             contextTransitions: contextTransitions,
             behaviorOutcomes: behaviorOutcomes,
-            sectorScores: sectorScores
+            sectorScores: sectorScores,
+            sectorContextProbs: exported.context,
+            sectorBehaviorProbs: exported.behavior,
+            sectorGlobalProbs: exported.global,
+            sectorSamples: exported.samples
         )
         if let data = try? JSONEncoder().encode(state) {
             try? data.write(to: storageURL)
@@ -428,6 +517,16 @@ final class LearningEngine: ObservableObject {
         contextTransitions = state.contextTransitions
         behaviorOutcomes = state.behaviorOutcomes
         sectorScores = state.sectorScores
+        if let ctx = state.sectorContextProbs,
+           let beh = state.sectorBehaviorProbs,
+           let glob = state.sectorGlobalProbs {
+            sectorModel.importState(
+                context: ctx,
+                behavior: beh,
+                global: glob,
+                samples: state.sectorSamples ?? 0
+            )
+        }
         lastLearningMessage = "Загружено: \(stats.totalPredictions) прогнозов, точность \(stats.overallAccuracyPercent)%"
     }
 }

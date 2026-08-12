@@ -8,6 +8,7 @@ struct ControlPanelView: View {
         VStack(alignment: .leading, spacing: 14) {
             header
             statusSection
+            pipelineSection
             learningSection
             regionSection
             playerBehaviorSection
@@ -73,12 +74,26 @@ struct ControlPanelView: View {
         }
     }
 
+    private var pipelineSection: some View {
+        GroupBox("Пайплайн анализа") {
+            PipelineStatusView(
+                currentStep: coordinator.pipelineStep,
+                isRunning: coordinator.isRunning
+            )
+            if coordinator.isRunning {
+                Label(coordinator.pipelineStep.displayName, systemImage: coordinator.pipelineStep.icon)
+                    .font(.caption.bold())
+                    .foregroundStyle(.orange)
+            }
+        }
+    }
+
     private var learningSection: some View {
-        GroupBox("Система обучения") {
+        GroupBox("Система обучения → 99%") {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     VStack(alignment: .leading) {
-                        Text("Точность (последние 50)")
+                        Text("Точность (50 бросков)")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                         Text("\(coordinator.learningEngine.stats.recentAccuracyPercent)%")
@@ -99,12 +114,23 @@ struct ControlPanelView: View {
                 ProgressView(value: coordinator.learningEngine.stats.progressToTarget)
                     .tint(accuracyColor)
 
+                HStack(spacing: 12) {
+                    Label(coordinator.learningEngine.stats.learningPhase, systemImage: "brain")
+                        .font(.caption2)
+                    Label(coordinator.learningEngine.stats.streakDisplay, systemImage: "flame")
+                        .font(.caption2)
+                    Spacer()
+                    Text("LR \(String(format: "%.2f", coordinator.learningEngine.stats.adaptiveLearningRate))")
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+
                 HStack {
                     Text("Всего: \(coordinator.learningEngine.stats.totalPredictions)")
                     Spacer()
                     Text("Верных: \(coordinator.learningEngine.stats.correctPredictions)")
                     Spacer()
-                    Text("Общая: \(coordinator.learningEngine.stats.overallAccuracyPercent)%")
+                    Text("Итераций: \(coordinator.learningEngine.stats.learningIterations)")
                 }
                 .font(.caption2.monospacedDigit())
                 .foregroundStyle(.secondary)

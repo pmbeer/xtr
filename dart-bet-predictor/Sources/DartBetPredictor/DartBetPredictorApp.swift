@@ -5,9 +5,11 @@ struct DartBetPredictorApp: App {
     @StateObject private var coordinator = MonitorCoordinator()
 
     var body: some Scene {
-        MenuBarExtra("DartBet", systemImage: "target") {
+        MenuBarExtra {
             ControlPanelView()
                 .environmentObject(coordinator)
+        } label: {
+            MenuBarIconView()
         }
         .menuBarExtraStyle(.window)
 

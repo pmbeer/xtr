@@ -19,6 +19,7 @@ final class MonitorCoordinator: ObservableObject {
     @Published var strategy: PredictionStrategy = .adaptiveLearning
     @Published var bettingWindowSeconds: Double = 5.0
     @Published var pollIntervalMs: Double = HardwareProfile.recommendedPollIntervalMs
+    @Published var pipelineStep: AnalysisPipelineStep = .idle
     @Published var statusMessage = "Выберите области «СЕРИЯ» и «Игрок», затем Старт"
 
     let throwTracker = ThrowTracker()
@@ -69,6 +70,7 @@ final class MonitorCoordinator: ObservableObject {
 
         isRunning = true
         phase = .waitingForThrow
+        pipelineStep = .watchingOutcome
         statusMessage = "Мониторинг запущен — обучение активно"
         frameCount = 0
         fpsTimer = Date()
@@ -93,6 +95,7 @@ final class MonitorCoordinator: ObservableObject {
         bettingTimer = nil
         isRunning = false
         phase = .idle
+        pipelineStep = .idle
         statusMessage = "Остановлено"
     }
 
@@ -127,6 +130,7 @@ final class MonitorCoordinator: ObservableObject {
         }
 
         isProcessingSeries = true
+        pipelineStep = .watchingOutcome
         frameCount += 1
         updateFPS()
 
@@ -168,6 +172,7 @@ final class MonitorCoordinator: ObservableObject {
         guard let image = ScreenCaptureService.shared.capture(region: cgRegion) else { return }
 
         isProcessingPlayer = true
+        pipelineStep = .analyzingBehavior
         let start = CFAbsoluteTimeGetCurrent()
 
         PlayerBehaviorAnalyzer.shared.analyze(image: image) { [weak self] snapshot in
@@ -189,6 +194,7 @@ final class MonitorCoordinator: ObservableObject {
 
         let behaviorDuringRound = averagedBehavior()
 
+        pipelineStep = .evaluatingPrediction
         if let outcome = learningEngine.evaluateAndLearn(
             actual: event.sector,
             behaviorDuringRound: behaviorDuringRound
@@ -200,6 +206,7 @@ final class MonitorCoordinator: ObservableObject {
         lastDetectedThrow = event
         behaviorAccumulator.removeAll()
 
+        pipelineStep = .generatingForecast
         let recommendation = PredictionEngine.shared.recommend(
             history: throwTracker.history,
             behavior: currentPlayerBehavior,
@@ -225,6 +232,8 @@ final class MonitorCoordinator: ObservableObject {
         if lastOutcome == nil {
             statusMessage = "Бросок: \(event.sector) → ставка: \(recommendation.displayBet)"
         }
+
+        pipelineStep = .watchingOutcome
     }
 
     private func averagedBehavior() -> PlayerBehaviorSnapshot {
