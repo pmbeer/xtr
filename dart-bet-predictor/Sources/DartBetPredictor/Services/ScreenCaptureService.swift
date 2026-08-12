@@ -9,10 +9,6 @@ final class ScreenCaptureService {
     static let shared = ScreenCaptureService()
 
     private var lastMethod = "none"
-    private var sckAvailable: Bool {
-        if #available(macOS 14.0, *) { return true }
-        return false
-    }
 
     private init() {}
 
@@ -26,10 +22,6 @@ final class ScreenCaptureService {
         if #available(macOS 14.0, *) {
             if let image = await captureWithDisplayFilter(region: region) {
                 lastMethod = "SCK-display"
-                return image
-            }
-            if let image = await captureWithGlobalRect(cgRect) {
-                lastMethod = "SCK-rect"
                 return image
             }
         }
@@ -53,30 +45,6 @@ final class ScreenCaptureService {
         lastMethod = "failed"
         LaunchLogger.log("All capture methods failed rect=\(cgRect)")
         return nil
-    }
-
-    /// Синхронный захват (legacy callers).
-    func capture(region: ScreenCaptureRegion) -> CGImage? {
-        if #available(macOS 14.0, *) {
-            return awaitCapture(region: region)
-        }
-        let cgRect = region.cgCaptureRect()
-        guard cgRect.width > 1, cgRect.height > 1 else { return nil }
-        if let image = captureLegacyWindowList(rect: cgRect) { return image }
-        if let displayID = region.displayIDForCapture,
-           let image = captureLegacyDisplay(displayID: displayID, cropRect: cgRect) { return image }
-        return captureLegacyWindowList(rect: cgRect, onScreenBelow: true)
-    }
-
-    private func awaitCapture(region: ScreenCaptureRegion) -> CGImage? {
-        let semaphore = DispatchSemaphore(value: 0)
-        var result: CGImage?
-        Task {
-            result = await captureAsync(region: region)
-            semaphore.signal()
-        }
-        semaphore.wait()
-        return result
     }
 
     @available(macOS 14.0, *)
@@ -105,32 +73,10 @@ final class ScreenCaptureService {
             config.showsCursor = false
             config.pixelFormat = kCVPixelFormatType_32BGRA
 
-            return await withCheckedContinuation { continuation in
-                SCScreenshotManager.captureImage(
-                    contentFilter: filter,
-                    configuration: config
-                ) { image, error in
-                    if let error {
-                        LaunchLogger.log("SCK display capture: \(error.localizedDescription)")
-                    }
-                    continuation.resume(returning: image)
-                }
-            }
+            return try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
         } catch {
-            LaunchLogger.log("SCShareableContent: \(error.localizedDescription)")
+            LaunchLogger.log("SCK capture error: \(error.localizedDescription)")
             return nil
-        }
-    }
-
-    @available(macOS 14.0, *)
-    private func captureWithGlobalRect(_ rect: CGRect) async -> CGImage? {
-        await withCheckedContinuation { continuation in
-            SCScreenshotManager.captureImage(in: rect) { image, error in
-                if let error {
-                    LaunchLogger.log("SCK rect capture: \(error.localizedDescription)")
-                }
-                continuation.resume(returning: image)
-            }
         }
     }
 
@@ -175,20 +121,12 @@ enum ScreenCapturePermission {
         return true
     }
 
-    /// Пробный захват — не блокирует запуск, только диагностика.
     static func probeCapture(region: ScreenCaptureRegion?) async -> Bool {
         guard hasPermission() else { return false }
         if let region {
             return await ScreenCaptureService.shared.captureAsync(region: region) != nil
         }
         let probe = CGRect(x: 0, y: 0, width: 8, height: 8)
-        if #available(macOS 14.0, *) {
-            return await withCheckedContinuation { continuation in
-                SCScreenshotManager.captureImage(in: probe) { image, _ in
-                    continuation.resume(returning: image != nil)
-                }
-            }
-        }
         return CGWindowListCreateImage(probe, .optionOnScreenOnly, kCGNullWindowID, []) != nil
     }
 }
@@ -216,7 +154,7 @@ final class CaptureSessionRecorder {
     func saveFrame(_ image: CGImage, label: String) {
         guard let dir = sessionDir else { return }
         frameIndex += 1
-        if frameIndex % 5 != 0 && label == "series" { return } // каждый 5-й для series
+        if frameIndex % 5 != 0 && label == "series" { return }
 
         let file = dir.appendingPathComponent("\(label)_\(frameIndex).png")
         let rep = NSBitmapImageRep(cgImage: image)

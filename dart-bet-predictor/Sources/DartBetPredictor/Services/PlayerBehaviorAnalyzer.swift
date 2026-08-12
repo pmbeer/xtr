@@ -27,7 +27,8 @@ final class PlayerBehaviorAnalyzer {
             snapshot.capturedAt = Date()
 
             self.motionHistory.append(snapshot.motionIntensity)
-            if self.motionHistory.count > HardwareProfile.isIntelMac ? 8 : 12 {
+            let motionLimit = HardwareProfile.isIntelMac ? 8 : 12
+            if self.motionHistory.count > motionLimit {
                 self.motionHistory.removeFirst()
             }
 
