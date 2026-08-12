@@ -75,10 +75,11 @@ final class MonitorCoordinator: ObservableObject {
 
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: pollIntervalMs / 1000.0, repeats: true) { [weak self] _ in
+            guard let coordinator = self else { return }
             Task { @MainActor in
-                self?.captureFrame(seriesRegion: series)
-                if let playerRegion = self?.playerRegion {
-                    self?.capturePlayerFrame(region: playerRegion)
+                coordinator.captureFrame(seriesRegion: series)
+                if let playerRegion = coordinator.playerRegion {
+                    coordinator.capturePlayerFrame(region: playerRegion)
                 }
             }
         }
@@ -255,8 +256,9 @@ final class MonitorCoordinator: ObservableObject {
         phase = .bettingOpen(remainingSeconds: bettingWindowSeconds, recommendation: recommendation)
 
         bettingTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+            guard let coordinator = self else { return }
             Task { @MainActor in
-                self?.tickBettingWindow()
+                coordinator.tickBettingWindow()
             }
         }
     }
@@ -293,11 +295,5 @@ final class MonitorCoordinator: ObservableObject {
     private func playAlertSound() {
         guard soundEnabled else { return }
         NSSound.beep()
-    }
-}
-
-extension ThrowEvent: Equatable {
-    static func == (lhs: ThrowEvent, rhs: ThrowEvent) -> Bool {
-        lhs.sector == rhs.sector && lhs.detectedAt == rhs.detectedAt
     }
 }

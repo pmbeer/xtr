@@ -11,6 +11,10 @@ let package = Package(
         .executableTarget(
             name: "DartBetPredictor",
             path: "Sources/DartBetPredictor",
+            exclude: [
+                "Info.plist",
+                "DartBetPredictor.entitlements"
+            ],
             resources: [.process("Resources")]
         )
     ]

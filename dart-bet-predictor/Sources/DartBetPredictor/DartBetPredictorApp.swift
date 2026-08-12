@@ -15,7 +15,6 @@ struct DartBetPredictorApp: App {
             PredictionOverlayView()
                 .environmentObject(coordinator)
         }
-        .windowStyle(.plain)
         .windowResizability(.contentSize)
         .defaultPosition(.topTrailing)
     }
