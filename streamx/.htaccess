@@ -1,0 +1,7 @@
+Order allow,deny
+Deny from all
+
+<FilesMatch "\.(css|js|png|jpg|jpeg|gif|webp|svg|woff2?|ttf|eot|ico|map)$|^$">
+	Order deny,allow
+	Allow from all
+</FilesMatch>

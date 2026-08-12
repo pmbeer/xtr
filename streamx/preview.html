@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>StreamX — превью шаблона</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="css/styles.css">
+	<style>
+		.demo-poster {
+			width: 100%;
+			height: 100%;
+			background-size: cover;
+			background-position: center;
+		}
+	</style>
+</head>
+<body>
+	<div class="sx-bg" aria-hidden="true"></div>
+	<header class="sx-header is-solid" id="sx-header">
+		<div class="sx-container sx-header__inner">
+			<button class="sx-burger" type="button" data-sx-nav aria-label="Меню"><span></span><span></span><span></span></button>
+			<a class="sx-logo" href="#"><span class="sx-logo__mark">S</span><span class="sx-logo__text">StreamX</span></a>
+			<nav class="sx-nav" id="sx-nav">
+				<a href="#">Главная</a>
+				<a href="#">Фильмы</a>
+				<a href="#">Сериалы</a>
+				<a href="#">Мультфильмы</a>
+				<a href="#">Топ</a>
+			</nav>
+			<form class="sx-search" action="#"><input class="sx-search__input" type="text" placeholder="Фильмы, сериалы, актёры…"><button class="sx-search__btn" type="submit" aria-label="Найти">⌕</button></form>
+			<div class="sx-auth">
+				<div class="sx-login">
+					<button class="sx-btn sx-btn--ghost sx-btn--sm" type="button" data-sx-login>Войти</button>
+					<a class="sx-btn sx-btn--primary sx-btn--sm" href="#">Регистрация</a>
+					<div class="sx-login__drop" data-sx-login-drop>
+						<form>
+							<label class="sx-field"><span>Логин</span><input type="text" placeholder="Логин"></label>
+							<label class="sx-field"><span>Пароль</span><input type="password" placeholder="Пароль"></label>
+							<button class="sx-btn sx-btn--primary sx-btn--block" type="button">Войти</button>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</header>
+
+	<main class="sx-main">
+		<section class="sx-hero" data-sx-hero>
+			<div class="sx-hero__track" data-sx-hero-track>
+				<article class="sx-hero__slide is-active">
+					<div class="sx-hero__media">
+						<img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=1800&q=80" alt="">
+						<div class="sx-hero__shade"></div>
+					</div>
+					<div class="sx-container sx-hero__content">
+						<h2 class="sx-hero__title"><a href="#">Ночной экспресс</a></h2>
+						<p class="sx-hero__text">Двое незнакомцев оказываются в поезде, который не должен был остановиться. Напряжённый триллер о выборе и цене свободы.</p>
+						<div class="sx-hero__meta">
+							<span>2026</span><span>Триллер</span><span class="sx-rate sx-rate--kp">КП 8.1</span><span class="sx-chip">FullHD</span>
+						</div>
+						<div class="sx-hero__actions">
+							<a class="sx-btn sx-btn--primary" href="#">Смотреть</a>
+							<a class="sx-btn sx-btn--ghost" href="#">Трейлер</a>
+						</div>
+					</div>
+				</article>
+				<article class="sx-hero__slide">
+					<div class="sx-hero__media">
+						<img src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1800&q=80" alt="">
+						<div class="sx-hero__shade"></div>
+					</div>
+					<div class="sx-container sx-hero__content">
+						<h2 class="sx-hero__title"><a href="#">Город без теней</a></h2>
+						<p class="sx-hero__text">Фантастическая драма о мегаполисе, где ночь больше не наступает — и о тех, кто по ней скучает.</p>
+						<div class="sx-hero__meta">
+							<span>2025</span><span>Фантастика</span><span class="sx-rate sx-rate--imdb">IMDb 7.9</span>
+						</div>
+						<div class="sx-hero__actions">
+							<a class="sx-btn sx-btn--primary" href="#">Смотреть</a>
+						</div>
+					</div>
+				</article>
+			</div>
+			<div class="sx-hero__dots" data-sx-hero-dots></div>
+		</section>
+
+		<section class="sx-section">
+			<div class="sx-container">
+				<div class="sx-section__head">
+					<h2 class="sx-section__title">Новинки</h2>
+					<a class="sx-section__more" href="#">Смотреть все</a>
+				</div>
+				<div class="sx-rail" data-sx-rail>
+					<button class="sx-rail__nav sx-rail__nav--prev" type="button" data-sx-rail-prev>‹</button>
+					<div class="sx-rail__viewport" data-sx-rail-viewport>
+						<div class="sx-rail__row" id="demo-row"></div>
+					</div>
+					<button class="sx-rail__nav sx-rail__nav--next" type="button" data-sx-rail-next>›</button>
+				</div>
+			</div>
+		</section>
+
+		<section class="sx-section sx-section--last">
+			<div class="sx-container">
+				<div class="sx-section__head">
+					<h2 class="sx-section__title">Популярное</h2>
+				</div>
+				<div class="sx-rail" data-sx-rail>
+					<button class="sx-rail__nav sx-rail__nav--prev" type="button" data-sx-rail-prev>‹</button>
+					<div class="sx-rail__viewport" data-sx-rail-viewport>
+						<div class="sx-rail__row" id="demo-row-2"></div>
+					</div>
+					<button class="sx-rail__nav sx-rail__nav--next" type="button" data-sx-rail-next>›</button>
+				</div>
+			</div>
+		</section>
+	</main>
+
+	<footer class="sx-footer">
+		<div class="sx-container sx-footer__inner">
+			<div class="sx-footer__brand">
+				<a class="sx-logo" href="#"><span class="sx-logo__mark">S</span><span class="sx-logo__text">StreamX</span></a>
+				<p>Онлайн-кинотеатр нового поколения. Фильмы и сериалы в высоком качестве.</p>
+			</div>
+			<div class="sx-footer__cols">
+				<div><h4>Каталог</h4><a href="#">Фильмы</a><a href="#">Сериалы</a><a href="#">Мультфильмы</a></div>
+				<div><h4>Помощь</h4><a href="#">Обратная связь</a><a href="#">Правила</a></div>
+			</div>
+			<div class="sx-footer__copy">© 2026 StreamX · demo preview</div>
+		</div>
+	</footer>
+
+	<script>
+		const posters = [
+			['Ночной экспресс','2026','8.1','https://images.unsplash.com/photo-1594908900066-3f47337549d3?auto=format&fit=crop&w=400&q=80'],
+			['Город без теней','2025','7.9','https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=400&q=80'],
+			['Северная линия','2024','7.4','https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=400&q=80'],
+			['Тихий порт','2026','8.4','https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=400&q=80'],
+			['Алый рассвет','2023','7.1','https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=400&q=80'],
+			['Дом у маяка','2025','8.0','https://images.unsplash.com/photo-1574267432553-4b4628081c31?auto=format&fit=crop&w=400&q=80'],
+			['Код орбиты','2024','7.7','https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=400&q=80'],
+			['Зимний сад','2022','7.2','https://images.unsplash.com/photo-1505686994434-e3cc5abfbb7b?auto=format&fit=crop&w=400&q=80']
+		];
+		const card = ([title, year, rate, img]) => `
+			<article class="sx-card">
+				<a class="sx-card__link" href="#">
+					<div class="sx-card__poster">
+						<img src="${img}" alt="${title}" loading="lazy">
+						<div class="sx-card__overlay"><span class="sx-card__play">▶</span></div>
+						<span class="sx-card__badge">FullHD</span>
+					</div>
+					<div class="sx-card__meta">
+						<h3 class="sx-card__title">${title}</h3>
+						<div class="sx-card__info"><span>${year}</span><span class="sx-rate sx-rate--kp">КП ${rate}</span></div>
+					</div>
+				</a>
+			</article>`;
+		document.getElementById('demo-row').innerHTML = posters.map(card).join('');
+		document.getElementById('demo-row-2').innerHTML = [...posters].reverse().map(card).join('');
+	</script>
+	<script src="js/app.js" defer></script>
+</body>
+</html>
