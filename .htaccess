@@ -1,12 +1,4 @@
-<ifmodule mod_rewrite.c>
-  RewriteEngine On
-  #RewriteCond %{HTTPS} off
-  #RewriteRule .* https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-
-  #Options +FollowSymLinks
-  Options -Indexes
-
-  RewriteCond %{SCRIPT_FILENAME} !-d  
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteRule . index.php [L,QSA] 
-</ifmodule>
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
