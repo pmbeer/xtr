@@ -1,0 +1,12 @@
+services:
+  bot:
+    build: .
+    container_name: b24agent
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_PATH: /app/data/bot.sqlite3
+      REPORTS_DIR: /app/data/reports
+    volumes:
+      - ./data:/app/data
+    # Long polling: входящие порты не нужны, наружу бот ничего не слушает.
