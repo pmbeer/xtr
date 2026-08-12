@@ -2,6 +2,7 @@ import Foundation
 
 /// Стратегия прогнозирования следующего броска.
 enum PredictionStrategy: String, CaseIterable, Identifiable, Codable {
+    case adaptiveLearning
     case ensemble
     case markov
     case contrarian
@@ -12,7 +13,8 @@ enum PredictionStrategy: String, CaseIterable, Identifiable, Codable {
 
     var displayName: String {
         switch self {
-        case .ensemble: return "Ансамбль (рекомендуется)"
+        case .adaptiveLearning: return "Адаптивное обучение (99% цель)"
+        case .ensemble: return "Ансамбль"
         case .markov: return "Марковская цепь"
         case .contrarian: return "Контртренд"
         case .hotCold: return "Горячие/холодные"
@@ -29,7 +31,8 @@ final class PredictionEngine {
 
     func recommend(
         history: [DartSector],
-        strategy: PredictionStrategy = .ensemble
+        behavior: PlayerBehaviorSnapshot = PlayerBehaviorSnapshot(),
+        strategy: PredictionStrategy = .adaptiveLearning
     ) -> BetRecommendation {
         guard history.count >= 3 else {
             return BetRecommendation(
@@ -41,7 +44,15 @@ final class PredictionEngine {
             )
         }
 
+        let baseCandidates = allBaseCandidates(history: history)
+
         switch strategy {
+        case .adaptiveLearning:
+            return LearningEngine.shared.adaptiveRecommend(
+                history: history,
+                behavior: behavior,
+                baseCandidates: baseCandidates
+            )
         case .ensemble:
             return ensembleRecommendation(history: history)
         case .markov:
@@ -53,6 +64,16 @@ final class PredictionEngine {
         case .parityBias:
             return parityBiasRecommendation(history: history)
         }
+    }
+
+    func allBaseCandidates(history: [DartSector]) -> [BetRecommendation] {
+        [
+            markovRecommendation(history: history),
+            contrarianRecommendation(history: history),
+            hotColdRecommendation(history: history),
+            parityBiasRecommendation(history: history),
+            ensembleRecommendation(history: history)
+        ]
     }
 
     // MARK: - Ensemble

@@ -1,8 +1,9 @@
 import AppKit
 import SwiftUI
 
-/// Полноэкранный оверлей для выбора области захвата (панель «СЕРИЯ»).
+/// Полноэкранный оверлей для выбора области захвата.
 struct RegionSelectorView: View {
+    var title: String = "Выделите область"
     let onSelect: (CGRect) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -26,7 +27,7 @@ struct RegionSelectorView: View {
             }
 
             VStack {
-                Text("Выделите область «СЕРИЯ» с номерами бросков")
+                Text(title)
                     .font(.headline)
                     .padding(12)
                     .background(.ultraThinMaterial)
@@ -83,7 +84,7 @@ struct RegionSelectorView: View {
 
 /// NSWindow wrapper для полноэкранного выбора области поверх всех окон.
 final class RegionSelectorWindowController {
-    static func present(onSelect: @escaping (CGRect) -> Void) {
+    static func present(title: String = "Выделите область", onSelect: @escaping (CGRect) -> Void) {
         guard let screen = NSScreen.main else { return }
 
         let window = NSWindow(
@@ -98,7 +99,7 @@ final class RegionSelectorWindowController {
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
 
         let hosting = NSHostingView(
-            rootView: RegionSelectorView { rect in
+            rootView: RegionSelectorView(title: title) { rect in
                 window.close()
                 onSelect(rect)
             }

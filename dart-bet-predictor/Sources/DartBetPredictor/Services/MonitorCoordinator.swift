@@ -2,47 +2,61 @@ import AppKit
 import Combine
 import Foundation
 
-/// Главный координатор: захват → OCR → детекция → прогноз → таймер 5 сек.
+/// Главный координатор: захват → OCR → поведение игрока → обучение → прогноз → таймер 5 сек.
 @MainActor
 final class MonitorCoordinator: ObservableObject {
     @Published var isRunning = false
-    @Published var captureRegion: CGRect?
+    @Published var seriesRegion: CGRect?
+    @Published var playerRegion: CGRect?
     @Published var phase: BettingPhase = .idle
     @Published var currentRecommendation: BetRecommendation?
     @Published var lastDetectedThrow: ThrowEvent?
+    @Published var lastOutcome: PredictionOutcome?
+    @Published var currentPlayerBehavior = PlayerBehaviorSnapshot()
     @Published var parseLatencyMs: Double = 0
+    @Published var behaviorLatencyMs: Double = 0
     @Published var fps: Double = 0
-    @Published var strategy: PredictionStrategy = .ensemble
+    @Published var strategy: PredictionStrategy = .adaptiveLearning
     @Published var bettingWindowSeconds: Double = 5.0
     @Published var pollIntervalMs: Double = 150
-    @Published var statusMessage = "Выберите область «СЕРИЯ» и нажмите Старт"
+    @Published var statusMessage = "Выберите области «СЕРИЯ» и «Игрок», затем Старт"
 
     let throwTracker = ThrowTracker()
+    let learningEngine = LearningEngine.shared
 
     private var timer: Timer?
     private var bettingTimer: Timer?
     private var bettingDeadline: Date?
     private var frameCount = 0
     private var fpsTimer: Date?
-    private var isProcessingFrame = false
+    private var isProcessingSeries = false
+    private var isProcessingPlayer = false
     private var soundEnabled = true
+    private var behaviorAccumulator: [PlayerBehaviorSnapshot] = []
 
     func requestScreenPermission() {
         _ = ScreenCapturePermission.requestPermission()
     }
 
-    func setCaptureRegion(_ rect: CGRect) {
-        captureRegion = rect
-        statusMessage = String(
-            format: "Область: %.0f×%.0f — готово к запуску",
-            rect.width,
-            rect.height
-        )
+    func setSeriesRegion(_ rect: CGRect) {
+        seriesRegion = rect
+        updateRegionStatus()
+    }
+
+    func setPlayerRegion(_ rect: CGRect) {
+        playerRegion = rect
+        updateRegionStatus()
+    }
+
+    private func updateRegionStatus() {
+        let series = seriesRegion != nil ? "СЕРИЯ ✓" : "СЕРИЯ ✗"
+        let player = playerRegion != nil ? "Игрок ✓" : "Игрок ✗"
+        statusMessage = "\(series), \(player)"
     }
 
     func start() {
-        guard let region = captureRegion else {
-            statusMessage = "Сначала выберите область экрана"
+        guard let series = seriesRegion else {
+            statusMessage = "Выберите область «СЕРИЯ»"
             return
         }
 
@@ -54,14 +68,18 @@ final class MonitorCoordinator: ObservableObject {
 
         isRunning = true
         phase = .waitingForThrow
-        statusMessage = "Мониторинг запущен"
+        statusMessage = "Мониторинг запущен — обучение активно"
         frameCount = 0
         fpsTimer = Date()
+        behaviorAccumulator.removeAll()
 
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: pollIntervalMs / 1000.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
-                self?.captureFrame(region: region)
+                self?.captureFrame(seriesRegion: series)
+                if let playerRegion = self?.playerRegion {
+                    self?.capturePlayerFrame(region: playerRegion)
+                }
             }
         }
     }
@@ -78,34 +96,42 @@ final class MonitorCoordinator: ObservableObject {
 
     func resetHistory() {
         throwTracker.reset()
+        PlayerBehaviorAnalyzer.shared.reset()
         currentRecommendation = nil
         lastDetectedThrow = nil
+        lastOutcome = nil
+        behaviorAccumulator.removeAll()
         phase = isRunning ? .waitingForThrow : .idle
+        statusMessage = "История сброшена"
     }
 
-    private func captureFrame(region: CGRect) {
-        guard !isProcessingFrame else { return }
+    func resetLearning() {
+        learningEngine.resetLearning()
+        statusMessage = "Обучение сброшено"
+    }
 
+    private func captureFrame(seriesRegion: CGRect) {
+        guard !isProcessingSeries else { return }
         guard let screen = NSScreen.main else { return }
+
         let cgRegion = ScreenCaptureService.cgRect(
-            from: region,
+            from: seriesRegion,
             screenHeight: screen.frame.height
         )
 
         guard let image = ScreenCaptureService.shared.capture(region: cgRegion) else {
-            statusMessage = "Ошибка захвата экрана"
+            statusMessage = "Ошибка захвата «СЕРИЯ»"
             return
         }
 
-        isProcessingFrame = true
+        isProcessingSeries = true
         frameCount += 1
         updateFPS()
 
         SeriesOCRService.shared.parseSeries(from: image) { [weak self] result in
             Task { @MainActor in
                 guard let self else { return }
-                self.isProcessingFrame = false
-
+                self.isProcessingSeries = false
                 guard let result else { return }
 
                 self.parseLatencyMs = result.parseDurationMs
@@ -125,19 +151,102 @@ final class MonitorCoordinator: ObservableObject {
         }
     }
 
+    private func capturePlayerFrame(region: CGRect) {
+        guard !isProcessingPlayer else { return }
+        guard let screen = NSScreen.main else { return }
+
+        let cgRegion = ScreenCaptureService.cgRect(
+            from: region,
+            screenHeight: screen.frame.height
+        )
+
+        guard let image = ScreenCaptureService.shared.capture(region: cgRegion) else { return }
+
+        isProcessingPlayer = true
+        let start = CFAbsoluteTimeGetCurrent()
+
+        PlayerBehaviorAnalyzer.shared.analyze(image: image) { [weak self] snapshot in
+            Task { @MainActor in
+                guard let self else { return }
+                self.isProcessingPlayer = false
+                self.behaviorLatencyMs = (CFAbsoluteTimeGetCurrent() - start) * 1000
+                self.currentPlayerBehavior = snapshot
+                self.behaviorAccumulator.append(snapshot)
+                if self.behaviorAccumulator.count > 40 {
+                    self.behaviorAccumulator.removeFirst()
+                }
+            }
+        }
+    }
+
     private func onNewThrowDetected(_ event: ThrowEvent) {
+        PlayerBehaviorAnalyzer.shared.markThrowDetected()
+
+        let behaviorDuringRound = averagedBehavior()
+
+        if let outcome = learningEngine.evaluateAndLearn(
+            actual: event.sector,
+            behaviorDuringRound: behaviorDuringRound
+        ) {
+            lastOutcome = outcome
+            statusMessage = "\(outcome.displayResult): выпало \(event.sector), ставили \(outcomeDisplay(outcome))"
+        }
+
         lastDetectedThrow = event
+        behaviorAccumulator.removeAll()
 
         let recommendation = PredictionEngine.shared.recommend(
             history: throwTracker.history,
+            behavior: currentPlayerBehavior,
             strategy: strategy
         )
         currentRecommendation = recommendation
 
+        let features = PredictionFeatures.build(
+            history: throwTracker.history,
+            behavior: currentPlayerBehavior,
+            strategyVotes: [:]
+        )
+        let pending = PendingPrediction(
+            from: recommendation,
+            features: features,
+            behavior: currentPlayerBehavior
+        )
+        learningEngine.setPending(pending)
+
         startBettingWindow(recommendation: recommendation)
         playAlertSound()
 
-        statusMessage = "Бросок: \(event.sector) → ставка: \(recommendation.displayBet)"
+        if lastOutcome == nil {
+            statusMessage = "Бросок: \(event.sector) → ставка: \(recommendation.displayBet)"
+        }
+    }
+
+    private func averagedBehavior() -> PlayerBehaviorSnapshot {
+        guard !behaviorAccumulator.isEmpty else { return currentPlayerBehavior }
+
+        var avg = PlayerBehaviorSnapshot()
+        let count = Double(behaviorAccumulator.count)
+        for snap in behaviorAccumulator {
+            avg.armRaise += snap.armRaise
+            avg.lateralLean += snap.lateralLean
+            avg.motionIntensity += snap.motionIntensity
+            avg.shoulderAngle += snap.shoulderAngle
+            avg.bodyDetected = avg.bodyDetected || snap.bodyDetected
+        }
+        avg.armRaise /= count
+        avg.lateralLean /= count
+        avg.motionIntensity /= count
+        avg.shoulderAngle /= count
+        avg.phase = behaviorAccumulator.last?.phase ?? .idle
+        return avg
+    }
+
+    private func outcomeDisplay(_ outcome: PredictionOutcome) -> String {
+        switch outcome.betType {
+        case .number: return outcome.predictedNumber.map(String.init) ?? "?"
+        default: return outcome.betType.displayName
+        }
     }
 
     private func startBettingWindow(recommendation: BetRecommendation) {

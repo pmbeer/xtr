@@ -8,26 +8,29 @@ struct ControlPanelView: View {
         VStack(alignment: .leading, spacing: 14) {
             header
             statusSection
+            learningSection
             regionSection
+            playerBehaviorSection
             strategySection
             controlsSection
             metricsSection
+            outcomesSection
             historySection
             disclaimer
         }
         .padding(16)
-        .frame(width: 360)
+        .frame(width: 400)
     }
 
     private var header: some View {
         HStack {
-            Image(systemName: "target")
+            Image(systemName: "brain.head.profile")
                 .font(.title2)
                 .foregroundStyle(.orange)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Dart Bet Predictor")
                     .font(.headline)
-                Text("FONBET Дартс 24/7")
+                Text("Обучение + поведение игрока")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -43,7 +46,7 @@ struct ControlPanelView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(coordinator.statusMessage)
                     .font(.subheadline)
-                    .lineLimit(2)
+                    .lineLimit(3)
 
                 if let rec = coordinator.currentRecommendation {
                     HStack {
@@ -70,6 +73,57 @@ struct ControlPanelView: View {
         }
     }
 
+    private var learningSection: some View {
+        GroupBox("Система обучения") {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text("Точность (последние 50)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Text("\(coordinator.learningEngine.stats.recentAccuracyPercent)%")
+                            .font(.title2.bold().monospacedDigit())
+                            .foregroundStyle(accuracyColor)
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing) {
+                        Text("Цель")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Text("99%")
+                            .font(.title3.bold())
+                            .foregroundStyle(.green)
+                    }
+                }
+
+                ProgressView(value: coordinator.learningEngine.stats.progressToTarget)
+                    .tint(accuracyColor)
+
+                HStack {
+                    Text("Всего: \(coordinator.learningEngine.stats.totalPredictions)")
+                    Spacer()
+                    Text("Верных: \(coordinator.learningEngine.stats.correctPredictions)")
+                    Spacer()
+                    Text("Общая: \(coordinator.learningEngine.stats.overallAccuracyPercent)%")
+                }
+                .font(.caption2.monospacedDigit())
+                .foregroundStyle(.secondary)
+
+                Text(coordinator.learningEngine.lastLearningMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+        }
+    }
+
+    private var accuracyColor: Color {
+        let acc = coordinator.learningEngine.stats.recentAccuracy
+        if acc >= 0.7 { return .green }
+        if acc >= 0.45 { return .orange }
+        return .red
+    }
+
     @ViewBuilder
     private var phaseIndicator: some View {
         switch coordinator.phase {
@@ -93,22 +147,57 @@ struct ControlPanelView: View {
     }
 
     private var regionSection: some View {
-        GroupBox("Область захвата") {
+        GroupBox("Область «СЕРИЯ» (исход броска)") {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Выделите панель «СЕРИЯ» с историей бросков (справа внизу на экране игры).")
+                Text("Выделите панель с кружками-номерами истории бросков.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                if let region = coordinator.captureRegion {
-                    Text(String(format: "%.0f × %.0f px", region.width, region.height))
-                        .font(.caption.monospacedDigit())
-                }
-
-                Button("Выбрать область экрана") {
-                    RegionSelectorWindowController.present { rect in
-                        coordinator.setCaptureRegion(rect)
+                regionButton(
+                    label: "Выбрать СЕРИЮ",
+                    configured: coordinator.seriesRegion != nil
+                ) {
+                    RegionSelectorWindowController.present(title: "Выделите панель СЕРИЯ") { rect in
+                        coordinator.setSeriesRegion(rect)
                     }
                 }
+            }
+        }
+    }
+
+    private var playerBehaviorSection: some View {
+        GroupBox("Область «Игрок» (поведение)") {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Выделите видео с игроком/ведущим (правая часть экрана).")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                regionButton(
+                    label: "Выбрать игрока",
+                    configured: coordinator.playerRegion != nil
+                ) {
+                    RegionSelectorWindowController.present(title: "Выделите видео игрока") { rect in
+                        coordinator.setPlayerRegion(rect)
+                    }
+                }
+
+                HStack {
+                    Image(systemName: "figure.stand")
+                        .foregroundStyle(.blue)
+                    Text(coordinator.currentPlayerBehavior.summary)
+                        .font(.caption)
+                }
+            }
+        }
+    }
+
+    private func regionButton(label: String, configured: Bool, action: @escaping () -> Void) -> some View {
+        HStack {
+            Button(label, action: action)
+            if configured {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .font(.caption)
             }
         }
     }
@@ -148,10 +237,12 @@ struct ControlPanelView: View {
             } else {
                 Button("Старт") { coordinator.start() }
                     .keyboardShortcut(.defaultAction)
-                    .disabled(coordinator.captureRegion == nil)
+                    .disabled(coordinator.seriesRegion == nil)
             }
 
             Button("Сброс") { coordinator.resetHistory() }
+            Button("Сброс обучения") { coordinator.resetLearning() }
+                .font(.caption)
 
             Spacer()
 
@@ -169,8 +260,8 @@ struct ControlPanelView: View {
         GroupBox("Производительность") {
             HStack {
                 metric("OCR", String(format: "%.0f мс", coordinator.parseLatencyMs))
+                metric("Поведение", String(format: "%.0f мс", coordinator.behaviorLatencyMs))
                 metric("FPS", String(format: "%.1f", coordinator.fps))
-                metric("История", "\(coordinator.throwTracker.history.count)")
             }
         }
     }
@@ -184,6 +275,30 @@ struct ControlPanelView: View {
                 .font(.caption.monospacedDigit().bold())
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private var outcomesSection: some View {
+        GroupBox("Последние прогнозы") {
+            if coordinator.learningEngine.recentOutcomes.isEmpty {
+                Text("Прогнозы появятся после 2-го броска")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(coordinator.learningEngine.recentOutcomes.prefix(5)) { outcome in
+                    HStack(spacing: 6) {
+                        Text(outcome.displayResult)
+                            .font(.caption.bold())
+                            .foregroundStyle(outcome.wasCorrect ? .green : .red)
+                        Text("→ \(outcome.actualSector)")
+                            .font(.caption.monospacedDigit())
+                        Spacer()
+                        Text(outcome.betType.displayName)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
     }
 
     private var historySection: some View {
@@ -208,7 +323,7 @@ struct ControlPanelView: View {
     }
 
     private var disclaimer: some View {
-        Text("⚠️ Прогнозы статистические. Азартные игры — риск потери средств. Приложение не гарантирует выигрыш.")
+        Text("⚠️ Обучение повышает точность на повторяющихся паттернах, но не гарантирует 99% при случайных бросках. Азартные игры — риск.")
             .font(.caption2)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
