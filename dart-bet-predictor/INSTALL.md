@@ -1,8 +1,8 @@
 # Установка на MacBook Pro 2018 (Intel, 8 ГБ, macOS Sequoia)
 
-## Прямая ссылка (v1.0.1 — Universal, Intel + Apple Silicon)
+## Прямая ссылка (v1.0.2 — Universal, Intel + Apple Silicon)
 
-**https://github.com/pmbeer/xtr/releases/download/dart-bet-predictor-v1.0.1/DartBetPredictor-1.0.1-macOS-Universal.dmg**
+**https://github.com/pmbeer/xtr/releases/download/dart-bet-predictor-v1.0.2/DartBetPredictor-1.0.2-macOS-Universal.dmg**
 
 > Если ссылка ещё не активна — соберите на Mac (см. ниже) или скачайте из [Actions](https://github.com/pmbeer/xtr/actions).
 
@@ -46,7 +46,7 @@ git clone https://github.com/pmbeer/xtr.git
 cd xtr/dart-bet-predictor
 chmod +x build-installer.sh
 ./build-installer.sh
-open dist/DartBetPredictor-1.0.1-macOS-Universal.dmg
+open dist/DartBetPredictor-1.0.2-macOS-Universal.dmg
 ```
 
 На Intel Mac соберётся нативный **x86_64** бинарник — оптимально для вашего железа.

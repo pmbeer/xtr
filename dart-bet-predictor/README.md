@@ -28,10 +28,13 @@
 
 ### Скачать готовый установщик
 
-1. Откройте **Actions** → **Build macOS Installer** на GitHub
-2. Скачайте артефакт **DartBetPredictor-macOS-Installer** (файл `.dmg`)
-3. Откройте DMG → перетащите **DartBetPredictor** в **Applications**
-4. Запустите из Программ
+**Прямая ссылка (v1.0.2 Universal):**  
+https://github.com/pmbeer/xtr/releases/download/dart-bet-predictor-v1.0.2/DartBetPredictor-1.0.2-macOS-Universal.dmg
+
+Либо: **Actions** → **Build macOS Installer** → артефакт **DartBetPredictor-macOS-Installer**.
+
+1. Откройте DMG → перетащите **DartBetPredictor** в **Applications**
+2. Запустите из Программ
 
 Подробная инструкция: [INSTALL.md](INSTALL.md)
 
@@ -42,7 +45,7 @@ cd dart-bet-predictor
 ./build-installer.sh
 ```
 
-Результат: `dist/DartBetPredictor-1.0.0-macOS.dmg`
+Результат: `dist/DartBetPredictor-1.0.2-macOS-Universal.dmg`
 
 ### Быстрый запуск без DMG (для разработки)
 
