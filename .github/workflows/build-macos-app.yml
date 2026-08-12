@@ -1,0 +1,44 @@
+name: Build macOS app
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "DartsPredictorApp/**"
+      - ".github/workflows/build-macos-app.yml"
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build app and dmg
+        working-directory: DartsPredictorApp
+        run: ./build_app.sh
+
+      - name: Zip app bundle
+        working-directory: DartsPredictorApp/build
+        run: ditto -c -k --keepParent DartsPredictor.app DartsPredictor.app.zip
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartsPredictor-macOS
+          path: |
+            DartsPredictorApp/build/DartsPredictor.dmg
+            DartsPredictorApp/build/DartsPredictor.app.zip
+          if-no-files-found: error
+
+      - name: Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            DartsPredictorApp/build/DartsPredictor.dmg
+            DartsPredictorApp/build/DartsPredictor.app.zip
