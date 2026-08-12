@@ -183,8 +183,8 @@ struct ControlPanelView: View {
                     label: "Выбрать СЕРИЮ",
                     configured: coordinator.seriesRegion != nil
                 ) {
-                    RegionSelectorWindowController.present(title: "Выделите панель СЕРИЯ") { rect in
-                        coordinator.setSeriesRegion(rect)
+                    RegionSelectorWindowController.present(title: "Выделите панель СЕРИЯ") { region in
+                        coordinator.setSeriesRegion(region)
                     }
                 }
             }
@@ -202,8 +202,8 @@ struct ControlPanelView: View {
                     label: "Выбрать игрока",
                     configured: coordinator.playerRegion != nil
                 ) {
-                    RegionSelectorWindowController.present(title: "Выделите видео игрока") { rect in
-                        coordinator.setPlayerRegion(rect)
+                    RegionSelectorWindowController.present(title: "Выделите видео игрока") { region in
+                        coordinator.setPlayerRegion(region)
                     }
                 }
 

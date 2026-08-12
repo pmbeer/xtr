@@ -6,8 +6,8 @@ import Foundation
 @MainActor
 final class MonitorCoordinator: ObservableObject {
     @Published var isRunning = false
-    @Published var seriesRegion: CGRect?
-    @Published var playerRegion: CGRect?
+    @Published var seriesRegion: ScreenCaptureRegion?
+    @Published var playerRegion: ScreenCaptureRegion?
     @Published var phase: BettingPhase = .idle
     @Published var currentRecommendation: BetRecommendation?
     @Published var lastDetectedThrow: ThrowEvent?
@@ -40,13 +40,13 @@ final class MonitorCoordinator: ObservableObject {
         _ = ScreenCapturePermission.requestPermission()
     }
 
-    func setSeriesRegion(_ rect: CGRect) {
-        seriesRegion = rect
+    func setSeriesRegion(_ region: ScreenCaptureRegion) {
+        seriesRegion = region
         updateRegionStatus()
     }
 
-    func setPlayerRegion(_ rect: CGRect) {
-        playerRegion = rect
+    func setPlayerRegion(_ region: ScreenCaptureRegion) {
+        playerRegion = region
         updateRegionStatus()
     }
 
@@ -115,14 +115,10 @@ final class MonitorCoordinator: ObservableObject {
         statusMessage = "Обучение сброшено"
     }
 
-    private func captureFrame(seriesRegion: CGRect) {
+    private func captureFrame(seriesRegion: ScreenCaptureRegion) {
         guard !isProcessingSeries else { return }
-        guard let screen = NSScreen.main else { return }
 
-        let cgRegion = ScreenCaptureService.cgRect(
-            from: seriesRegion,
-            screenHeight: screen.frame.height
-        )
+        let cgRegion = seriesRegion.cgCaptureRect()
 
         guard let image = ScreenCaptureService.shared.capture(region: cgRegion) else {
             statusMessage = "Ошибка захвата «СЕРИЯ»"
@@ -157,17 +153,13 @@ final class MonitorCoordinator: ObservableObject {
         }
     }
 
-    private func capturePlayerFrame(region: CGRect) {
+    private func capturePlayerFrame(region: ScreenCaptureRegion) {
         playerFrameCounter += 1
         let stride = HardwareProfile.playerAnalysisStride
         guard playerFrameCounter % stride == 0 else { return }
         guard !isProcessingPlayer else { return }
-        guard let screen = NSScreen.main else { return }
 
-        let cgRegion = ScreenCaptureService.cgRect(
-            from: region,
-            screenHeight: screen.frame.height
-        )
+        let cgRegion = region.cgCaptureRect()
 
         guard let image = ScreenCaptureService.shared.capture(region: cgRegion) else { return }
 
