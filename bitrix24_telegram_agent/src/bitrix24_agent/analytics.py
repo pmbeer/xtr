@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+import httpx
+
 from .bitrix import BitrixAPIError, BitrixClient
 from .periods import ReportPeriod
 
@@ -30,7 +32,7 @@ TASK_FIELDS = [
 ]
 
 
-def field(item: dict[str, Any], name: str, default: Any = None) -> Any:
+def get_field(item: dict[str, Any], name: str, default: Any = None) -> Any:
     target = name.replace("_", "").lower()
     for key, value in item.items():
         if key.replace("_", "").lower() == target:
@@ -102,7 +104,7 @@ class AnalyticsService:
         active = [
             task
             for task in all_non_completed
-            if int(field(task, "STATUS", 0) or 0) in ACTIVE_STATUSES
+            if int(get_field(task, "STATUS", 0) or 0) in ACTIVE_STATUSES
         ]
         tasks = await self._task_analytics(completed, active, period.end)
         open_lines = await self._open_lines(user_id, period)
@@ -115,9 +117,10 @@ class AnalyticsService:
         now: datetime,
     ) -> TaskAnalytics:
         statuses = Counter(
-            STATUS_NAMES.get(int(field(task, "STATUS", 0) or 0), "Неизвестно") for task in active
+            STATUS_NAMES.get(int(get_field(task, "STATUS", 0) or 0), "Неизвестно")
+            for task in active
         )
-        group_ids = {int(field(task, "GROUP_ID", 0) or 0) for task in active}
+        group_ids = {int(get_field(task, "GROUP_ID", 0) or 0) for task in active}
         stage_maps: dict[int, dict[str, str]] = {}
 
         async def load_stages(group_id: int) -> None:
@@ -130,15 +133,17 @@ class AnalyticsService:
         stages: Counter[str] = Counter()
         overdue = 0
         for task in active:
-            group_id = int(field(task, "GROUP_ID", 0) or 0)
-            stage_id = str(field(task, "STAGE_ID", "") or "")
+            group_id = int(get_field(task, "GROUP_ID", 0) or 0)
+            stage_id = str(get_field(task, "STAGE_ID", "") or "")
             stage_name = stage_maps.get(group_id, {}).get(stage_id)
-            status = int(field(task, "STATUS", 0) or 0)
+            status = int(get_field(task, "STATUS", 0) or 0)
             stages[stage_name or STATUS_NAMES.get(status, "Без стадии")] += 1
-            deadline = field(task, "DEADLINE")
+            deadline = get_field(task, "DEADLINE")
             if deadline:
                 try:
                     parsed = datetime.fromisoformat(str(deadline).replace("Z", "+00:00"))
+                    if parsed.tzinfo is None:
+                        parsed = parsed.replace(tzinfo=now.tzinfo)
                     overdue += int(parsed < now)
                 except ValueError:
                     pass
@@ -168,20 +173,13 @@ class AnalyticsService:
             )
         except BitrixAPIError as error:
             return OpenLinesAnalytics(error=f"{error.code}: {error.message}")
-        except (httpx_error_types()):
+        except httpx.HTTPError:
             return OpenLinesAnalytics(error="Не удалось подключиться к Bitrix24")
-
-
-def httpx_error_types() -> tuple[type[Exception], ...]:
-    # Imported lazily so this module remains easy to unit test with a fake client.
-    import httpx
-
-    return (httpx.HTTPError,)
 
 
 def _find(stats: dict[str, Any], *names: str) -> Any:
     for name in names:
-        value = field(stats, name)
+        value = get_field(stats, name)
         if value is not None:
             return value
     return None

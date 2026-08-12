@@ -5,7 +5,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.worksheet.worksheet import Worksheet
 
-from .analytics import AnalyticsResult, STATUS_NAMES, field
+from .analytics import STATUS_NAMES, AnalyticsResult, get_field
 
 HEADER_FILL = PatternFill("solid", fgColor="1F4E78")
 HEADER_FONT = Font(color="FFFFFF", bold=True)
@@ -45,16 +45,16 @@ def _autosize(sheet: Worksheet) -> None:
 def _task_rows(tasks: list[dict[str, Any]]) -> list[list[Any]]:
     rows: list[list[Any]] = []
     for task in tasks:
-        status = int(field(task, "STATUS", 0) or 0)
+        status = int(get_field(task, "STATUS", 0) or 0)
         rows.append(
             [
-                field(task, "ID"),
-                safe_cell(field(task, "TITLE", "")),
+                get_field(task, "ID"),
+                safe_cell(get_field(task, "TITLE", "")),
                 STATUS_NAMES.get(status, "Неизвестно"),
-                field(task, "STAGE_ID", ""),
-                field(task, "DEADLINE", ""),
-                field(task, "CREATED_DATE", ""),
-                field(task, "CLOSED_DATE", ""),
+                get_field(task, "STAGE_ID", ""),
+                get_field(task, "DEADLINE", ""),
+                get_field(task, "CREATED_DATE", ""),
+                get_field(task, "CLOSED_DATE", ""),
             ]
         )
     return rows
