@@ -24,6 +24,7 @@ enum PredictionStrategy: String, CaseIterable, Identifiable, Codable {
 }
 
 /// Движок прогнозов на основе истории бросков.
+@MainActor
 final class PredictionEngine {
     static let shared = PredictionEngine()
 
