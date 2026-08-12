@@ -50,7 +50,8 @@ final class SectorProbabilityModel {
         // Штраф прогнозу, который не совпал с исходом
         if let wrongKey = wrongSectorKey(bet: predictedBet, number: predictedNumber, actual: actual) {
             if var ctxMap = contextProbs[contextKey] {
-                ctxMap[wrongKey] = max(0.001, ctxMap[wrongKey] - learningStep * 0.5)
+                let current = ctxMap[wrongKey] ?? smoothing
+                ctxMap[wrongKey] = max(0.001, current - learningStep * 0.5)
                 normalize(&ctxMap)
                 contextProbs[contextKey] = ctxMap
             }
@@ -117,7 +118,7 @@ final class SectorProbabilityModel {
         let sum = map.values.reduce(0, +)
         guard sum > 0 else { return }
         for key in map.keys {
-            map[key] /= sum
+            map[key] = (map[key] ?? 0) / sum
         }
     }
 
