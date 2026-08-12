@@ -64,12 +64,8 @@ struct RegionSelectorView: View {
             .allowsHitTesting(true)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            // Отдельный слой для drag — не перекрывается кнопками
-            Color.clear
-                .contentShape(Rectangle())
-                .gesture(dragGesture)
-        )
+        .contentShape(Rectangle())
+        .gesture(dragGesture)
     }
 
     private var dragGesture: some Gesture {
