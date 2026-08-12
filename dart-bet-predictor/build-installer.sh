@@ -32,5 +32,5 @@ echo "[2/2] Создание DMG..."
 
 echo ""
 echo "════════════════════════════════════════════════════"
-echo " Готово! Установщик: dist/DartBetPredictor-1.0.0-macOS.dmg"
+echo " Готово! Установщик: dist/DartBetPredictor-1.0.1-macOS-Universal.dmg"
 echo "════════════════════════════════════════════════════"

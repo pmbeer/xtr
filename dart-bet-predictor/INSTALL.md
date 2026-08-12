@@ -1,71 +1,60 @@
-# Установка Dart Bet Predictor на MacBook
+# Установка на MacBook Pro 2018 (Intel, 8 ГБ, macOS Sequoia)
 
-## Способ 1: Скачать готовый установщик (рекомендуется)
+## Прямая ссылка (v1.0.1 — Universal, Intel + Apple Silicon)
 
-### Из GitHub Actions (после сборки)
+**https://github.com/pmbeer/xtr/releases/download/dart-bet-predictor-v1.0.1/DartBetPredictor-1.0.1-macOS-Universal.dmg**
 
-1. Откройте вкладку **Actions** в репозитории на GitHub
-2. Выберите workflow **Build macOS Installer**
-3. Откройте последний успешный запуск (зелёная галочка)
-4. Внизу страницы в разделе **Artifacts** скачайте:
-   - `DartBetPredictor-macOS-Installer` — файл `.dmg` (установщик)
-5. Откройте скачанный `.dmg`
-6. Перетащите **DartBetPredictor** в папку **Applications**
-
-### Из GitHub Releases (если опубликован релиз)
-
-1. Перейдите в **Releases** репозитория
-2. Скачайте `DartBetPredictor-1.0.0-macOS.dmg`
-3. Установите как описано выше
+> Если ссылка ещё не активна — соберите на Mac (см. ниже) или скачайте из [Actions](https://github.com/pmbeer/xtr/actions).
 
 ---
 
-## Способ 2: Собрать на своём MacBook
+## Ваш Mac
 
-Если у вас есть исходники:
+| Параметр | Значение |
+|----------|----------|
+| Модель | MacBook Pro 13" 2018 |
+| Процессор | Intel Core i5 2.3 GHz (4 ядра) |
+| Память | 8 ГБ |
+| macOS | Sequoia 15.7.8 |
+| Архитектура | **x86_64 (Intel)** |
+
+Приложение **автоматически** определяет Intel Mac и:
+- снижает нагрузку на CPU (интервал OCR 220 мс вместо 150)
+- анализирует игрока реже (каждый 3-й кадр)
+- уменьшает разрешение анализа движения (120×90)
+
+---
+
+## Установка
+
+1. Скачайте DMG по ссылке выше
+2. Откройте файл
+3. Перетащите **DartBetPredictor** в **Applications**
+4. Запустите из Программ
+
+### Первый запуск
+
+- **«Разработчик не подтверждён»** → ПКМ → **Открыть** → **Открыть**
+- **Запись экрана** → Системные настройки → Конфиденциальность → Запись экрана → включите DartBetPredictor → перезапустите
+
+---
+
+## Собрать на своём Mac (если DMG не подходит)
 
 ```bash
-cd dart-bet-predictor
+git clone https://github.com/pmbeer/xtr.git
+cd xtr/dart-bet-predictor
 chmod +x build-installer.sh
 ./build-installer.sh
+open dist/DartBetPredictor-1.0.1-macOS-Universal.dmg
 ```
 
-Готовый установщик появится здесь:
-```
-dart-bet-predictor/dist/DartBetPredictor-1.0.0-macOS.dmg
-```
-
-Требуется: Xcode Command Line Tools (`xcode-select --install`)
-
----
-
-## Первый запуск
-
-1. Откройте **DartBetPredictor** из папки Программы
-2. Если macOS пишет «разработчик не подтверждён»:
-   - ПКМ на приложении → **Открыть** → **Открыть**
-3. Разрешите **Запись экрана**:
-   - **Системные настройки → Конфиденциальность и безопасность → Запись экрана**
-   - Включите DartBetPredictor
-   - Перезапустите приложение
-4. В строке меню появится иконка мишени — кликните для настройки
-
----
-
-## Быстрая настройка
-
-1. **Выбрать СЕРИЮ** — область с историей бросков
-2. **Выбрать игрока** — видео с ведущим
-3. Нажать **Старт**
-4. Окно прогноза — расположить рядом с игрой
+На Intel Mac соберётся нативный **x86_64** бинарник — оптимально для вашего железа.
 
 ---
 
 ## Удаление
 
-Перетащите `DartBetPredictor.app` из Applications в Корзину.
+Перетащите `DartBetPredictor.app` в Корзину.
 
-Данные обучения хранятся в:
-```
-~/Library/Application Support/DartBetPredictor/
-```
+Данные обучения: `~/Library/Application Support/DartBetPredictor/`
