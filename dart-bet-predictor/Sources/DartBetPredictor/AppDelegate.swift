@@ -13,6 +13,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             Self.showMainWindows()
         }
+
+        NotificationCenter.default.addObserver(
+            forName: .openPredictionOverlay,
+            object: nil,
+            queue: .main
+        ) { _ in
+            Self.showPredictionOverlay()
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -29,6 +37,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.orderFrontRegardless()
         }
         LaunchLogger.log("windows shown: \(NSApp.windows.count)")
+    }
+
+    private static func showPredictionOverlay() {
+        for window in NSApp.windows where window.title.contains("Прогноз") {
+            window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
+            window.level = .floating
+            LaunchLogger.log("Prediction overlay shown")
+            return
+        }
+        LaunchLogger.log("Prediction overlay window not found yet")
     }
 }
 

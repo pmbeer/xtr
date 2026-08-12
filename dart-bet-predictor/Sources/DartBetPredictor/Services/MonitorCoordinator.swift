@@ -2,6 +2,10 @@ import AppKit
 import Combine
 import Foundation
 
+extension Notification.Name {
+    static let openPredictionOverlay = Notification.Name("DartBetPredictor.openPredictionOverlay")
+}
+
 /// Главный координатор: захват → OCR → поведение игрока → обучение → прогноз → таймер 5 сек.
 @MainActor
 final class MonitorCoordinator: ObservableObject {
@@ -22,6 +26,13 @@ final class MonitorCoordinator: ObservableObject {
     @Published var pipelineStep: AnalysisPipelineStep = .idle
     @Published var statusMessage = "Выберите области «СЕРИЯ» и «Игрок», затем Старт"
 
+    // Диагностика — видно, что пайплайн работает
+    @Published var lastOCRTexts: [String] = []
+    @Published var lastSectorCount: Int = 0
+    @Published var visualChangeScore: Double = 0
+    @Published var captureSuccessCount: Int = 0
+    @Published var captureFailureCount: Int = 0
+
     let throwTracker = ThrowTracker()
     let learningEngine = LearningEngine.shared
 
@@ -35,6 +46,17 @@ final class MonitorCoordinator: ObservableObject {
     private var soundEnabled = true
     private var behaviorAccumulator: [PlayerBehaviorSnapshot] = []
     private var playerFrameCounter = 0
+    private var cancellables = Set<AnyCancellable>()
+
+    init() {
+        throwTracker.objectWillChange
+            .sink { [weak self] _ in self?.objectWillChange.send() }
+            .store(in: &cancellables)
+
+        learningEngine.objectWillChange
+            .sink { [weak self] _ in self?.objectWillChange.send() }
+            .store(in: &cancellables)
+    }
 
     func requestScreenPermission() {
         _ = ScreenCapturePermission.requestPermission()
@@ -42,18 +64,21 @@ final class MonitorCoordinator: ObservableObject {
 
     func setSeriesRegion(_ region: ScreenCaptureRegion) {
         seriesRegion = region
+        SeriesFrameDiff.shared.reset()
         updateRegionStatus()
+        LaunchLogger.log("Series region set: \(region.localRect) display=\(region.displayID ?? 0)")
     }
 
     func setPlayerRegion(_ region: ScreenCaptureRegion) {
         playerRegion = region
         updateRegionStatus()
+        LaunchLogger.log("Player region set: \(region.localRect) display=\(region.displayID ?? 0)")
     }
 
     private func updateRegionStatus() {
         let series = seriesRegion != nil ? "СЕРИЯ ✓" : "СЕРИЯ ✗"
         let player = playerRegion != nil ? "Игрок ✓" : "Игрок ✗"
-        statusMessage = "\(series), \(player)"
+        statusMessage = "\(series), \(player) — нажмите Старт"
     }
 
     func start() {
@@ -62,22 +87,41 @@ final class MonitorCoordinator: ObservableObject {
             return
         }
 
+        guard playerRegion != nil else {
+            statusMessage = "Выберите область «Игрок» для анализа поведения"
+            return
+        }
+
         if !ScreenCapturePermission.hasPermission() {
             requestScreenPermission()
-            statusMessage = "Разрешите запись экрана в Настройках → Конфиденциальность"
+            statusMessage = "Разрешите запись экрана → Настройки → Конфиденциальность"
+            return
+        }
+
+        if !ScreenCapturePermission.verifyWithProbe() {
+            statusMessage = "Запись экрана не работает — перезапустите после разрешения"
+            LaunchLogger.log("Screen capture probe failed")
             return
         }
 
         isRunning = true
         phase = .waitingForThrow
         pipelineStep = .watchingOutcome
-        statusMessage = "Мониторинг запущен — обучение активно"
+        statusMessage = "Мониторинг запущен — анализ и прогнозы активны"
         frameCount = 0
         fpsTimer = Date()
+        captureSuccessCount = 0
+        captureFailureCount = 0
         behaviorAccumulator.removeAll()
+        SeriesFrameDiff.shared.reset()
+
+        LaunchLogger.log("Monitor started poll=\(pollIntervalMs)ms")
+
+        NotificationCenter.default.post(name: .openPredictionOverlay, object: nil)
 
         timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: pollIntervalMs / 1000.0, repeats: true) { [weak self] _ in
+        let interval = pollIntervalMs / 1000.0
+        let newTimer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
             guard let coordinator = self else { return }
             Task { @MainActor in
                 coordinator.captureFrame(seriesRegion: series)
@@ -85,6 +129,14 @@ final class MonitorCoordinator: ObservableObject {
                     coordinator.capturePlayerFrame(region: playerRegion)
                 }
             }
+        }
+        RunLoop.main.add(newTimer, forMode: .common)
+        timer = newTimer
+
+        // Первый кадр сразу
+        captureFrame(seriesRegion: series)
+        if let playerRegion {
+            capturePlayerFrame(region: playerRegion)
         }
     }
 
@@ -97,14 +149,18 @@ final class MonitorCoordinator: ObservableObject {
         phase = .idle
         pipelineStep = .idle
         statusMessage = "Остановлено"
+        LaunchLogger.log("Monitor stopped")
     }
 
     func resetHistory() {
         throwTracker.reset()
         PlayerBehaviorAnalyzer.shared.reset()
+        SeriesFrameDiff.shared.reset()
         currentRecommendation = nil
         lastDetectedThrow = nil
         lastOutcome = nil
+        lastOCRTexts = []
+        lastSectorCount = 0
         behaviorAccumulator.removeAll()
         phase = isRunning ? .waitingForThrow : .idle
         statusMessage = "История сброшена"
@@ -118,13 +174,16 @@ final class MonitorCoordinator: ObservableObject {
     private func captureFrame(seriesRegion: ScreenCaptureRegion) {
         guard !isProcessingSeries else { return }
 
-        let cgRegion = seriesRegion.cgCaptureRect()
-
-        guard let image = ScreenCaptureService.shared.capture(region: cgRegion) else {
-            statusMessage = "Ошибка захвата «СЕРИЯ»"
+        guard let image = ScreenCaptureService.shared.capture(region: seriesRegion) else {
+            captureFailureCount += 1
+            if captureFailureCount % 10 == 1 {
+                statusMessage = "Ошибка захвата «СЕРИЯ» (\(captureFailureCount)) — проверьте разрешения"
+                LaunchLogger.log("Series capture failed #\(captureFailureCount) rect=\(seriesRegion.cgCaptureRect())")
+            }
             return
         }
 
+        captureSuccessCount += 1
         isProcessingSeries = true
         pipelineStep = .watchingOutcome
         frameCount += 1
@@ -134,20 +193,34 @@ final class MonitorCoordinator: ObservableObject {
             Task { @MainActor in
                 guard let self else { return }
                 self.isProcessingSeries = false
-                guard let result else { return }
+                guard let result else {
+                    LaunchLogger.log("OCR returned nil")
+                    return
+                }
 
                 self.parseLatencyMs = result.parseDurationMs
+                self.lastOCRTexts = result.rawTexts
+                self.lastSectorCount = result.sectors.count
+                self.visualChangeScore = result.visualChangeScore
 
-                let previousThrow = self.throwTracker.lastThrow
-                self.throwTracker.update(
+                let newThrow = self.throwTracker.update(
                     with: result.sectors,
                     rawTexts: result.rawTexts,
                     parseMs: result.parseDurationMs
                 )
 
-                if let newThrow = self.throwTracker.lastThrow,
-                   newThrow != previousThrow {
+                if let newThrow {
+                    LaunchLogger.log(
+                        "Throw detected: \(newThrow.sector) OCR=[\(result.rawTexts.joined(separator: ","))]"
+                    )
                     self.onNewThrowDetected(newThrow)
+                } else if result.sectors.isEmpty && result.visualChangeScore > 0.2 {
+                    self.statusMessage = "Визуальное изменение, но OCR не прочитал числа — увеличьте область СЕРИЯ"
+                } else {
+                    self.bootstrapRecommendationIfNeeded()
+                    if self.isRunning && self.phase == .waitingForThrow {
+                        self.statusMessage = "Слежение: \(result.sectors.count) секторов, OCR \(Int(result.parseDurationMs))мс"
+                    }
                 }
             }
         }
@@ -159,9 +232,12 @@ final class MonitorCoordinator: ObservableObject {
         guard playerFrameCounter % stride == 0 else { return }
         guard !isProcessingPlayer else { return }
 
-        let cgRegion = region.cgCaptureRect()
-
-        guard let image = ScreenCaptureService.shared.capture(region: cgRegion) else { return }
+        guard let image = ScreenCaptureService.shared.capture(region: region) else {
+            if captureFailureCount % 15 == 0 {
+                LaunchLogger.log("Player capture failed")
+            }
+            return
+        }
 
         isProcessingPlayer = true
         pipelineStep = .analyzingBehavior
@@ -177,8 +253,24 @@ final class MonitorCoordinator: ObservableObject {
                 if self.behaviorAccumulator.count > 40 {
                     self.behaviorAccumulator.removeFirst()
                 }
+                if self.isRunning && self.phase == .waitingForThrow {
+                    self.pipelineStep = .watchingOutcome
+                }
             }
         }
+    }
+
+    private func bootstrapRecommendationIfNeeded() {
+        guard currentRecommendation == nil, throwTracker.history.count >= 1 else { return }
+
+        let recommendation = PredictionEngine.shared.recommend(
+            history: throwTracker.history,
+            behavior: currentPlayerBehavior,
+            strategy: strategy
+        )
+        currentRecommendation = recommendation
+        statusMessage = "Прогноз: \(recommendation.displayBet) (\(recommendation.confidencePercent)%)"
+        LaunchLogger.log("Bootstrap recommendation: \(recommendation.displayBet)")
     }
 
     private func onNewThrowDetected(_ event: ThrowEvent) {
@@ -198,6 +290,7 @@ final class MonitorCoordinator: ObservableObject {
         lastDetectedThrow = event
         behaviorAccumulator.removeAll()
 
+        pipelineStep = .learning
         pipelineStep = .generatingForecast
         let recommendation = PredictionEngine.shared.recommend(
             history: throwTracker.history,
@@ -225,6 +318,7 @@ final class MonitorCoordinator: ObservableObject {
             statusMessage = "Бросок: \(event.sector) → ставка: \(recommendation.displayBet)"
         }
 
+        LaunchLogger.log("Prediction: \(recommendation.displayBet) conf=\(recommendation.confidencePercent)%")
         pipelineStep = .watchingOutcome
     }
 
@@ -260,12 +354,14 @@ final class MonitorCoordinator: ObservableObject {
         bettingDeadline = Date().addingTimeInterval(bettingWindowSeconds)
         phase = .bettingOpen(remainingSeconds: bettingWindowSeconds, recommendation: recommendation)
 
-        bettingTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+        let newTimer = Timer(timeInterval: 0.05, repeats: true) { [weak self] _ in
             guard let coordinator = self else { return }
             Task { @MainActor in
                 coordinator.tickBettingWindow()
             }
         }
+        RunLoop.main.add(newTimer, forMode: .common)
+        bettingTimer = newTimer
     }
 
     private func tickBettingWindow() {

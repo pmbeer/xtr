@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ControlPanelView: View {
     @EnvironmentObject var coordinator: MonitorCoordinator
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -21,6 +22,9 @@ struct ControlPanelView: View {
         }
         .padding(16)
         .frame(minWidth: 400, minHeight: 480)
+        .onReceive(NotificationCenter.default.publisher(for: .openPredictionOverlay)) { _ in
+            openWindow(id: "prediction-overlay")
+        }
     }
 
     private var header: some View {
@@ -263,7 +267,7 @@ struct ControlPanelView: View {
             } else {
                 Button("Старт") { coordinator.start() }
                     .keyboardShortcut(.defaultAction)
-                    .disabled(coordinator.seriesRegion == nil)
+                    .disabled(coordinator.seriesRegion == nil || coordinator.playerRegion == nil)
             }
 
             Button("Сброс") { coordinator.resetHistory() }
@@ -283,11 +287,35 @@ struct ControlPanelView: View {
     }
 
     private var metricsSection: some View {
-        GroupBox("Производительность") {
+        GroupBox("Производительность и диагностика") {
             HStack {
                 metric("OCR", String(format: "%.0f мс", coordinator.parseLatencyMs))
                 metric("Поведение", String(format: "%.0f мс", coordinator.behaviorLatencyMs))
                 metric("FPS", String(format: "%.1f", coordinator.fps))
+            }
+
+            if coordinator.isRunning {
+                Divider()
+                HStack {
+                    metric("Секторов", "\(coordinator.lastSectorCount)")
+                    metric("Захват OK", "\(coordinator.captureSuccessCount)")
+                    metric("Захват ✗", "\(coordinator.captureFailureCount)")
+                }
+                if !coordinator.lastOCRTexts.isEmpty {
+                    Text("OCR: \(coordinator.lastOCRTexts.joined(separator: ", "))")
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                } else if coordinator.captureSuccessCount > 0 {
+                    Text("OCR: нет чисел — расширьте область СЕРИЯ")
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                }
+                if coordinator.visualChangeScore > 0.15 {
+                    Label("Визуальное изменение \(Int(coordinator.visualChangeScore * 100))%", systemImage: "eye")
+                        .font(.caption2)
+                        .foregroundStyle(.blue)
+                }
             }
         }
     }
