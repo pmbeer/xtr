@@ -1,0 +1,17 @@
+{
+  "name": "DLE StreamX (Wink) Template",
+  "install": "echo 'Static DLE template — no dependencies to install; nothing to build.'",
+  "terminals": [
+    {
+      "name": "preview-server",
+      "command": "python3 -m http.server 8000 --bind 0.0.0.0",
+      "description": "Static HTTP server rooted at the repository. Open http://localhost:8000/dle_streamx/preview.html to preview the DLE template design."
+    }
+  ],
+  "ports": [
+    {
+      "name": "preview",
+      "port": 8000
+    }
+  ]
+}
