@@ -18,7 +18,7 @@ final class MonitorCoordinator: ObservableObject {
     @Published var fps: Double = 0
     @Published var strategy: PredictionStrategy = .adaptiveLearning
     @Published var bettingWindowSeconds: Double = 5.0
-    @Published var pollIntervalMs: Double = 150
+    @Published var pollIntervalMs: Double = HardwareProfile.recommendedPollIntervalMs
     @Published var statusMessage = "Выберите области «СЕРИЯ» и «Игрок», затем Старт"
 
     let throwTracker = ThrowTracker()
@@ -33,6 +33,7 @@ final class MonitorCoordinator: ObservableObject {
     private var isProcessingPlayer = false
     private var soundEnabled = true
     private var behaviorAccumulator: [PlayerBehaviorSnapshot] = []
+    private var playerFrameCounter = 0
 
     func requestScreenPermission() {
         _ = ScreenCapturePermission.requestPermission()
@@ -153,6 +154,9 @@ final class MonitorCoordinator: ObservableObject {
     }
 
     private func capturePlayerFrame(region: CGRect) {
+        playerFrameCounter += 1
+        let stride = HardwareProfile.playerAnalysisStride
+        guard playerFrameCounter % stride == 0 else { return }
         guard !isProcessingPlayer else { return }
         guard let screen = NSScreen.main else { return }
 

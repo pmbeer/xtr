@@ -30,7 +30,7 @@ struct ControlPanelView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Dart Bet Predictor")
                     .font(.headline)
-                Text("Обучение + поведение игрока")
+                Text("FONBET Дартс 24/7 · \(HardwareProfile.displayName)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

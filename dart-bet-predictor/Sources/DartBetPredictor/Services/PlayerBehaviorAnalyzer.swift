@@ -11,7 +11,7 @@ final class PlayerBehaviorAnalyzer {
     private var previousSnapshot: PlayerBehaviorSnapshot?
     private var motionHistory: [Double] = []
     private var lastThrowTime: Date?
-    private let motionHistoryLimit = 12
+    private let motionHistoryLimit = HardwareProfile.isIntelMac ? 8 : 12
 
     private init() {}
 
@@ -58,8 +58,8 @@ final class PlayerBehaviorAnalyzer {
     // MARK: - Motion
 
     private func computeMotionIntensity(image: CGImage) -> Double {
-        let width = min(image.width, 160)
-        let height = min(image.height, 120)
+        let width = min(image.width, HardwareProfile.motionFrameWidth)
+        let height = min(image.height, HardwareProfile.motionFrameHeight)
         guard let context = CGContext(
             data: nil,
             width: width,

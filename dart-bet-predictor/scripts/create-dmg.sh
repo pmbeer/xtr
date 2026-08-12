@@ -5,9 +5,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-VERSION="1.0.0"
+VERSION="1.0.1"
 APP_NAME="DartBetPredictor"
-DMG_NAME="${APP_NAME}-${VERSION}-macOS"
+DMG_NAME="${APP_NAME}-${VERSION}-macOS-Universal"
 STAGING="$ROOT/build/dmg-staging"
 DMG_PATH="$ROOT/dist/${DMG_NAME}.dmg"
 APP_PATH="$ROOT/build/${APP_NAME}.app"

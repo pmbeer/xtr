@@ -33,7 +33,10 @@ jobs:
           chmod +x build-installer.sh scripts/*.sh
           ./build-installer.sh
 
-      - name: Upload DMG artifact
+      - name: Verify universal binary
+        run: |
+          file build/DartBetPredictor.app/Contents/MacOS/DartBetPredictor
+          lipo -info build/DartBetPredictor.app/Contents/MacOS/DartBetPredictor
         uses: actions/upload-artifact@v4
         with:
           name: DartBetPredictor-macOS-Installer
