@@ -19,8 +19,13 @@ struct PlayerBehaviorSnapshot: Codable, Equatable {
     }
 
     var summary: String {
-        guard bodyDetected else { return "Игрок не виден" }
-        return "\(phase.displayName) · рука \(Int(armRaise * 100))% · движ. \(Int(motionIntensity * 100))%"
+        if bodyDetected {
+            return "\(phase.displayName) · рука \(Int(armRaise * 100))% · движ. \(Int(motionIntensity * 100))%"
+        }
+        if motionIntensity > 0.015 {
+            return "Видео активно · движ. \(Int(motionIntensity * 100))% · \(phase.displayName)"
+        }
+        return "Нет сигнала — расширьте область видео игрока"
     }
 }
 

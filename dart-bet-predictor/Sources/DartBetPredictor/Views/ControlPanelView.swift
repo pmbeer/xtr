@@ -191,6 +191,10 @@ struct ControlPanelView: View {
                         coordinator.setSeriesRegion(region)
                     }
                 }
+
+                if let preview = coordinator.seriesPreview {
+                    previewImage(preview, label: "Захват СЕРИЯ")
+                }
             }
         }
     }
@@ -212,12 +216,36 @@ struct ControlPanelView: View {
                 }
 
                 HStack {
-                    Image(systemName: "figure.stand")
-                        .foregroundStyle(.blue)
+                    Image(systemName: coordinator.currentPlayerBehavior.bodyDetected ? "figure.stand" : "figure.walk.motion")
+                        .foregroundStyle(coordinator.currentPlayerBehavior.bodyDetected ? .blue : .orange)
                     Text(coordinator.currentPlayerBehavior.summary)
                         .font(.caption)
                 }
+
+                if coordinator.isRunning {
+                    Text("Кадры игрока: \(coordinator.playerCaptureSuccessCount)")
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+
+                if let preview = coordinator.playerPreview {
+                    previewImage(preview, label: "Захват игрока")
+                }
             }
+        }
+    }
+
+    private func previewImage(_ image: NSImage, label: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Image(nsImage: image)
+                .resizable()
+                .scaledToFit()
+                .frame(maxHeight: 80)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(.orange.opacity(0.5), lineWidth: 1))
         }
     }
 
@@ -267,7 +295,7 @@ struct ControlPanelView: View {
             } else {
                 Button("Старт") { coordinator.start() }
                     .keyboardShortcut(.defaultAction)
-                    .disabled(coordinator.seriesRegion == nil || coordinator.playerRegion == nil)
+                    .disabled(coordinator.seriesRegion == nil)
             }
 
             Button("Сброс") { coordinator.resetHistory() }
@@ -298,8 +326,19 @@ struct ControlPanelView: View {
                 Divider()
                 HStack {
                     metric("Секторов", "\(coordinator.lastSectorCount)")
-                    metric("Захват OK", "\(coordinator.captureSuccessCount)")
-                    metric("Захват ✗", "\(coordinator.captureFailureCount)")
+                    metric("СЕРИЯ OK", "\(coordinator.captureSuccessCount)")
+                    metric("Игрок OK", "\(coordinator.playerCaptureSuccessCount)")
+                }
+                HStack {
+                    metric("Метод", coordinator.captureMethod)
+                    metric("Ошибки", "\(coordinator.captureFailureCount)")
+                }
+                if let path = coordinator.sessionRecordingPath {
+                    Text("Запись: \(path)")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
                 }
                 if !coordinator.lastOCRTexts.isEmpty {
                     Text("OCR: \(coordinator.lastOCRTexts.joined(separator: ", "))")

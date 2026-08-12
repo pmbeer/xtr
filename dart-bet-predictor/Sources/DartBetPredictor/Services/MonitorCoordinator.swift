@@ -26,12 +26,17 @@ final class MonitorCoordinator: ObservableObject {
     @Published var pipelineStep: AnalysisPipelineStep = .idle
     @Published var statusMessage = "Выберите области «СЕРИЯ» и «Игрок», затем Старт"
 
-    // Диагностика — видно, что пайплайн работает
+    // Диагностика
     @Published var lastOCRTexts: [String] = []
     @Published var lastSectorCount: Int = 0
     @Published var visualChangeScore: Double = 0
     @Published var captureSuccessCount: Int = 0
     @Published var captureFailureCount: Int = 0
+    @Published var playerCaptureSuccessCount: Int = 0
+    @Published var captureMethod = "—"
+    @Published var seriesPreview: NSImage?
+    @Published var playerPreview: NSImage?
+    @Published var sessionRecordingPath: String?
 
     let throwTracker = ThrowTracker()
     let learningEngine = LearningEngine.shared
@@ -46,6 +51,7 @@ final class MonitorCoordinator: ObservableObject {
     private var soundEnabled = true
     private var behaviorAccumulator: [PlayerBehaviorSnapshot] = []
     private var playerFrameCounter = 0
+    private var previewCounter = 0
     private var cancellables = Set<AnyCancellable>()
 
     init() {
@@ -87,57 +93,55 @@ final class MonitorCoordinator: ObservableObject {
             return
         }
 
-        guard playerRegion != nil else {
-            statusMessage = "Выберите область «Игрок» для анализа поведения"
-            return
-        }
-
         if !ScreenCapturePermission.hasPermission() {
             requestScreenPermission()
-            statusMessage = "Разрешите запись экрана → Настройки → Конфиденциальность"
-            return
-        }
-
-        if !ScreenCapturePermission.verifyWithProbe() {
-            statusMessage = "Запись экрана не работает — перезапустите после разрешения"
-            LaunchLogger.log("Screen capture probe failed")
+            statusMessage = "Разрешите запись экрана → Системные настройки → Конфиденциальность → Запись экрана"
             return
         }
 
         isRunning = true
         phase = .waitingForThrow
         pipelineStep = .watchingOutcome
-        statusMessage = "Мониторинг запущен — анализ и прогнозы активны"
+        statusMessage = "Запуск захвата экрана…"
         frameCount = 0
         fpsTimer = Date()
         captureSuccessCount = 0
         captureFailureCount = 0
+        playerCaptureSuccessCount = 0
         behaviorAccumulator.removeAll()
         SeriesFrameDiff.shared.reset()
+        CaptureSessionRecorder.shared.startSession()
 
-        LaunchLogger.log("Monitor started poll=\(pollIntervalMs)ms")
+        LaunchLogger.log("Monitor starting poll=\(pollIntervalMs)ms")
 
         NotificationCenter.default.post(name: .openPredictionOverlay, object: nil)
+
+        // Проверка захвата — не блокируем, только диагностика
+        Task {
+            let probeOK = await ScreenCapturePermission.probeCapture(region: series)
+            await MainActor.run {
+                if probeOK {
+                    self.statusMessage = "Захват работает — мониторинг активен"
+                    self.captureMethod = ScreenCaptureService.shared.lastCaptureMethod
+                } else {
+                    self.statusMessage = "Захват не работает — перезапустите приложение после разрешения"
+                    LaunchLogger.log("Probe capture failed — continuing anyway")
+                }
+            }
+        }
 
         timer?.invalidate()
         let interval = pollIntervalMs / 1000.0
         let newTimer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
             guard let coordinator = self else { return }
             Task { @MainActor in
-                coordinator.captureFrame(seriesRegion: series)
-                if let playerRegion = coordinator.playerRegion {
-                    coordinator.capturePlayerFrame(region: playerRegion)
-                }
+                await coordinator.pollOnce(seriesRegion: series)
             }
         }
         RunLoop.main.add(newTimer, forMode: .common)
         timer = newTimer
 
-        // Первый кадр сразу
-        captureFrame(seriesRegion: series)
-        if let playerRegion {
-            capturePlayerFrame(region: playerRegion)
-        }
+        Task { await pollOnce(seriesRegion: series) }
     }
 
     func stop() {
@@ -149,6 +153,7 @@ final class MonitorCoordinator: ObservableObject {
         phase = .idle
         pipelineStep = .idle
         statusMessage = "Остановлено"
+        CaptureSessionRecorder.shared.stopSession()
         LaunchLogger.log("Monitor stopped")
     }
 
@@ -171,23 +176,36 @@ final class MonitorCoordinator: ObservableObject {
         statusMessage = "Обучение сброшено"
     }
 
-    private func captureFrame(seriesRegion: ScreenCaptureRegion) {
-        guard !isProcessingSeries else { return }
+    private func pollOnce(seriesRegion: ScreenCaptureRegion) async {
+        await captureFrame(seriesRegion: seriesRegion)
+        if let playerRegion {
+            await capturePlayerFrame(region: playerRegion)
+        }
+    }
 
-        guard let image = ScreenCaptureService.shared.capture(region: seriesRegion) else {
+    private func captureFrame(seriesRegion: ScreenCaptureRegion) async {
+        guard !isProcessingSeries else { return }
+        isProcessingSeries = true
+
+        let image = await ScreenCaptureService.shared.captureAsync(region: seriesRegion)
+        captureMethod = ScreenCaptureService.shared.lastCaptureMethod
+
+        guard let image else {
+            isProcessingSeries = false
             captureFailureCount += 1
-            if captureFailureCount % 10 == 1 {
-                statusMessage = "Ошибка захвата «СЕРИЯ» (\(captureFailureCount)) — проверьте разрешения"
-                LaunchLogger.log("Series capture failed #\(captureFailureCount) rect=\(seriesRegion.cgCaptureRect())")
+            if captureFailureCount % 5 == 1 {
+                statusMessage = "Захват СЕРИЯ не работает (\(captureFailureCount)) — проверьте разрешение и перезапуск"
+                LaunchLogger.log("Series capture failed #\(captureFailureCount)")
             }
             return
         }
 
         captureSuccessCount += 1
-        isProcessingSeries = true
         pipelineStep = .watchingOutcome
         frameCount += 1
         updateFPS()
+        updatePreview(image: image, isPlayer: false)
+        CaptureSessionRecorder.shared.saveFrame(image, label: "series")
 
         SeriesOCRService.shared.parseSeries(from: image) { [weak self] result in
             Task { @MainActor in
@@ -211,36 +229,41 @@ final class MonitorCoordinator: ObservableObject {
 
                 if let newThrow {
                     LaunchLogger.log(
-                        "Throw detected: \(newThrow.sector) OCR=[\(result.rawTexts.joined(separator: ","))]"
+                        "Throw: \(newThrow.sector) OCR=[\(result.rawTexts.joined(separator: ","))]"
                     )
                     self.onNewThrowDetected(newThrow)
-                } else if result.sectors.isEmpty && result.visualChangeScore > 0.2 {
-                    self.statusMessage = "Визуальное изменение, но OCR не прочитал числа — увеличьте область СЕРИЯ"
+                } else if result.sectors.isEmpty && result.visualChangeScore > 0.15 {
+                    self.statusMessage = "Экран меняется, но OCR не читает числа — расширьте СЕРИЯ"
                 } else {
                     self.bootstrapRecommendationIfNeeded()
                     if self.isRunning && self.phase == .waitingForThrow {
-                        self.statusMessage = "Слежение: \(result.sectors.count) секторов, OCR \(Int(result.parseDurationMs))мс"
+                        self.statusMessage = "Захват ✓ · \(result.sectors.count) секторов · OCR \(Int(result.parseDurationMs))мс"
                     }
                 }
             }
         }
     }
 
-    private func capturePlayerFrame(region: ScreenCaptureRegion) {
+    private func capturePlayerFrame(region: ScreenCaptureRegion) async {
         playerFrameCounter += 1
         let stride = HardwareProfile.playerAnalysisStride
         guard playerFrameCounter % stride == 0 else { return }
         guard !isProcessingPlayer else { return }
 
-        guard let image = ScreenCaptureService.shared.capture(region: region) else {
-            if captureFailureCount % 15 == 0 {
-                LaunchLogger.log("Player capture failed")
-            }
+        isProcessingPlayer = true
+        let image = await ScreenCaptureService.shared.captureAsync(region: region)
+
+        guard let image else {
+            isProcessingPlayer = false
+            LaunchLogger.log("Player capture failed")
             return
         }
 
-        isProcessingPlayer = true
+        playerCaptureSuccessCount += 1
         pipelineStep = .analyzingBehavior
+        updatePreview(image: image, isPlayer: true)
+        CaptureSessionRecorder.shared.saveFrame(image, label: "player")
+
         let start = CFAbsoluteTimeGetCurrent()
 
         PlayerBehaviorAnalyzer.shared.analyze(image: image) { [weak self] snapshot in
@@ -260,6 +283,20 @@ final class MonitorCoordinator: ObservableObject {
         }
     }
 
+    private func updatePreview(image: CGImage, isPlayer: Bool) {
+        previewCounter += 1
+        guard previewCounter % 8 == 0 else { return }
+        let thumb = image.thumbnail(maxWidth: 160)
+        if isPlayer {
+            playerPreview = thumb.toNSImage()
+        } else {
+            seriesPreview = thumb.toNSImage()
+        }
+        if let path = CaptureSessionRecorder.shared.sessionPath {
+            sessionRecordingPath = path
+        }
+    }
+
     private func bootstrapRecommendationIfNeeded() {
         guard currentRecommendation == nil, throwTracker.history.count >= 1 else { return }
 
@@ -270,7 +307,7 @@ final class MonitorCoordinator: ObservableObject {
         )
         currentRecommendation = recommendation
         statusMessage = "Прогноз: \(recommendation.displayBet) (\(recommendation.confidencePercent)%)"
-        LaunchLogger.log("Bootstrap recommendation: \(recommendation.displayBet)")
+        LaunchLogger.log("Bootstrap prediction: \(recommendation.displayBet)")
     }
 
     private func onNewThrowDetected(_ event: ThrowEvent) {
@@ -290,7 +327,6 @@ final class MonitorCoordinator: ObservableObject {
         lastDetectedThrow = event
         behaviorAccumulator.removeAll()
 
-        pipelineStep = .learning
         pipelineStep = .generatingForecast
         let recommendation = PredictionEngine.shared.recommend(
             history: throwTracker.history,
@@ -396,5 +432,25 @@ final class MonitorCoordinator: ObservableObject {
     private func playAlertSound() {
         guard soundEnabled else { return }
         NSSound.beep()
+    }
+}
+
+extension CGImage {
+    func thumbnail(maxWidth: Int) -> CGImage {
+        guard width > maxWidth else { return self }
+        let scale = Double(maxWidth) / Double(width)
+        let newHeight = Int(Double(height) * scale)
+        guard let context = CGContext(
+            data: nil,
+            width: maxWidth,
+            height: newHeight,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return self }
+        context.interpolationQuality = .medium
+        context.draw(self, in: CGRect(x: 0, y: 0, width: maxWidth, height: newHeight))
+        return context.makeImage() ?? self
     }
 }
