@@ -26,8 +26,10 @@
 
 ## Установка готового DMG
 
-1. Скачайте артефакт `DartsAssistant-1.1.0-macOS-universal` из последнего
-   успешного запуска GitHub Actions и распакуйте ZIP.
+**Прямая ссылка (v1.1.0 Universal):**  
+https://github.com/pmbeer/xtr/releases/download/darts-assistant-v1.1.0/DartsAssistant-1.1.0-macOS-universal.dmg
+
+1. Скачайте DMG по ссылке выше (или артефакт из GitHub Actions).
 2. Откройте `DartsAssistant-1.1.0-macOS-universal.dmg`.
 3. Перетащите `DartsAssistant.app` в `Applications`.
 4. При первом запуске подтвердите доступ к записи экрана.
