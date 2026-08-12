@@ -1,0 +1,8 @@
+services:
+  bitrix-telegram-bot:
+    build: .
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - ./data/reports:/app/data/reports
