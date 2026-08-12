@@ -265,7 +265,9 @@ def _openlines_block(section: OpenLinesSection, previous: Section | None) -> Blo
     if section.by_source:
         block.tables.append(Table("Каналы обращений", _counter_items(section.by_source, section.handled_count)))
     if section.by_line:
-        block.tables.append(Table("Открытые линии", _counter_items(section.by_line, section.handled_count)))
+        block.tables.append(
+            Table("Распределение по линиям", _counter_items(section.by_line, section.handled_count))
+        )
     if section.by_status:
         block.tables.append(Table("Статусы обращений", _counter_items(section.by_status, section.handled_count)))
     if any(section.by_hour):

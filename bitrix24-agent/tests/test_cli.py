@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import unittest
 from pathlib import Path
 
@@ -40,7 +42,8 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(args.period, "30d")
 
     def test_command_is_required(self) -> None:
-        with self.assertRaises(SystemExit):
+        # argparse печатает подсказку в stderr — в выводе тестов она лишняя.
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             self.parser.parse_args([])
 
 

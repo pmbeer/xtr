@@ -18,7 +18,11 @@ class ParsePeriodTests(unittest.TestCase):
         period = parse_period("month", TZ, today=TODAY)
         self.assertEqual(period.start.date(), date(2026, 6, 1))
         self.assertEqual(period.end.date(), TODAY)
-        self.assertEqual(period.label, "июня 2026")
+        self.assertEqual(period.label, "июнь 2026")
+
+    def test_month_names_use_the_right_grammatical_case(self) -> None:
+        self.assertEqual(parse_period("2026-06", TZ, today=TODAY).label, "июнь 2026")
+        self.assertEqual(parse_period("2026-06-17", TZ, today=TODAY).label, "17 июня 2026")
 
     def test_last_month_covers_whole_previous_month(self) -> None:
         period = parse_period("last-month", TZ, today=TODAY)

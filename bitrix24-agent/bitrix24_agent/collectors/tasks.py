@@ -28,7 +28,8 @@ STATUS_LABELS: dict[int, str] = {
     7: "Отклонена",
 }
 #: Незакрытые статусы — из них складывается текущая нагрузка.
-OPEN_STATUSES: tuple[int, ...] = (1, 2, 3, 4, 6)
+#: Только значения, которые REST принимает в фильтре `REAL_STATUS`.
+OPEN_STATUSES: tuple[int, ...] = (2, 3, 4, 6)
 #: «В работе» в узком смысле: без отложенных.
 ACTIVE_STATUSES: frozenset[int] = frozenset({2, 3, 4})
 

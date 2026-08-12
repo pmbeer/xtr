@@ -14,6 +14,7 @@ DAY_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
 RANGE_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\.\.(\d{4}-\d{2}-\d{2})$")
 LAST_DAYS_RE = re.compile(r"^(\d+)\s*(?:d|д|дн|дней|day|days)$", re.IGNORECASE)
 
+#: Родительный падеж — для дат: «17 июня».
 MONTH_NAMES_GENITIVE = (
     "января",
     "февраля",
@@ -27,6 +28,21 @@ MONTH_NAMES_GENITIVE = (
     "октября",
     "ноября",
     "декабря",
+)
+#: Именительный падеж — для названия периода: «июнь 2026».
+MONTH_NAMES_NOMINATIVE = (
+    "январь",
+    "февраль",
+    "март",
+    "апрель",
+    "май",
+    "июнь",
+    "июль",
+    "август",
+    "сентябрь",
+    "октябрь",
+    "ноябрь",
+    "декабрь",
 )
 
 #: Синонимы периодов: русские и английские названия приводятся к одному ключу.
@@ -155,12 +171,12 @@ def parse_period(spec: str, tz: tzinfo, today: date | None = None) -> Period:
         return _span(first, first + timedelta(days=6), tz, "прошлая неделя")
     if alias == "month":
         first = today.replace(day=1)
-        return _span(first, today, tz, f"{MONTH_NAMES_GENITIVE[first.month - 1]} {first.year}")
+        return _span(first, today, tz, f"{MONTH_NAMES_NOMINATIVE[first.month - 1]} {first.year}")
     if alias == "last-month":
         first_of_this = today.replace(day=1)
         last = first_of_this - timedelta(days=1)
         first = last.replace(day=1)
-        return _span(first, last, tz, f"{MONTH_NAMES_GENITIVE[first.month - 1]} {first.year}")
+        return _span(first, last, tz, f"{MONTH_NAMES_NOMINATIVE[first.month - 1]} {first.year}")
     if alias == "quarter":
         quarter_first_month = 3 * ((today.month - 1) // 3) + 1
         first = date(today.year, quarter_first_month, 1)
@@ -195,7 +211,7 @@ def parse_period(spec: str, tz: tzinfo, today: date | None = None) -> Period:
         if not 1 <= month <= 12:
             raise ConfigError(f"Некорректный месяц в периоде: {spec!r}")
         first = date(year, month, 1)
-        return _span(first, _last_day_of_month(year, month), tz, f"{MONTH_NAMES_GENITIVE[month - 1]} {year}")
+        return _span(first, _last_day_of_month(year, month), tz, f"{MONTH_NAMES_NOMINATIVE[month - 1]} {year}")
 
     if DAY_RE.match(raw):
         day = date.fromisoformat(raw)
