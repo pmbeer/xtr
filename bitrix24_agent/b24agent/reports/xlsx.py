@@ -227,13 +227,13 @@ def _stages_sheet(sheet: Worksheet, tasks: TaskMetrics) -> None:
     row = write_title(sheet, 1, "Незакрытые задачи: статусы, стадии, проекты", width=3)
 
     total = tasks.open_count or 1
-    for caption, distribution in (
-        ("По статусам", tasks.by_status),
-        ("По стадиям канбана", tasks.by_stage),
-        ("По проектам", tasks.by_group),
+    for caption, column, distribution in (
+        ("По статусам", "Статус", tasks.by_status),
+        ("По стадиям канбана", "Стадия", tasks.by_stage),
+        ("По проектам", "Проект", tasks.by_group),
     ):
         row = write_section(sheet, row, caption, width=3)
-        row = write_header(sheet, row, [caption, "Задач", "Доля"])
+        row = write_header(sheet, row, [column, "Задач", "Доля"])
         for name, count in distribution.items():
             row = write_row(sheet, row, [name, count, percent(count / total)])
         if not distribution:

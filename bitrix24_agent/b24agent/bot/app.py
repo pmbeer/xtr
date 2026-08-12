@@ -11,6 +11,7 @@ from aiogram.types import BotCommand
 
 from b24agent.analytics.service import AnalyticsService
 from b24agent.bitrix.client import Bitrix24Client
+from b24agent.bitrix.errors import Bitrix24Error
 from b24agent.bot.handlers import build_router
 from b24agent.bot.middlewares import AccessMiddleware
 from b24agent.config import Settings
@@ -82,6 +83,18 @@ async def run_bot(settings: Settings) -> None:
 
 
 async def _log_portal_owner(service: AnalyticsService) -> None:
-    """Ранняя проверка вебхука: лучше упасть на старте, чем при первом отчёте."""
-    user = await service.resolve_user(None)
+    """Проверяет вебхук на старте, чтобы проблема была видна сразу в логах.
+
+    Недоступный портал не мешает запуску: бот поднимется и ответит на запрос
+    понятной ошибкой вместо молчания.
+    """
+    try:
+        user = await service.resolve_user(None)
+    except Bitrix24Error as exc:
+        logger.error(
+            "Вебхук Битрикс24 не отвечает (%s). Бот запустится, но отчёты собрать "
+            "не сможет — проверьте BITRIX_WEBHOOK_URL и права вебхука",
+            exc,
+        )
+        return
     logger.info("Вебхук Битрикс24 работает, отчёты по умолчанию: %s (ID %s)", user.name, user.id)
