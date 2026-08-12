@@ -22,7 +22,7 @@ final class NativeRegionSelectorView: NSView {
     private let buttonBarHeight: CGFloat = 96
     private var confirmButton: NSButton?
     private var cancelButton: NSButton?
-    private var titleLabel: NSTextField?
+    fileprivate var titleLabel: NSTextField?
     private var hintLabel: NSTextField?
 
     override var isFlipped: Bool { true }
@@ -145,7 +145,7 @@ final class NativeRegionSelectorView: NSView {
         window?.trackEvents(
             matching: [.leftMouseDragged, .leftMouseUp],
             timeout: .greatestFiniteMagnitude,
-            mode: .eventTrackingRunLoopMode
+            mode: .eventTracking
         ) { event, stop in
             guard let event else { return }
             switch event.type {
