@@ -1,0 +1,16 @@
+{
+  "score_left": { "left": 745, "top": 480, "width": 45, "height": 20 },
+  "score_right": { "left": 815, "top": 480, "width": 45, "height": 20 },
+  "poll_interval_sec": 0.15,
+  "voice": true,
+  "voice_name": "Milena",
+  "top_recommendations": 2,
+  "odds": {
+    "even": 1.85,
+    "odd": 1.85,
+    "low": 1.85,
+    "high": 1.85,
+    "exact_number": 12.0,
+    "bull": 15.0
+  }
+}
