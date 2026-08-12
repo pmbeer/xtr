@@ -54,10 +54,7 @@ final class ScreenCaptureService: NSObject, SCStreamOutput, SCStreamDelegate {
             type: .screen,
             sampleHandlerQueue: captureQueue
         )
-        stateLock.lock()
-        stream = newStream
-        self.sessionID = sessionID
-        stateLock.unlock()
+        activate(newStream, sessionID: sessionID)
         do {
             try await newStream.startCapture()
         } catch {
@@ -67,14 +64,7 @@ final class ScreenCaptureService: NSObject, SCStreamOutput, SCStreamDelegate {
     }
 
     func stop() async throws {
-        stateLock.lock()
-        guard let stream else {
-            stateLock.unlock()
-            return
-        }
-        self.stream = nil
-        sessionID = nil
-        stateLock.unlock()
+        guard let stream = takeActiveStream() else { return }
         try await stream.stopCapture()
     }
 
@@ -122,6 +112,22 @@ final class ScreenCaptureService: NSObject, SCStreamOutput, SCStreamDelegate {
         defer { stateLock.unlock() }
         guard let stream, stream === candidate else { return nil }
         return sessionID
+    }
+
+    private func activate(_ newStream: SCStream, sessionID: UUID) {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        stream = newStream
+        self.sessionID = sessionID
+    }
+
+    private func takeActiveStream() -> SCStream? {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        let activeStream = stream
+        stream = nil
+        sessionID = nil
+        return activeStream
     }
 
     private func deactivate(_ candidate: SCStream) {

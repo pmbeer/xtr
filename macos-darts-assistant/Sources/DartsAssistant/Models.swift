@@ -14,7 +14,7 @@ struct CaptureRegion: Equatable {
         let clampedWidth = max(minimumSize, min(1 - clampedX, width))
         let clampedHeight = max(minimumSize, min(1 - topY, height))
 
-        CGRect(
+        return CGRect(
             x: clampedX,
             y: 1 - topY - clampedHeight,
             width: clampedWidth,
