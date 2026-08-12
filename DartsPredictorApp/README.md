@@ -12,12 +12,15 @@ Apple Vision, захват экрана — ScreenCaptureKit, голос — с�
 
 ## Скачать
 
-**Вариант 1 — готовая сборка из GitHub Actions:**
-откройте вкладку [Actions](../../actions) → последний зелёный запуск
-«Build macOS app» → внизу страницы артефакт **DartsPredictor-macOS**
-(внутри `DartsPredictor.dmg` и `DartsPredictor.app.zip`).
+**Вариант 1 — готовый релиз:**
+[github.com/pmbeer/xtr/releases](https://github.com/pmbeer/xtr/releases) —
+скачайте `DartsPredictor.dmg` из последнего релиза.
 
-**Вариант 2 — собрать самому (одна команда):**
+**Вариант 2 — свежая сборка из CI:**
+вкладка [Actions](../../actions) → последний зелёный запуск «Build macOS app» →
+внизу страницы артефакт **DartsPredictor-macOS**.
+
+**Вариант 3 — собрать самому (одна команда):**
 
 ```bash
 git clone <этот репозиторий>
