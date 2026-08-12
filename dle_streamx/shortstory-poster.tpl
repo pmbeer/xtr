@@ -4,14 +4,11 @@
 			[image-1]<img src="{image-1}" alt="{title}" loading="lazy">[/image-1]
 			[not-image-1]<div class="poster-card__placeholder">{title}</div>[/not-image-1]
 			<div class="poster-card__overlay">
-				<span class="poster-card__play">▶</span>
+				<span class="poster-card__play">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+				</span>
 			</div>
-			[rating]<span class="poster-card__badge">★ {rating}</span>[/rating]
 		</div>
-		<h3 class="poster-card__title">{title limit="40"}</h3>
-		<div class="poster-card__meta">
-			<span>{date=Y}</span>
-			<span>{link-category}</span>
-		</div>
+		<h3 class="poster-card__title">{title limit="45"}</h3>
 	</a>
 </article>

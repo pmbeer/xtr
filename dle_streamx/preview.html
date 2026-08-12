@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Wink — Превью шаблона DLE</title>
+	<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="css/styles.css">
+	<style>
+		.demo-p1 { background: linear-gradient(160deg,#2a1810,#1a1018); }
+		.demo-p2 { background: linear-gradient(160deg,#1a2030,#101820); }
+		.demo-p3 { background: linear-gradient(160deg,#201828,#141020); }
+		.demo-p4 { background: linear-gradient(160deg,#281a10,#181008); }
+		.demo-p5 { background: linear-gradient(160deg,#102028,#081018); }
+		.demo-p6 { background: linear-gradient(160deg,#281020,#180818); }
+		.preview-tabs { position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:2000;display:flex;gap:6px;padding:6px;background:rgba(0,0,0,0.9);border:1px solid rgba(255,255,255,0.1);border-radius:999px; }
+		.preview-tabs button { padding:10px 18px;border:none;border-radius:999px;background:transparent;color:rgba(255,255,255,0.5);font-family:Manrope,sans-serif;font-size:13px;font-weight:600;cursor:pointer; }
+		.preview-tabs button.active { background:#FF5A24;color:#fff; }
+		.preview-page { display:none; }
+		.preview-page.active { display:block; }
+	</style>
+</head>
+<body class="wink">
+	<div class="preview-tabs">
+		<button class="active" data-page="home">Главная</button>
+		<button data-page="movie">Фильм</button>
+		<button data-page="catalog">Каталог</button>
+	</div>
+
+	<div class="preview-page active" id="page-home">
+		<div class="layout">
+			<div class="promo-bar">
+				<div class="container promo-bar__inner">
+					<span class="promo-bar__text">ТВ-каналы, фильмы и сериалы в одной подписке — <strong>7 дней бесплатно</strong></span>
+					<a href="#" class="promo-bar__btn">Подробнее</a>
+				</div>
+			</div>
+			<header class="header header--transparent" id="header">
+				<div class="container header__inner">
+					<div class="header__left">
+						<a href="#" class="logo"><img src="images/wink-logo.svg" alt="Wink" class="logo__img"></a>
+						<nav class="nav">
+							<ul class="nav__list">
+								<li><a href="#" class="nav__link nav__link--active">Главная</a></li>
+								<li><a href="#" class="nav__link">ТВ-каналы</a></li>
+								<li><a href="#" class="nav__link">Фильмы</a></li>
+								<li><a href="#" class="nav__link">Сериалы</a></li>
+								<li><a href="#" class="nav__link">Детям</a></li>
+								<li><a href="#" class="nav__link">Спорт</a></li>
+							</ul>
+						</nav>
+					</div>
+					<div class="header__right">
+						<form class="search"><button type="button" class="search__icon-btn" aria-label="Поиск"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button></form>
+						<div class="auth"><a href="#" class="auth__link">Вход</a><span class="auth__sep">|</span><a href="#" class="auth__link">Регистрация</a></div>
+					</div>
+				</div>
+			</header>
+			<section class="hero">
+				<div class="hero__slider" id="heroSlider">
+					<div class="hero-slide active">
+						<div class="hero-slide__bg"><img src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1920&q=80" alt=""></div>
+						<div class="container hero-slide__content">
+							<div class="hero-slide__info">
+								<span class="hero-slide__badge">Смотрите в подписке</span>
+								<h1 class="hero-slide__title">Любовь Аксёнова в криминальной драме о графе Монте-Кристо нашего времени</h1>
+								<p class="hero-slide__desc">Захватывающая история мести, любви и предательства в современном мире. Новый оригинальный сериал уже в подписке.</p>
+								<div class="hero-slide__meta"><span class="hero-slide__rating">8.4</span><span>2024</span><span>Драма</span></div>
+								<div class="hero-slide__actions">
+									<a href="#" class="btn btn--primary btn--lg">Смотреть</a>
+									<a href="#" class="btn btn--secondary btn--lg">Подключить подписку</a>
+								</div>
+								<p class="hero-slide__legal">Отключить можно в любой момент в Личном кабинете</p>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="hero__fade"></div>
+			</section>
+			<main class="main">
+				<div class="content-rows">
+					<section class="row-section">
+						<div class="row-section__head container"><h2 class="row-section__title">Новинки</h2></div>
+						<div class="row-scroll container" data-scroll-row>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p1"><div class="poster-card__overlay"><span class="poster-card__play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div></div><h3 class="poster-card__title">Холод</h3></a></article>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p2"><div class="poster-card__overlay"><span class="poster-card__play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div></div><h3 class="poster-card__title">Обсессия</h3></a></article>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p3"><div class="poster-card__overlay"><span class="poster-card__play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div></div><h3 class="poster-card__title">Богатыри</h3></a></article>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p4"><div class="poster-card__overlay"><span class="poster-card__play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div></div><h3 class="poster-card__title">Пропасть</h3></a></article>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p5"><div class="poster-card__overlay"><span class="poster-card__play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div></div><h3 class="poster-card__title">Фишер</h3></a></article>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p6"><div class="poster-card__overlay"><span class="poster-card__play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div></div><h3 class="poster-card__title">Ландыши</h3></a></article>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p1"><div class="poster-card__overlay"><span class="poster-card__play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div></div><h3 class="poster-card__title">Отмороженные</h3></a></article>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p2"><div class="poster-card__overlay"><span class="poster-card__play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div></div><h3 class="poster-card__title">Слово пацана</h3></a></article>
+						</div>
+					</section>
+					<section class="row-section">
+						<div class="row-section__head container"><h2 class="row-section__title">Выбор зрителей</h2></div>
+						<div class="row-scroll container" data-scroll-row>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p3"></div><h3 class="poster-card__title">Коммерсант</h3></a></article>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p4"></div><h3 class="poster-card__title">Чудо-доктор</h3></a></article>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p5"></div><h3 class="poster-card__title">Буратино</h3></a></article>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p6"></div><h3 class="poster-card__title">Ландыши</h3></a></article>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p1"></div><h3 class="poster-card__title">Король и Шут</h3></a></article>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p2"></div><h3 class="poster-card__title">Молодежка</h3></a></article>
+						</div>
+					</section>
+					<section class="row-section">
+						<div class="row-section__head container">
+							<h2 class="row-section__title">Wink Originals</h2>
+							<p class="row-section__subtitle">Лучшие сериалы из линейки оригинальных проектов Wink</p>
+						</div>
+						<div class="row-scroll container" data-scroll-row>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p4"></div><h3 class="poster-card__title">Гордость</h3></a></article>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p5"></div><h3 class="poster-card__title">Надвое</h3></a></article>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p6"></div><h3 class="poster-card__title">Фишер</h3></a></article>
+							<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p1"></div><h3 class="poster-card__title">Обнальщик</h3></a></article>
+						</div>
+					</section>
+				</div>
+			</main>
+			<footer class="footer">
+				<div class="container">
+					<div class="footer__grid">
+						<div class="footer__brand">
+							<a href="#" class="logo"><img src="images/wink-logo.svg" alt="Wink" width="90" height="24"></a>
+							<p class="footer__desc">Онлайн-кинотеатр Wink — ТВ-каналы, фильмы, сериалы и спорт.</p>
+							<div class="footer__apps"><span class="footer__app-badge">App Store</span><span class="footer__app-badge">Google Play</span><span class="footer__app-badge">RuStore</span></div>
+						</div>
+						<div class="footer__col"><h4 class="footer__title">О сервисе</h4><ul class="footer__links"><li><a href="#">О Wink</a></li><li><a href="#">Подписки</a></li></ul></div>
+						<div class="footer__col"><h4 class="footer__title">Помощь</h4><ul class="footer__links"><li><a href="#">Техподдержка</a></li><li><a href="#">FAQ</a></li></ul></div>
+						<div class="footer__col"><h4 class="footer__title">Правовая информация</h4><ul class="footer__links"><li><a href="#">Соглашение</a></li><li><a href="#">Конфиденциальность</a></li></ul></div>
+					</div>
+					<div class="footer__bottom"><span>&copy; 2026 Wink</span><span class="footer__age">18+</span></div>
+				</div>
+			</footer>
+		</div>
+	</div>
+
+	<div class="preview-page" id="page-movie">
+		<div class="layout">
+			<header class="header">
+				<div class="container header__inner">
+					<div class="header__left"><a href="#" class="logo"><img src="images/wink-logo.svg" alt="Wink" class="logo__img"></a></div>
+					<div class="header__right"><div class="auth"><a href="#" class="auth__link">Вход</a><span class="auth__sep">|</span><a href="#" class="auth__link">Регистрация</a></div></div>
+				</div>
+			</header>
+			<main class="main">
+				<article class="movie-page">
+					<div class="movie-page__hero">
+						<div class="movie-page__backdrop"><img src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1920&q=80" alt=""></div>
+						<div class="movie-page__hero-fade"></div>
+						<div class="container movie-page__hero-inner">
+							<figure class="movie-page__poster"><img src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&q=80" alt=""></figure>
+							<div class="movie-page__info">
+								<h1 class="movie-page__title">Дюна: Часть вторая</h1>
+								<div class="movie-page__meta"><span class="movie-page__rating">9.0</span><span>2024</span><span>Фантастика, Боевик</span><span>166 мин</span><span>18+</span></div>
+								<div class="movie-page__actions">
+									<a href="#" class="btn btn--primary btn--lg">Смотреть</a>
+									<a href="#" class="btn btn--secondary">♡ В избранное</a>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="container movie-page__body">
+						<div class="movie-page__player"><div class="player"><div class="player__screen" style="aspect-ratio:16/9;background:#000;display:flex;align-items:center;justify-content:center"><div style="width:64px;height:64px;border-radius:50%;background:#FF5A24;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div></div></div></div>
+						<div class="movie-page__details">
+							<div class="movie-page__story"><h2 class="movie-page__section-title">О фильме</h2><p class="movie-page__story-text">Пол Атрейдес объединяется с Чанни и фрименами, чтобы отомстить за уничтожение своей семьи. Он сталкивается с выбором между любовью к Чанни и судьбой вселенной.</p></div>
+							<div class="movie-page__xfields"><h2 class="movie-page__section-title">Рейтинг</h2><p class="movie-page__xfields-grid"><strong>9.0</strong> Оценка пользователей Wink<br><strong>8.2</strong> КиноПоиск<br><strong>8.4</strong> IMDb</p></div>
+						</div>
+					</div>
+				</article>
+			</main>
+		</div>
+	</div>
+
+	<div class="preview-page" id="page-catalog">
+		<div class="layout">
+			<header class="header"><div class="container header__inner"><div class="header__left"><a href="#" class="logo"><img src="images/wink-logo.svg" alt="Wink" class="logo__img"></a><nav class="nav"><ul class="nav__list"><li><a href="#" class="nav__link">Главная</a></li><li><a href="#" class="nav__link nav__link--active">Фильмы</a></li></ul></nav></div></div></header>
+			<main class="main"><div class="container page-content">
+				<div class="speedbar"><a href="#">Главная</a> » <span>Фильмы</span></div>
+				<div class="category-page"><header class="category-page__header"><h1 class="category-page__title">Фильмы</h1><p class="category-page__desc">Тысячи фильмов в HD и 4K качестве</p></header>
+				<div class="grid grid--catalog">
+					<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p1"></div><h3 class="poster-card__title">Холод</h3></a></article>
+					<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p2"></div><h3 class="poster-card__title">Обсессия</h3></a></article>
+					<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p3"></div><h3 class="poster-card__title">Богатыри</h3></a></article>
+					<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p4"></div><h3 class="poster-card__title">Пропасть</h3></a></article>
+					<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p5"></div><h3 class="poster-card__title">Фишер</h3></a></article>
+					<article class="poster-card"><a class="poster-card__link" href="#"><div class="poster-card__img demo-p6"></div><h3 class="poster-card__title">Ландыши</h3></a></article>
+				</div></div>
+			</div></main>
+		</div>
+	</div>
+
+	<script src="js/app.js"></script>
+	<script>
+		document.querySelectorAll('.preview-tabs button').forEach(function(btn) {
+			btn.addEventListener('click', function() {
+				document.querySelectorAll('.preview-tabs button').forEach(function(b) { b.classList.remove('active'); });
+				document.querySelectorAll('.preview-page').forEach(function(p) { p.classList.remove('active'); });
+				btn.classList.add('active');
+				document.getElementById('page-' + btn.dataset.page).classList.add('active');
+				window.scrollTo(0, 0);
+			});
+		});
+	</script>
+</body>
+</html>

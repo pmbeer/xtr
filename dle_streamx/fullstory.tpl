@@ -12,42 +12,42 @@
 			<div class="movie-page__info">
 				<h1 class="movie-page__title">{title}</h1>
 				<div class="movie-page__meta">
-					[rating]<span class="movie-page__rating">★ {rating}</span>[/rating]
+					[rating]<span class="movie-page__rating">{rating}</span>[/rating]
 					<span>{date=Y}</span>
 					<span>{link-category}</span>
-					<span>👁 {views}</span>
-					<span>💬 {comments-num}</span>
+					<span>{views} просмотров</span>
 				</div>
 				<div class="movie-page__tags">{tags}</div>
 				<div class="movie-page__actions">
-					{add-favorites}
-					{edit}
+					<a href="#player" class="btn btn--primary btn--lg">Смотреть</a>
+					<span class="movie-page__fav">{add-favorites}{del-favorites}</span>
 				</div>
 			</div>
 		</div>
 	</div>
 
 	<div class="container movie-page__body">
-		<div class="movie-page__player">
+		<div class="movie-page__player" id="player">
 			<div class="player">
-				<div class="player__screen">
-					{full-story}
-				</div>
+				<div class="player__screen">{full-story}</div>
 			</div>
 		</div>
 
 		<div class="movie-page__details">
-			<div class="movie-page__xfields">{xfields}</div>
 			<div class="movie-page__story">
-				<h2>Описание</h2>
-				{short-story}
+				<h2 class="movie-page__section-title">О фильме</h2>
+				<div class="movie-page__story-text">{short-story}</div>
+			</div>
+			<div class="movie-page__xfields">
+				<h2 class="movie-page__section-title">Информация</h2>
+				<div class="movie-page__xfields-grid">{xfields}</div>
 			</div>
 		</div>
 
 		[related-news]
 		<section class="row-section">
 			<div class="row-section__head">
-				<h2 class="row-section__title">Похожие фильмы</h2>
+				<h2 class="row-section__title">Похожие</h2>
 			</div>
 			<div class="row-scroll" data-scroll-row>
 				{related-news}

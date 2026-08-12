@@ -1,15 +1,18 @@
 (function () {
 	'use strict';
 
-	/* Header scroll effect */
 	var header = document.getElementById('header');
-	if (header) {
+	var hero = document.querySelector('.hero');
+
+	if (header && hero) {
+		header.classList.add('header--transparent');
 		window.addEventListener('scroll', function () {
-			header.classList.toggle('header--scrolled', window.scrollY > 50);
+			var scrolled = window.scrollY > 80;
+			header.classList.toggle('header--transparent', !scrolled);
+			header.classList.toggle('header--scrolled', scrolled);
 		}, { passive: true });
 	}
 
-	/* Mobile menu */
 	var burger = document.getElementById('burger');
 	var nav = document.getElementById('nav');
 	if (burger && nav) {
@@ -25,7 +28,6 @@
 		});
 	}
 
-	/* Hero slider */
 	var heroSlider = document.getElementById('heroSlider');
 	if (heroSlider) {
 		var slides = heroSlider.querySelectorAll('.hero-slide');
@@ -36,31 +38,23 @@
 				slides[current].classList.remove('active');
 				current = (current + 1) % slides.length;
 				slides[current].classList.add('active');
-			}, 7000);
+			}, 8000);
 		} else if (slides.length === 1) {
 			slides[0].classList.add('active');
 		}
 	}
 
-	/* Horizontal scroll rows with mouse drag */
 	document.querySelectorAll('[data-scroll-row]').forEach(function (row) {
 		var isDown = false;
 		var startX, scrollLeft;
 
 		row.addEventListener('mousedown', function (e) {
 			isDown = true;
-			row.style.cursor = 'grabbing';
 			startX = e.pageX - row.offsetLeft;
 			scrollLeft = row.scrollLeft;
 		});
-		row.addEventListener('mouseleave', function () {
-			isDown = false;
-			row.style.cursor = '';
-		});
-		row.addEventListener('mouseup', function () {
-			isDown = false;
-			row.style.cursor = '';
-		});
+		row.addEventListener('mouseleave', function () { isDown = false; });
+		row.addEventListener('mouseup', function () { isDown = false; });
 		row.addEventListener('mousemove', function (e) {
 			if (!isDown) return;
 			e.preventDefault();
@@ -69,32 +63,13 @@
 		});
 	});
 
-	/* Scroll to top */
 	var scrollTop = document.getElementById('scrollTop');
 	if (scrollTop) {
 		window.addEventListener('scroll', function () {
-			scrollTop.classList.toggle('visible', window.scrollY > 400);
+			scrollTop.classList.toggle('visible', window.scrollY > 500);
 		}, { passive: true });
 		scrollTop.addEventListener('click', function () {
 			window.scrollTo({ top: 0, behavior: 'smooth' });
-		});
-	}
-
-	/* Lazy load fade-in for images */
-	if ('IntersectionObserver' in window) {
-		var imgObserver = new IntersectionObserver(function (entries) {
-			entries.forEach(function (entry) {
-				if (entry.isIntersecting) {
-					entry.target.style.opacity = '1';
-					imgObserver.unobserve(entry.target);
-				}
-			});
-		}, { threshold: 0.1 });
-
-		document.querySelectorAll('.poster-card__img img, .card__poster img').forEach(function (img) {
-			img.style.opacity = '0';
-			img.style.transition = 'opacity 0.4s ease';
-			imgObserver.observe(img);
 		});
 	}
 })();
