@@ -13,7 +13,11 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "DartsAssistant",
-            path: "Sources/DartsAssistant"
+            path: "Sources/DartsAssistant",
+            exclude: [
+                "DartsAssistant.entitlements",
+                "Info.plist"
+            ]
         ),
         .testTarget(
             name: "DartsAssistantTests",

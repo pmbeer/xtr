@@ -1,0 +1,58 @@
+name: Build Darts Assistant macOS Installer
+
+on:
+  push:
+    branches:
+      - main
+      - 'cursor/**'
+    paths:
+      - 'macos-darts-assistant/**'
+      - '.github/workflows/darts-assistant-macos.yml'
+  pull_request:
+    paths:
+      - 'macos-darts-assistant/**'
+      - '.github/workflows/darts-assistant-macos.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-installer:
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: macos-darts-assistant
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          sw_vers
+          swift --version
+
+      - name: Run unit tests
+        run: swift test
+
+      - name: Build universal app and DMG
+        run: |
+          chmod +x build-installer.sh scripts/*.sh
+          ./build-installer.sh
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartsAssistant-1.0.0-macOS-universal
+          path: macos-darts-assistant/dist/*.dmg
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Upload application bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartsAssistant-1.0.0-app
+          path: macos-darts-assistant/build/DartsAssistant.app
+          retention-days: 30
+          if-no-files-found: error
