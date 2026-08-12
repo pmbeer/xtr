@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-VERSION="1.0.3"
+VERSION="1.0.4"
 APP_NAME="DartBetPredictor"
 APP_DIR="$ROOT/build/${APP_NAME}.app"
 CONTENTS="$APP_DIR/Contents"

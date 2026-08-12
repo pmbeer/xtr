@@ -1,15 +1,14 @@
 import AppKit
 import SwiftUI
 
-/// Полноэкранный оверлей для выбора области захвата.
+/// Полноэкранный оверлей для выбора области захвата (без @Environment dismiss).
 struct RegionSelectorView: View {
     var title: String = "Выделите область"
-    let onSelect: (CGRect) -> Void
+    let onConfirm: (CGRect) -> Void
+    let onCancel: () -> Void
 
-    @Environment(\.dismiss) private var dismiss
     @State private var startPoint: CGPoint?
     @State private var currentPoint: CGPoint?
-    @State private var screenFrame: CGRect = .zero
 
     var body: some View {
         ZStack {
@@ -34,15 +33,21 @@ struct RegionSelectorView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .padding(.top, 40)
 
+                Text("Зажмите и протяните мышь, затем «Подтвердить»")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
                 Spacer()
 
                 HStack(spacing: 16) {
-                    Button("Отмена") { dismiss() }
-                        .keyboardShortcut(.cancelAction)
+                    Button("Отмена") {
+                        onCancel()
+                    }
+                    .keyboardShortcut(.cancelAction)
 
                     Button("Подтвердить") {
                         if let rect = selectionRect {
-                            onSelect(rect)
+                            onConfirm(rect)
                         }
                     }
                     .keyboardShortcut(.defaultAction)
@@ -51,9 +56,10 @@ struct RegionSelectorView: View {
                 .padding(.bottom, 40)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
         .gesture(
-            DragGesture(minimumDistance: 2)
+            DragGesture(minimumDistance: 2, coordinateSpace: .local)
                 .onChanged { value in
                     if startPoint == nil {
                         startPoint = value.startLocation
@@ -64,11 +70,6 @@ struct RegionSelectorView: View {
                     currentPoint = value.location
                 }
         )
-        .onAppear {
-            if let screen = NSScreen.main {
-                screenFrame = screen.frame
-            }
-        }
     }
 
     private var selectionRect: CGRect? {
@@ -82,29 +83,90 @@ struct RegionSelectorView: View {
     }
 }
 
-/// NSWindow wrapper для полноэкранного выбора области поверх всех окон.
-final class RegionSelectorWindowController {
-    static func present(title: String = "Выделите область", onSelect: @escaping (CGRect) -> Void) {
+/// Безопасный контроллер окна — удерживает сильную ссылку до полного закрытия.
+final class RegionSelectorWindowController: NSWindowController, NSWindowDelegate {
+    private static var active: RegionSelectorWindowController?
+
+    private var onSelectCallback: ((CGRect) -> Void)?
+    private var hostingController: NSHostingController<RegionSelectorView>?
+
+    static func present(
+        title: String = "Выделите область",
+        onSelect: @escaping (CGRect) -> Void
+    ) {
+        // Закрыть предыдущий селектор, если открыт
+        active?.closeSelector()
+
         guard let screen = NSScreen.main else { return }
+
+        let controller = RegionSelectorWindowController()
+        RegionSelectorWindowController.active = controller
+        controller.onSelectCallback = onSelect
+
+        let contentView = RegionSelectorView(
+            title: title,
+            onConfirm: { rect in
+                controller.confirmSelection(rect)
+            },
+            onCancel: {
+                controller.cancelSelection()
+            }
+        )
+
+        let hosting = NSHostingController(rootView: contentView)
+        controller.hostingController = hosting
 
         let window = NSWindow(
             contentRect: screen.frame,
-            styleMask: [.borderless],
+            styleMask: [.borderless, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
+        window.contentViewController = hosting
         window.level = .screenSaver
         window.isOpaque = false
-        window.backgroundColor = .clear
+        window.backgroundColor = NSColor.black.withAlphaComponent(0.01)
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        window.isReleasedWhenClosed = false
+        window.delegate = controller
 
-        let hosting = NSHostingView(
-            rootView: RegionSelectorView(title: title) { rect in
-                window.close()
-                onSelect(rect)
-            }
-        )
-        window.contentView = hosting
+        controller.window = window
         window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+
+        LaunchLogger.log("RegionSelector opened: \(title)")
+    }
+
+    private func confirmSelection(_ rect: CGRect) {
+        LaunchLogger.log("RegionSelector confirmed: \(rect)")
+        let callback = onSelectCallback
+        onSelectCallback = nil
+        closeSelector()
+
+        // Callback после закрытия окна — избегаем краша при dealloc NSHostingView
+        DispatchQueue.main.async {
+            callback?(rect)
+        }
+    }
+
+    private func cancelSelection() {
+        LaunchLogger.log("RegionSelector cancelled")
+        onSelectCallback = nil
+        closeSelector()
+    }
+
+    private func closeSelector() {
+        window?.orderOut(nil)
+        window?.contentViewController = nil
+        hostingController = nil
+        window = nil
+
+        if RegionSelectorWindowController.active === self {
+            RegionSelectorWindowController.active = nil
+        }
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        closeSelector()
     }
 }
