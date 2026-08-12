@@ -4,11 +4,13 @@ import Foundation
 import ScreenCaptureKit
 
 final class ScreenCaptureService: NSObject, SCStreamOutput, SCStreamDelegate {
-    var onFrame: ((CVPixelBuffer) -> Void)?
-    var onError: ((String) -> Void)?
+    var onFrame: ((CVPixelBuffer, UUID) -> Void)?
+    var onError: ((UUID, String) -> Void)?
 
     private let captureQueue = DispatchQueue(label: "darts.capture", qos: .userInteractive)
+    private let stateLock = NSLock()
     private var stream: SCStream?
+    private var sessionID: UUID?
 
     func availableWindows() async throws -> [SCWindow] {
         let content = try await SCShareableContent.excludingDesktopWindows(
@@ -28,7 +30,7 @@ final class ScreenCaptureService: NSObject, SCStreamOutput, SCStreamDelegate {
             }
     }
 
-    func start(window: SCWindow) async throws {
+    func start(window: SCWindow, sessionID: UUID) async throws {
         try await stop()
 
         let filter = SCContentFilter(desktopIndependentWindow: window)
@@ -52,14 +54,28 @@ final class ScreenCaptureService: NSObject, SCStreamOutput, SCStreamDelegate {
             type: .screen,
             sampleHandlerQueue: captureQueue
         )
+        stateLock.lock()
         stream = newStream
-        try await newStream.startCapture()
+        self.sessionID = sessionID
+        stateLock.unlock()
+        do {
+            try await newStream.startCapture()
+        } catch {
+            deactivate(newStream)
+            throw error
+        }
     }
 
     func stop() async throws {
-        guard let stream else { return }
-        try await stream.stopCapture()
+        stateLock.lock()
+        guard let stream else {
+            stateLock.unlock()
+            return
+        }
         self.stream = nil
+        sessionID = nil
+        stateLock.unlock()
+        try await stream.stopCapture()
     }
 
     func stream(
@@ -67,21 +83,52 @@ final class ScreenCaptureService: NSObject, SCStreamOutput, SCStreamDelegate {
         didOutputSampleBuffer sampleBuffer: CMSampleBuffer,
         of type: SCStreamOutputType
     ) {
-        guard type == .screen,
+        guard let sessionID = activeSession(for: stream),
+              type == .screen,
               sampleBuffer.isValid,
+              isCompleteFrame(sampleBuffer),
               let pixelBuffer = sampleBuffer.imageBuffer else {
             return
         }
-        onFrame?(pixelBuffer)
+        onFrame?(pixelBuffer, sessionID)
     }
 
     func stream(_ stream: SCStream, didStopWithError error: Error) {
-        onError?(error.localizedDescription)
+        guard let sessionID = activeSession(for: stream) else { return }
+        onError?(sessionID, error.localizedDescription)
     }
 
     private func windowLabel(_ window: SCWindow) -> String {
         let app = window.owningApplication?.applicationName ?? "Приложение"
         let title = window.title?.isEmpty == false ? window.title! : "без названия"
         return "\(app) — \(title)"
+    }
+
+    private func isCompleteFrame(_ sampleBuffer: CMSampleBuffer) -> Bool {
+        guard let attachmentArray = CMSampleBufferGetSampleAttachmentsArray(
+            sampleBuffer,
+            createIfNecessary: false
+        ) as? [[SCStreamFrameInfo: Any]],
+        let attachment = attachmentArray.first,
+        let rawStatus = attachment[.status] as? Int,
+        let status = SCFrameStatus(rawValue: rawStatus) else {
+            return false
+        }
+        return status == .complete
+    }
+
+    private func activeSession(for candidate: SCStream) -> UUID? {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        guard let stream, stream === candidate else { return nil }
+        return sessionID
+    }
+
+    private func deactivate(_ candidate: SCStream) {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        guard let stream, stream === candidate else { return }
+        self.stream = nil
+        sessionID = nil
     }
 }

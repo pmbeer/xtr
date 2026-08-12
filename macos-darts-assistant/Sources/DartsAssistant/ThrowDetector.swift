@@ -9,6 +9,7 @@ enum ThrowDetection: Equatable {
 struct ThrowDetector {
     var newestFirst = true
     var requiredStableFrames = 2
+    var resynchronizationFrames = 5
 
     private var pendingValues: [Int] = []
     private var stableFrameCount = 0
@@ -36,10 +37,13 @@ struct ThrowDetector {
         }
         guard previous != cleanValues else { return .none }
 
-        acceptedValues = cleanValues
         guard let value = inferNewValue(previous: previous, current: cleanValues) else {
+            if stableFrameCount >= resynchronizationFrames {
+                acceptedValues = cleanValues
+            }
             return .none
         }
+        acceptedValues = cleanValues
         return .newThrow(value)
     }
 
@@ -51,17 +55,25 @@ struct ThrowDetector {
 
     private func inferNewValue(previous: [Int], current: [Int]) -> Int? {
         if newestFirst {
+            if current.count == previous.count + 1,
+               Array(current.dropFirst()) == previous {
+                return current.first
+            }
             if current.count == previous.count,
                Array(current.dropFirst()) == Array(previous.dropLast()) {
                 return current.first
             }
-            return current.first != previous.first ? current.first : nil
+            return nil
         }
 
+        if current.count == previous.count + 1,
+           Array(current.dropLast()) == previous {
+            return current.last
+        }
         if current.count == previous.count,
            Array(current.dropLast()) == Array(previous.dropFirst()) {
             return current.last
         }
-        return current.last != previous.last ? current.last : nil
+        return nil
     }
 }

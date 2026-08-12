@@ -1,4 +1,5 @@
 import AVFoundation
+import CoreVideo
 import Foundation
 import ScreenCaptureKit
 import SwiftUI
@@ -11,6 +12,7 @@ final class AppModel: ObservableObject {
     @Published var newestFirst = true
     @Published var voiceEnabled = true
     @Published var isCapturing = false
+    @Published var isTransitioning = false
     @Published var status = "Выберите окно с игрой."
     @Published var rawOCR = "—"
     @Published var recognizedValues: [Int] = []
@@ -24,17 +26,27 @@ final class AppModel: ObservableObject {
     private let speech = AVSpeechSynthesizer()
     private var detector = ThrowDetector()
     private var predictor = ThrowPredictor()
+    private var activeSessionID: UUID?
+    private var analysisEpoch = 0
 
     init() {
-        capture.onFrame = { [weak self] pixelBuffer in
+        capture.onFrame = { [weak self] pixelBuffer, sessionID in
             Task { @MainActor [weak self] in
-                self?.process(pixelBuffer)
+                guard let self, self.activeSessionID == sessionID else { return }
+                self.process(
+                    pixelBuffer,
+                    sessionID: sessionID,
+                    epoch: self.analysisEpoch
+                )
             }
         }
-        capture.onError = { [weak self] message in
+        capture.onError = { [weak self] sessionID, message in
             Task { @MainActor [weak self] in
-                self?.isCapturing = false
-                self?.status = "Захват остановлен: \(message)"
+                guard let self, self.activeSessionID == sessionID else { return }
+                self.activeSessionID = nil
+                self.analysisEpoch += 1
+                self.isCapturing = false
+                self.status = "Захват остановлен: \(message)"
             }
         }
     }
@@ -56,6 +68,10 @@ final class AppModel: ObservableObject {
     }
 
     func toggleCapture() async {
+        guard !isTransitioning else { return }
+        isTransitioning = true
+        defer { isTransitioning = false }
+
         if isCapturing {
             await stopCapture()
             return
@@ -68,32 +84,43 @@ final class AppModel: ObservableObject {
 
         detector.reset()
         predictor.reset()
+        analysisEpoch += 1
         recommendation = .collecting
         sampleCount = 0
         latestThrow = nil
 
+        let sessionID = UUID()
+        activeSessionID = sessionID
         do {
-            try await capture.start(window: window)
+            try await capture.start(window: window, sessionID: sessionID)
+            guard activeSessionID == sessionID else { return }
             isCapturing = true
             status = "Захват активен. OCR обрабатывает до 12 кадров/с."
         } catch {
-            status = "Не удалось запустить захват: \(error.localizedDescription)"
+            if activeSessionID == sessionID {
+                activeSessionID = nil
+                analysisEpoch += 1
+                status = "Не удалось запустить захват: \(error.localizedDescription)"
+            }
         }
     }
 
-    func stopCapture() async {
+    private func stopCapture() async {
+        activeSessionID = nil
+        analysisEpoch += 1
+        isCapturing = false
         do {
             try await capture.stop()
         } catch {
             status = "Ошибка остановки: \(error.localizedDescription)"
         }
-        isCapturing = false
         if !status.hasPrefix("Ошибка") {
             status = "Захват остановлен."
         }
     }
 
     func resetStatistics() {
+        analysisEpoch += 1
         detector.reset()
         predictor.reset()
         recognizedValues = []
@@ -109,12 +136,18 @@ final class AppModel: ObservableObject {
         return "\(app) — \(title)"
     }
 
-    private func process(_ pixelBuffer: CVPixelBuffer) {
+    private func process(_ pixelBuffer: CVPixelBuffer, sessionID: UUID, epoch: Int) {
         let currentRegion = region
         analyzer.analyze(pixelBuffer: pixelBuffer, region: currentRegion) {
             [weak self] snapshot in
             Task { @MainActor [weak self] in
-                self?.accept(snapshot)
+                guard let self,
+                      self.activeSessionID == sessionID,
+                      self.analysisEpoch == epoch,
+                      self.isCapturing else {
+                    return
+                }
+                self.accept(snapshot)
             }
         }
     }

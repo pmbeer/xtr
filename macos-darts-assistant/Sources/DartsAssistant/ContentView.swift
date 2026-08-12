@@ -79,12 +79,14 @@ struct ContentView: View {
                                 .tag(Optional(window.windowID))
                         }
                     }
+                    .disabled(model.isCapturing || model.isTransitioning)
                     Button {
                         Task { await model.refreshWindows() }
                     } label: {
                         Image(systemName: "arrow.clockwise")
                     }
                     .help("Обновить список окон")
+                    .disabled(model.isCapturing || model.isTransitioning)
                 }
 
                 HStack {
@@ -92,6 +94,7 @@ struct ContentView: View {
                         Task { await model.toggleCapture() }
                     }
                     .buttonStyle(.borderedProminent)
+                    .disabled(model.isTransitioning)
 
                     Button("Сбросить статистику") {
                         model.resetStatistics()
@@ -126,6 +129,7 @@ struct ContentView: View {
                 Toggle("Новейший результат распознаётся первым", isOn: $model.newestFirst)
             }
             .padding(.top, 4)
+            .disabled(model.isCapturing || model.isTransitioning)
         }
     }
 

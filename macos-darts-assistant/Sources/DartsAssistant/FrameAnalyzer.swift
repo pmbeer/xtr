@@ -38,13 +38,7 @@ final class FrameAnalyzer {
                     options: [:]
                 ).perform([request])
 
-                let observations = (request.results ?? []).sorted { lhs, rhs in
-                    let verticalDifference = lhs.boundingBox.midY - rhs.boundingBox.midY
-                    if abs(verticalDifference) > 0.025 {
-                        return verticalDifference > 0
-                    }
-                    return lhs.boundingBox.minX < rhs.boundingBox.minX
-                }
+                let observations = self.readingOrder(request.results ?? [])
                 let strings = observations.compactMap { $0.topCandidates(1).first?.string }
                 let elapsed = started.duration(to: .now)
                 let milliseconds = Int(
@@ -84,6 +78,30 @@ final class FrameAnalyzer {
                 guard let swiftRange = Range(match.range, in: text) else { return nil }
                 return Int(text[swiftRange])
             }
+        }
+    }
+
+    private func readingOrder(
+        _ observations: [VNRecognizedTextObservation]
+    ) -> [VNRecognizedTextObservation] {
+        let byVerticalPosition = observations.sorted {
+            $0.boundingBox.midY > $1.boundingBox.midY
+        }
+        var rows: [[VNRecognizedTextObservation]] = []
+
+        for observation in byVerticalPosition {
+            if let index = rows.firstIndex(where: { row in
+                guard let anchor = row.first else { return false }
+                return abs(anchor.boundingBox.midY - observation.boundingBox.midY) < 0.025
+            }) {
+                rows[index].append(observation)
+            } else {
+                rows.append([observation])
+            }
+        }
+
+        return rows.flatMap { row in
+            row.sorted { $0.boundingBox.minX < $1.boundingBox.minX }
         }
     }
 }

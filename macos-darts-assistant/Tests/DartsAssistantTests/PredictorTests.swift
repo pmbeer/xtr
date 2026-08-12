@@ -62,4 +62,47 @@ final class ThrowDetectorTests: XCTestCase {
         XCTAssertEqual(detector.ingest([5, 5, 3]), .none)
         XCTAssertEqual(detector.ingest([5, 5, 3]), .newThrow(5))
     }
+
+    func testDetectsRepeatedValueWhenHistoryGrows() {
+        var detector = ThrowDetector()
+        _ = detector.ingest([5, 3, 7])
+        _ = detector.ingest([5, 3, 7])
+
+        XCTAssertEqual(detector.ingest([5, 5, 3, 7]), .none)
+        XCTAssertEqual(detector.ingest([5, 5, 3, 7]), .newThrow(5))
+    }
+
+    func testInvalidChangeDoesNotPoisonBaseline() {
+        var detector = ThrowDetector()
+        _ = detector.ingest([3, 7, 10])
+        _ = detector.ingest([3, 7, 10])
+        _ = detector.ingest([4, 9, 8])
+        XCTAssertEqual(detector.ingest([4, 9, 8]), .none)
+
+        _ = detector.ingest([5, 3, 7])
+        XCTAssertEqual(detector.ingest([5, 3, 7]), .newThrow(5))
+    }
+
+    func testOldestFirstHistory() {
+        var detector = ThrowDetector()
+        detector.newestFirst = false
+        _ = detector.ingest([10, 7, 3])
+        _ = detector.ingest([10, 7, 3])
+
+        XCTAssertEqual(detector.ingest([7, 3, 5]), .none)
+        XCTAssertEqual(detector.ingest([7, 3, 5]), .newThrow(5))
+    }
+}
+
+final class CaptureRegionTests: XCTestCase {
+    func testRegionStaysInsideVisionBounds() {
+        let region = CaptureRegion(x: 1, y: 1, width: 1, height: 1).visionRegion
+
+        XCTAssertGreaterThan(region.width, 0)
+        XCTAssertGreaterThan(region.height, 0)
+        XCTAssertGreaterThanOrEqual(region.minX, 0)
+        XCTAssertGreaterThanOrEqual(region.minY, 0)
+        XCTAssertLessThanOrEqual(region.maxX, 1)
+        XCTAssertLessThanOrEqual(region.maxY, 1)
+    }
 }

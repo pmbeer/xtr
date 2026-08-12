@@ -3,16 +3,22 @@ import Foundation
 
 struct CaptureRegion: Equatable {
     var x: Double = 0.68
-    var y: Double = 0.48
+    var y: Double = 0.68
     var width: Double = 0.30
-    var height: Double = 0.45
+    var height: Double = 0.30
 
     var visionRegion: CGRect {
+        let minimumSize = 0.01
+        let clampedX = max(0, min(1 - minimumSize, x))
+        let topY = max(0, min(1 - minimumSize, y))
+        let clampedWidth = max(minimumSize, min(1 - clampedX, width))
+        let clampedHeight = max(minimumSize, min(1 - topY, height))
+
         CGRect(
-            x: max(0, min(1, x)),
-            y: max(0, min(1, 1 - y - height)),
-            width: max(0.01, min(1 - x, width)),
-            height: max(0.01, min(1 - y, height))
+            x: clampedX,
+            y: 1 - topY - clampedHeight,
+            width: clampedWidth,
+            height: clampedHeight
         )
     }
 }

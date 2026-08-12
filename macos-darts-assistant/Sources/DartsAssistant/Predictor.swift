@@ -5,6 +5,7 @@ struct ThrowPredictor {
     let minimumSamples = 30
     let minimumEdge = 0.03
     let priorStrength = 20.0
+    let simultaneousZScore = 2.92
 
     mutating func observe(_ value: Int) {
         guard (1...20).contains(value) else { return }
@@ -79,7 +80,8 @@ struct ThrowPredictor {
         let posterior = alpha / (alpha + beta)
         let variance = alpha * beta
             / (pow(alpha + beta, 2) * (alpha + beta + 1))
-        let lowerBound = max(0, posterior - 1.64 * sqrt(variance))
+        // Bonferroni-adjusted one-sided normal approximation for 28 candidates.
+        let lowerBound = max(0, posterior - simultaneousZScore * sqrt(variance))
 
         return BetCandidate(
             label: label,
