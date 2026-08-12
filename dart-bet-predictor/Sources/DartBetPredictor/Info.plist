@@ -15,13 +15,15 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.2</string>
+    <string>1.0.3</string>
     <key>CFBundleVersion</key>
-    <string>1.0.2</string>
+    <string>1.0.3</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
-    <key>LSUIElement</key>
+    <key>NSHighResolutionCapable</key>
     <true/>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
     <key>NSScreenCaptureUsageDescription</key>
     <string>Приложению нужен доступ к записи экрана для чтения истории бросков в дартс.</string>
     <key>NSHumanReadableCopyright</key>
