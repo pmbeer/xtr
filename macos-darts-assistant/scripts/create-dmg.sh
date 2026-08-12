@@ -5,7 +5,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 APP_NAME="DartsAssistant"
-VERSION="1.0.0"
+VERSION="1.1.0"
 APP_PATH="$ROOT/build/${APP_NAME}.app"
 STAGING_DIR="$ROOT/build/dmg-staging"
 DMG_PATH="$ROOT/dist/${APP_NAME}-${VERSION}-macOS-universal.dmg"

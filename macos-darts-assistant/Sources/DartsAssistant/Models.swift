@@ -27,6 +27,8 @@ struct OCRSnapshot: Equatable {
     let values: [Int]
     let rawText: String
     let latencyMilliseconds: Int
+    let behaviorFeatures: [Double]
+    let behaviorConfidence: Double
 }
 
 struct BetCandidate: Equatable {
@@ -47,4 +49,19 @@ struct Recommendation: Equatable {
         detail: "Нужно не менее 30 распознанных бросков.",
         candidate: nil
     )
+}
+
+struct LearningMetrics: Codable, Equatable {
+    var predictedNumber: Int?
+    var confidence: Double = 0
+    var evaluatedCount = 0
+    var correctCount = 0
+    var rollingAccuracy: Double?
+    var lastPredictionWasCorrect: Bool?
+    var behaviorConfidence: Double = 0
+
+    var totalAccuracy: Double? {
+        guard evaluatedCount > 0 else { return nil }
+        return Double(correctCount) / Double(evaluatedCount)
+    }
 }

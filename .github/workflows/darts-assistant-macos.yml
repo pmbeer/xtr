@@ -44,7 +44,7 @@ jobs:
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: DartsAssistant-1.0.0-macOS-universal
+          name: DartsAssistant-1.1.0-macOS-universal
           path: macos-darts-assistant/dist/*.dmg
           retention-days: 90
           if-no-files-found: error
@@ -52,7 +52,7 @@ jobs:
       - name: Upload application bundle
         uses: actions/upload-artifact@v4
         with:
-          name: DartsAssistant-1.0.0-app
+          name: DartsAssistant-1.1.0-app
           path: macos-darts-assistant/build/DartsAssistant.app
           retention-days: 30
           if-no-files-found: error

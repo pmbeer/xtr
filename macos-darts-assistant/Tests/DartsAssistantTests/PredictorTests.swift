@@ -106,3 +106,40 @@ final class CaptureRegionTests: XCTestCase {
         XCTAssertLessThanOrEqual(region.maxY, 1)
     }
 }
+
+final class OnlineLearningPredictorTests: XCTestCase {
+    func testEvaluatesPredictionBeforeTraining() {
+        var learner = OnlineLearningPredictor()
+        let features = Array(repeating: 0.1, count: 40)
+        _ = learner.seed([1, 2, 3, 4, 5], behaviorFeatures: features, behaviorConfidence: 0.8)
+        let predicted = learner.metrics.predictedNumber
+
+        _ = learner.observe(outcome: 7, behaviorFeatures: features, behaviorConfidence: 0.8)
+
+        XCTAssertEqual(learner.metrics.evaluatedCount, 1)
+        XCTAssertEqual(learner.metrics.lastPredictionWasCorrect, predicted == 7)
+        XCTAssertNotNil(learner.metrics.predictedNumber)
+    }
+
+    func testEraseLearningResetsMetrics() {
+        var learner = OnlineLearningPredictor()
+        let features = Array(repeating: 0.0, count: 40)
+        _ = learner.seed([1, 2, 3, 4, 5], behaviorFeatures: features, behaviorConfidence: 0.5)
+        _ = learner.observe(outcome: 1, behaviorFeatures: features, behaviorConfidence: 0.5)
+
+        learner.eraseLearning()
+
+        XCTAssertEqual(learner.metrics.evaluatedCount, 0)
+        XCTAssertNil(learner.metrics.predictedNumber)
+    }
+
+    func testBeginSessionClearsPendingEvaluation() {
+        var learner = OnlineLearningPredictor()
+        let features = Array(repeating: 0.0, count: 40)
+        _ = learner.seed([3, 4, 5], behaviorFeatures: features, behaviorConfidence: 0.4)
+        learner.beginSession()
+
+        XCTAssertNil(learner.metrics.lastPredictionWasCorrect)
+        XCTAssertEqual(learner.metrics.evaluatedCount, 0)
+    }
+}

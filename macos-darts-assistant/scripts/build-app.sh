@@ -6,7 +6,7 @@ cd "$ROOT"
 
 APP_NAME="DartsAssistant"
 DISPLAY_NAME="Darts Assistant"
-VERSION="1.0.0"
+VERSION="1.1.0"
 APP_DIR="$ROOT/build/${APP_NAME}.app"
 CONTENTS="$APP_DIR/Contents"
 MACOS_DIR="$CONTENTS/MacOS"
@@ -33,6 +33,13 @@ mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 install -m 755 "$BIN" "$MACOS_DIR/$APP_NAME"
 install -m 644 Sources/DartsAssistant/Info.plist "$CONTENTS/Info.plist"
 printf 'APPL????' > "$CONTENTS/PkgInfo"
+
+if [[ -x "$(dirname "$0")/build-icon.sh" ]]; then
+    "$(dirname "$0")/build-icon.sh"
+    if [[ -f "$ROOT/build/AppIcon.icns" ]]; then
+        install -m 644 "$ROOT/build/AppIcon.icns" "$RESOURCES_DIR/AppIcon.icns"
+    fi
+fi
 
 /usr/libexec/PlistBuddy \
     -c "Set :CFBundleShortVersionString $VERSION" \

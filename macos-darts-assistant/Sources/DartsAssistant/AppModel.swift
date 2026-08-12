@@ -9,6 +9,12 @@ final class AppModel: ObservableObject {
     @Published var windows: [SCWindow] = []
     @Published var selectedWindowID: CGWindowID?
     @Published var region = CaptureRegion()
+    @Published var behaviorRegion = CaptureRegion(
+        x: 0.50,
+        y: 0.10,
+        width: 0.25,
+        height: 0.55
+    )
     @Published var newestFirst = true
     @Published var voiceEnabled = true
     @Published var isCapturing = false
@@ -20,16 +26,23 @@ final class AppModel: ObservableObject {
     @Published var sampleCount = 0
     @Published var latencyMilliseconds = 0
     @Published var recommendation = Recommendation.collecting
+    @Published var learningMetrics = LearningMetrics()
 
     private let capture = ScreenCaptureService()
     private let analyzer = FrameAnalyzer()
     private let speech = AVSpeechSynthesizer()
     private var detector = ThrowDetector()
     private var predictor = ThrowPredictor()
+    private var onlineLearner: OnlineLearningPredictor
     private var activeSessionID: UUID?
     private var analysisEpoch = 0
 
     init() {
+        onlineLearner = OnlineLearningPredictor.load(from: Self.modelURL)
+            ?? OnlineLearningPredictor()
+        onlineLearner.beginSession()
+        learningMetrics = onlineLearner.metrics
+
         capture.onFrame = { [weak self] pixelBuffer, sessionID in
             Task { @MainActor [weak self] in
                 guard let self, self.activeSessionID == sessionID else { return }
@@ -84,8 +97,11 @@ final class AppModel: ObservableObject {
 
         detector.reset()
         predictor.reset()
+        onlineLearner.beginSession()
+        learningMetrics = onlineLearner.metrics
+        analyzer.resetBehavior()
         analysisEpoch += 1
-        recommendation = .collecting
+        recommendation = Recommendation.collecting
         sampleCount = 0
         latestThrow = nil
 
@@ -93,7 +109,10 @@ final class AppModel: ObservableObject {
         activeSessionID = sessionID
         do {
             try await capture.start(window: window, sessionID: sessionID)
-            guard activeSessionID == sessionID else { return }
+            guard activeSessionID == sessionID else {
+                try? await capture.stop()
+                return
+            }
             isCapturing = true
             status = "Захват активен. OCR обрабатывает до 12 кадров/с."
         } catch {
@@ -123,11 +142,21 @@ final class AppModel: ObservableObject {
         analysisEpoch += 1
         detector.reset()
         predictor.reset()
+        onlineLearner.beginSession()
+        learningMetrics = onlineLearner.metrics
+        analyzer.resetBehavior()
         recognizedValues = []
         latestThrow = nil
         sampleCount = 0
-        recommendation = .collecting
+        recommendation = Recommendation.collecting
         status = "Статистика сброшена."
+    }
+
+    func eraseLearning() {
+        onlineLearner.eraseLearning()
+        learningMetrics = onlineLearner.metrics
+        try? FileManager.default.removeItem(at: Self.modelURL)
+        status = "Накопленное обучение удалено."
     }
 
     func windowLabel(_ window: SCWindow) -> String {
@@ -138,8 +167,12 @@ final class AppModel: ObservableObject {
 
     private func process(_ pixelBuffer: CVPixelBuffer, sessionID: UUID, epoch: Int) {
         let currentRegion = region
-        analyzer.analyze(pixelBuffer: pixelBuffer, region: currentRegion) {
-            [weak self] snapshot in
+        let currentBehaviorRegion = behaviorRegion
+        analyzer.analyze(
+            pixelBuffer: pixelBuffer,
+            region: currentRegion,
+            behaviorRegion: currentBehaviorRegion
+        ) { [weak self] snapshot in
             Task { @MainActor [weak self] in
                 guard let self,
                       self.activeSessionID == sessionID,
@@ -163,12 +196,24 @@ final class AppModel: ObservableObject {
             break
         case .seed(let values):
             values.forEach { predictor.observe($0) }
+            let chronologicalValues = newestFirst ? Array(values.reversed()) : values
+            learningMetrics = onlineLearner.seed(
+                chronologicalValues,
+                behaviorFeatures: snapshot.behaviorFeatures,
+                behaviorConfidence: snapshot.behaviorConfidence
+            )
             sampleCount = predictor.history.count
             recommendation = predictor.recommendation()
             status = "История распознана: \(values.count) значений."
         case .newThrow(let value):
             latestThrow = value
             predictor.observe(value)
+            learningMetrics = onlineLearner.observe(
+                outcome: value,
+                behaviorFeatures: snapshot.behaviorFeatures,
+                behaviorConfidence: snapshot.behaviorConfidence
+            )
+            try? onlineLearner.save(to: Self.modelURL)
             sampleCount = predictor.history.count
             recommendation = predictor.recommendation()
             status = "Новый бросок: \(value). Подсказка обновлена."
@@ -185,5 +230,15 @@ final class AppModel: ObservableObject {
         utterance.voice = AVSpeechSynthesisVoice(language: "ru-RU")
         utterance.rate = 0.55
         speech.speak(utterance)
+    }
+
+    private static var modelURL: URL {
+        let base = FileManager.default.urls(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask
+        ).first ?? FileManager.default.homeDirectoryForCurrentUser
+        return base
+            .appendingPathComponent("DartsAssistant", isDirectory: true)
+            .appendingPathComponent("online-model.json")
     }
 }

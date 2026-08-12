@@ -4,13 +4,26 @@ import ImageIO
 import Vision
 
 final class FrameAnalyzer {
+    private static let trackedJoints: [VNHumanBodyPoseObservation.JointName] = [
+        .nose,
+        .neck,
+        .leftShoulder,
+        .rightShoulder,
+        .leftElbow,
+        .rightElbow,
+        .leftWrist,
+        .rightWrist
+    ]
+
     private let queue = DispatchQueue(label: "darts.vision", qos: .userInteractive)
     private let lock = NSLock()
     private var processing = false
+    private var previousPose: [VNHumanBodyPoseObservation.JointName: CGPoint] = [:]
 
     func analyze(
         pixelBuffer: CVPixelBuffer,
         region: CaptureRegion,
+        behaviorRegion: CaptureRegion,
         completion: @escaping (OCRSnapshot) -> Void
     ) {
         lock.lock()
@@ -30,16 +43,19 @@ final class FrameAnalyzer {
             request.recognitionLanguages = ["en-US"]
             request.minimumTextHeight = 0.018
             request.regionOfInterest = region.visionRegion
+            let poseRequest = VNDetectHumanBodyPoseRequest()
+            poseRequest.regionOfInterest = behaviorRegion.visionRegion
 
             do {
                 try VNImageRequestHandler(
                     cvPixelBuffer: pixelBuffer,
                     orientation: .up,
                     options: [:]
-                ).perform([request])
+                ).perform([request, poseRequest])
 
                 let observations = self.readingOrder(request.results ?? [])
                 let strings = observations.compactMap { $0.topCandidates(1).first?.string }
+                let behavior = self.behaviorFeatures(from: poseRequest.results?.first)
                 let elapsed = started.duration(to: .now)
                 let milliseconds = Int(
                     elapsed.components.seconds * 1_000
@@ -49,7 +65,9 @@ final class FrameAnalyzer {
                     OCRSnapshot(
                         values: self.extractValues(from: strings),
                         rawText: strings.joined(separator: " · "),
-                        latencyMilliseconds: milliseconds
+                        latencyMilliseconds: milliseconds,
+                        behaviorFeatures: behavior.features,
+                        behaviorConfidence: behavior.confidence
                     )
                 )
             } catch {
@@ -57,7 +75,9 @@ final class FrameAnalyzer {
                     OCRSnapshot(
                         values: [],
                         rawText: "Ошибка Vision: \(error.localizedDescription)",
-                        latencyMilliseconds: 0
+                        latencyMilliseconds: 0,
+                        behaviorFeatures: Array(repeating: 0, count: 40),
+                        behaviorConfidence: 0
                     )
                 )
             }
@@ -65,6 +85,12 @@ final class FrameAnalyzer {
             self.lock.lock()
             self.processing = false
             self.lock.unlock()
+        }
+    }
+
+    func resetBehavior() {
+        queue.async { [weak self] in
+            self?.previousPose = [:]
         }
     }
 
@@ -103,5 +129,43 @@ final class FrameAnalyzer {
         return rows.flatMap { row in
             row.sorted { $0.boundingBox.minX < $1.boundingBox.minX }
         }
+    }
+
+    private func behaviorFeatures(
+        from observation: VNHumanBodyPoseObservation?
+    ) -> (features: [Double], confidence: Double) {
+        guard let observation else {
+            previousPose = [:]
+            return (Array(repeating: 0, count: 40), 0)
+        }
+
+        var features: [Double] = []
+        var currentPose: [VNHumanBodyPoseObservation.JointName: CGPoint] = [:]
+        var confidenceSum = 0.0
+
+        for joint in Self.trackedJoints {
+            guard let point = try? observation.recognizedPoint(joint),
+                  point.confidence >= 0.2 else {
+                features.append(contentsOf: [0, 0, 0, 0, 0])
+                continue
+            }
+
+            let previous = previousPose[joint] ?? point.location
+            features.append(contentsOf: [
+                Double(point.location.x),
+                Double(point.location.y),
+                Double(point.confidence),
+                Double(point.location.x - previous.x),
+                Double(point.location.y - previous.y)
+            ])
+            currentPose[joint] = point.location
+            confidenceSum += Double(point.confidence)
+        }
+
+        previousPose = currentPose
+        return (
+            features,
+            confidenceSum / Double(Self.trackedJoints.count)
+        )
     }
 }

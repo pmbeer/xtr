@@ -9,13 +9,14 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 16) {
                 header
                 recommendationCard
+                learningCard
                 captureControls
                 calibrationControls
                 diagnostics
             }
             .padding(20)
         }
-        .frame(minWidth: 620, idealWidth: 680, minHeight: 700)
+        .frame(minWidth: 620, idealWidth: 680, minHeight: 860)
         .task {
             await model.refreshWindows()
         }
@@ -68,6 +69,58 @@ struct ContentView: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
     }
 
+    private var learningCard: some View {
+        GroupBox("Online-обучение и поведение") {
+            VStack(alignment: .leading, spacing: 9) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("Следующий сектор:")
+                    Text(model.learningMetrics.predictedNumber.map(String.init) ?? "—")
+                        .font(.title2.bold().monospacedDigit())
+                    Text("уверенность \(percent(model.learningMetrics.confidence))")
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text(
+                        model.learningMetrics.lastPredictionWasCorrect.map {
+                            $0 ? "прошлый ✓" : "прошлый ✕"
+                        } ?? "нет проверки"
+                    )
+                    .foregroundStyle(
+                        model.learningMetrics.lastPredictionWasCorrect == true
+                            ? Color.green : Color.secondary
+                    )
+                }
+
+                HStack {
+                    metric(
+                        "Точность всего",
+                        model.learningMetrics.totalAccuracy.map(percent) ?? "—"
+                    )
+                    metric(
+                        "Последние 100",
+                        model.learningMetrics.rollingAccuracy.map(percent) ?? "—"
+                    )
+                    metric(
+                        "Проверено",
+                        "\(model.learningMetrics.evaluatedCount)"
+                    )
+                    metric(
+                        "Поза",
+                        percent(model.learningMetrics.behaviorConfidence)
+                    )
+                }
+
+                Text(
+                    "Точность считается честно: сначала фиксируется прогноз, затем "
+                        + "приходит исход, прогноз проверяется и только после этого модель учится. "
+                        + "99% — не обещание; приложение показывает фактически достигнутый результат."
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+            .padding(.top, 4)
+        }
+    }
+
     private var captureControls: some View {
         GroupBox("Захват окна") {
             VStack(alignment: .leading, spacing: 12) {
@@ -100,6 +153,11 @@ struct ContentView: View {
                         model.resetStatistics()
                     }
 
+                    Button("Стереть обучение") {
+                        model.eraseLearning()
+                    }
+                    .foregroundStyle(.red)
+
                     Toggle("Голос", isOn: $model.voiceEnabled)
                     Spacer()
                     Button("Доступ к экрану…") {
@@ -112,25 +170,47 @@ struct ContentView: View {
     }
 
     private var calibrationControls: some View {
-        GroupBox("Область истории бросков") {
-            VStack(alignment: .leading, spacing: 10) {
-                Text(
-                    "Оставьте в области только ячейки истории (минимум 5). "
-                        + "Меняйте ползунки, пока OCR ниже не покажет числа в нужном порядке."
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
+        VStack(spacing: 12) {
+            GroupBox("Область истории бросков") {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(
+                        "Оставьте в области только ячейки истории (минимум 5). "
+                            + "Меняйте ползунки, пока OCR ниже не покажет числа."
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
 
-                regionSlider("X", value: $model.region.x)
-                regionSlider("Y", value: $model.region.y)
-                regionSlider("Ширина", value: $model.region.width)
-                regionSlider("Высота", value: $model.region.height)
+                    regionSlider("X", value: $model.region.x)
+                    regionSlider("Y", value: $model.region.y)
+                    regionSlider("Ширина", value: $model.region.width)
+                    regionSlider("Высота", value: $model.region.height)
 
-                Toggle("Новейший результат распознаётся первым", isOn: $model.newestFirst)
+                    Toggle(
+                        "Новейший результат распознаётся первым",
+                        isOn: $model.newestFirst
+                    )
+                }
+                .padding(.top, 4)
             }
-            .padding(.top, 4)
-            .disabled(model.isCapturing || model.isTransitioning)
+
+            GroupBox("Область игрока / ведущего") {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(
+                        "Обведите человека целиком. Vision извлекает только координаты "
+                            + "плеч, локтей, кистей и головы; изображение не сохраняется."
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                    regionSlider("X", value: $model.behaviorRegion.x)
+                    regionSlider("Y", value: $model.behaviorRegion.y)
+                    regionSlider("Ширина", value: $model.behaviorRegion.width)
+                    regionSlider("Высота", value: $model.behaviorRegion.height)
+                }
+                .padding(.top, 4)
+            }
         }
+        .disabled(model.isCapturing || model.isTransitioning)
     }
 
     private var diagnostics: some View {
@@ -164,6 +244,21 @@ struct ContentView: View {
                 .font(.caption.monospacedDigit())
                 .frame(width: 36)
         }
+    }
+
+    private func metric(_ title: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.caption.bold().monospacedDigit())
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func percent(_ value: Double) -> String {
+        value.formatted(.percent.precision(.fractionLength(1)))
     }
 
     private func openScreenRecordingSettings() {
