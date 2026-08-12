@@ -20,7 +20,7 @@ struct ControlPanelView: View {
             disclaimer
         }
         .padding(16)
-        .frame(width: 400, minHeight: 480)
+        .frame(minWidth: 400, minHeight: 480)
     }
 
     private var header: some View {
