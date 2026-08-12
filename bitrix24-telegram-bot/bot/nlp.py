@@ -18,22 +18,6 @@ class UserIntent:
     raw: str = ""
 
 
-_MONTHS = {
-    "январ": 1,
-    "феврал": 2,
-    "март": 3,
-    "апрел": 4,
-    "ма": 5,
-    "июн": 6,
-    "июл": 7,
-    "август": 8,
-    "сентябр": 9,
-    "октябр": 10,
-    "ноябр": 11,
-    "декабр": 12,
-}
-
-
 def parse_user_request(text: str, *, default_days: int = 30, now: Optional[datetime] = None) -> UserIntent:
     now = now or datetime.now()
     raw = (text or "").strip()

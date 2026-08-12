@@ -43,18 +43,6 @@ def _is_allowed(user_id: Optional[int]) -> bool:
     return bool(user_id and user_id in settings.allowed_telegram_ids)
 
 
-async def _make_analytics() -> AnalyticsService:
-    if settings.demo_mode:
-        return AnalyticsService(None, settings.bitrix_user_id or 1, demo_mode=True)
-    if not settings.bitrix_webhook_url:
-        raise RuntimeError("Не задан BITRIX_WEBHOOK_URL")
-    return AnalyticsService(
-        BitrixClient(settings.bitrix_webhook_url),
-        settings.bitrix_user_id,
-        demo_mode=False,
-    )
-
-
 async def _build_and_send(message: Message, intent: UserIntent) -> None:
     await message.answer("⏳ Собираю данные из Bitrix24…")
 
@@ -72,15 +60,8 @@ async def _build_and_send(message: Message, intent: UserIntent) -> None:
 
 async def _deliver_report(message: Message, report: AnalyticsReport, intent: UserIntent) -> None:
     summary = "\n".join(report.summary_lines or report.build_summary())
-    # Telegram лимит ~4096
     if len(summary) > 3500:
         summary = summary[:3490] + "\n…"
-
-    if intent.focus == "tasks":
-        # укоротим open lines в тексте
-        lines = [line for line in (report.summary_lines or []) if not line.startswith("  •") or "ОЛ" not in line]
-        # лучше просто отправить полную сводку — файл всё равно полный
-        pass
 
     await message.answer(f"<pre>{_escape_pre(summary)}</pre>", parse_mode="HTML")
 
@@ -90,13 +71,10 @@ async def _deliver_report(message: Message, report: AnalyticsReport, intent: Use
     generator = ReportGenerator(settings.reports_dir)
     if intent.format == "txt":
         path = generator.generate_txt(report)
-        data = path.read_bytes()
-        document = BufferedInputFile(data, filename=path.name)
     else:
         path = generator.generate_excel(report)
-        data = path.read_bytes()
-        document = BufferedInputFile(data, filename=path.name)
 
+    document = BufferedInputFile(path.read_bytes(), filename=path.name)
     await message.answer_document(
         document,
         caption=f"Готовый отчёт за {report.period.date_from:%d.%m.%Y} — {report.period.date_to:%d.%m.%Y}",
