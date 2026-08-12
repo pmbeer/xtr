@@ -24,16 +24,33 @@
 
 Цель: **99% точности** на повторяющихся паттернах. При случайных (RNG) бросках реальная точность будет ограничена математически.
 
-## Установка
+## Установка на MacBook (установщик .dmg)
+
+### Скачать готовый установщик
+
+1. Откройте **Actions** → **Build macOS Installer** на GitHub
+2. Скачайте артефакт **DartBetPredictor-macOS-Installer** (файл `.dmg`)
+3. Откройте DMG → перетащите **DartBetPredictor** в **Applications**
+4. Запустите из Программ
+
+Подробная инструкция: [INSTALL.md](INSTALL.md)
+
+### Собрать установщик на Mac
 
 ```bash
 cd dart-bet-predictor
-chmod +x build.sh
+./build-installer.sh
+```
+
+Результат: `dist/DartBetPredictor-1.0.0-macOS.dmg`
+
+### Быстрый запуск без DMG (для разработки)
+
+```bash
+cd dart-bet-predictor
 ./build.sh
 open build/DartBetPredictor.app
 ```
-
-Требуется macOS 13+ и разрешение «Запись экрана».
 
 ## Настройка (2 области)
 

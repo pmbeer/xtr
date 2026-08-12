@@ -5,6 +5,7 @@ on:
     branches: [main, 'cursor/**']
     paths:
       - 'dart-bet-predictor/**'
+      - '.github/workflows/macos-installer.yml'
   pull_request:
     paths:
       - 'dart-bet-predictor/**'
