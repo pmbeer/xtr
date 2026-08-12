@@ -37,6 +37,7 @@ build_arch() {
 }
 
 FINAL_BIN="$ROOT/build/${APP_NAME}-final"
+mkdir -p "$ROOT/build"
 
 if [[ "$HOST_ARCH" == "x86_64" ]]; then
   # Intel Mac (MacBook Pro 2018) — нативная сборка
