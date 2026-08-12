@@ -23,12 +23,16 @@ fi
 
 build_arch() {
     local arch="$1"
-    echo "→ Компиляция ${arch}..."
-    swift build -c release --arch "$arch" 2>&1
+    echo "→ Компиляция ${arch}..." >&2
+    swift build -c release --arch "$arch" >&2
     local bin="${BUILD_DIR}/${arch}-apple-macosx/release/${APP_NAME}"
     if [[ ! -f "$bin" ]]; then
         bin="$(swift build -c release --arch "$arch" --show-bin-path)/${APP_NAME}"
     fi
+  if [[ ! -f "$bin" ]]; then
+    echo "Ошибка: бинарник не найден для ${arch}: $bin" >&2
+    return 1
+  fi
     echo "$bin"
 }
 
@@ -40,10 +44,8 @@ if [[ "$HOST_ARCH" == "x86_64" ]]; then
   cp "$X86_BIN" "$FINAL_BIN"
   echo "→ Сборка для Intel x86_64"
 elif [[ "$HOST_ARCH" == "arm64" ]]; then
-  # Apple Silicon / CI — universal binary
   ARM_BIN="$(build_arch arm64)"
-  if build_arch x86_64 > /tmp/x86_bin_path 2>/dev/null; then
-    X86_BIN="$(cat /tmp/x86_bin_path)"
+  if X86_BIN="$(build_arch x86_64 2>/dev/null)"; then
     echo "→ Объединение arm64 + x86_64 в Universal Binary..."
     lipo -create -output "$FINAL_BIN" "$ARM_BIN" "$X86_BIN"
     lipo -info "$FINAL_BIN"
