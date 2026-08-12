@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bitrix24 Analytics Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true"></div>
+  <header class="top">
+    <div class="brand">
+      <span class="brand-mark">B24</span>
+      <div>
+        <p class="brand-name">Analytics Agent</p>
+        <p class="brand-sub">личная активность в Bitrix24</p>
+      </div>
+    </div>
+    <form class="period" method="get" action="/">
+      <label>
+        Дней
+        <input type="number" name="days" min="1" max="365" value="{{ days }}" />
+      </label>
+      <label>
+        User ID
+        <input type="number" name="user_id" placeholder="авто" value="{{ user_id or '' }}" />
+      </label>
+      <button type="submit">Обновить</button>
+    </form>
+  </header>
+
+  {% if error %}
+  <section class="panel error">
+    <h1>Не удалось построить отчёт</h1>
+    <p>{{ error }}</p>
+    <p class="hint">Проверьте <code>BITRIX24_WEBHOOK_URL</code> в <code>.env</code> и права вебхука: task, user, imopenlines.</p>
+  </section>
+  {% elif report %}
+  <main>
+    <section class="hero">
+      <p class="eyebrow">Отчёт</p>
+      <h1>{{ report.user_name }}</h1>
+      <p class="lede">За последние {{ report.days }} дней: закрыто {{ report.summary.closed_tasks }} задач, обработано {{ report.summary.openline_sessions }} обращений.</p>
+      <p class="meta">Сформирован {{ report.generated_at }} · ID {{ report.user_id }}</p>
+    </section>
+
+    <section class="metrics">
+      <article>
+        <h2>Задачи закрыто</h2>
+        <p class="value">{{ report.tasks.closed_count }}</p>
+      </article>
+      <article>
+        <h2>В работе</h2>
+        <p class="value">{{ report.tasks.in_progress_count }}</p>
+      </article>
+      <article>
+        <h2>Просрочено</h2>
+        <p class="value">{{ report.tasks.overdue_count }}</p>
+      </article>
+      <article>
+        <h2>Обращений ОЛ</h2>
+        <p class="value">{{ report.openlines.processed_count }}</p>
+      </article>
+      <article>
+        <h2>Среднее решение</h2>
+        <p class="value value-sm">{{ report.openlines.avg_resolution_human or 'н/д' }}</p>
+      </article>
+      <article>
+        <h2>Среднее закрытие задачи</h2>
+        <p class="value value-sm">{% if report.tasks.avg_close_hours is not none %}{{ report.tasks.avg_close_hours }} ч{% else %}н/д{% endif %}</p>
+      </article>
+    </section>
+
+    <section class="split">
+      <div class="panel">
+        <h2>Задачи по статусам</h2>
+        {% if report.tasks.by_status %}
+        <ul class="bars">
+          {% for name, count in report.tasks.by_status.items() %}
+          <li>
+            <span>{{ name }}</span>
+            <strong>{{ count }}</strong>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty">Нет активных задач</p>
+        {% endif %}
+
+        {% if report.tasks.by_stage %}
+        <h3>По стадиям</h3>
+        <ul class="bars">
+          {% for name, count in report.tasks.by_stage.items() %}
+          <li>
+            <span>{{ name }}</span>
+            <strong>{{ count }}</strong>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <div class="panel">
+        <h2>Открытые линии</h2>
+        <p class="meta">Источник: {{ report.openlines.source }}</p>
+        <ul class="bars">
+          <li><span>Закрыто</span><strong>{{ report.openlines.closed_count }}</strong></li>
+          <li><span>Открыто</span><strong>{{ report.openlines.open_count }}</strong></li>
+          <li><span>Спам</span><strong>{{ report.openlines.spam_count }}</strong></li>
+          <li><span>Ожидание ответа</span><strong>{% if report.openlines.avg_wait_answer_sec is not none %}{{ report.openlines.avg_wait_answer_sec }} с{% else %}н/д{% endif %}</strong></li>
+        </ul>
+        {% if report.openlines.by_source %}
+        <h3>По каналам</h3>
+        <ul class="bars">
+          {% for name, count in report.openlines.by_source.items() %}
+          <li><span>{{ name }}</span><strong>{{ count }}</strong></li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if report.openlines.notes %}
+        <ul class="notes">
+          {% for note in report.openlines.notes %}
+          <li>{{ note }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="split">
+      <div class="panel">
+        <h2>Недавно закрытые задачи</h2>
+        {% if report.tasks.closed_tasks %}
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Название</th><th>Часы</th></tr>
+          </thead>
+          <tbody>
+            {% for task in report.tasks.closed_tasks[:12] %}
+            <tr>
+              <td>{{ task.id }}</td>
+              <td>{{ task.title }}</td>
+              <td>{% if task.hours_to_close is not none %}{{ task.hours_to_close }}{% else %}—{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="empty">За период закрытых задач нет</p>
+        {% endif %}
+      </div>
+      <div class="panel">
+        <h2>Активные задачи</h2>
+        {% if report.tasks.active_tasks %}
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Название</th><th>Статус</th></tr>
+          </thead>
+          <tbody>
+            {% for task in report.tasks.active_tasks[:12] %}
+            <tr>
+              <td>{{ task.id }}</td>
+              <td>{{ task.title }}</td>
+              <td>{{ task.status }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="empty">Активных задач нет</p>
+        {% endif %}
+      </div>
+    </section>
+  </main>
+  {% else %}
+  <section class="panel error">
+    <h1>Нет данных</h1>
+    <p>Задайте BITRIX24_WEBHOOK_URL и обновите страницу.</p>
+  </section>
+  {% endif %}
+
+  <footer>
+    <p>Webhook событий: <code>POST /webhook/bitrix</code> · API: <code>GET /api/report</code></p>
+  </footer>
+</body>
+</html>
