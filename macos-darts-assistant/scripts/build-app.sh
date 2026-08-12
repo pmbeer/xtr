@@ -39,7 +39,7 @@ printf 'APPL????' > "$CONTENTS/PkgInfo"
     "$CONTENTS/Info.plist"
 
 echo "Architectures: $(lipo -archs "$MACOS_DIR/$APP_NAME")"
-lipo -verify_arch arm64 x86_64 "$MACOS_DIR/$APP_NAME"
+lipo "$MACOS_DIR/$APP_NAME" -verify_arch arm64 x86_64
 
 codesign \
     --force \
