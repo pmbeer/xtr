@@ -88,7 +88,7 @@ final class GameAIAnalyzer {
         if let sec = bettingSeconds, sec > 0 && sec <= 20 {
             return .bettingWindow
         }
-        if insight.playerDetected && insight.detectedAction == .aim || insight.detectedAction == .stance {
+        if insight.playerDetected && (insight.detectedAction == .aim || insight.detectedAction == .stance) {
             return .playerPreparing
         }
         if insight.playerDetected {

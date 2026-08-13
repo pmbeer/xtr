@@ -6,11 +6,42 @@ struct MainDashboardView: View {
     @ObservedObject var settings = SettingsManager.shared
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
+            if pipeline.needsScreenPermission {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                    Text("Разрешите «Запись экрана» для DartPredictor")
+                        .font(.caption)
+                    Spacer()
+                    Button("Открыть настройки") {
+                        pipeline.requestPermission()
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+                .padding(8)
+                .background(Color.orange.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+
+            LivePreviewPanel(
+                image: pipeline.livePreviewImage,
+                cropSize: pipeline.lastCropSize,
+                captureFrames: pipeline.captureFrames,
+                error: pipeline.captureError
+            )
+
             AIStatusPanel(
+                phase: pipeline.gamePhase,
                 sceneState: pipeline.sceneState,
                 insight: pipeline.aiInsight,
-                detectedNumbers: pipeline.detectedNumbersOnScreen
+                detectedNumbers: pipeline.detectedNumbersOnScreen,
+                bettingSeconds: pipeline.bettingSecondsOnScreen,
+                throwInProgress: pipeline.throwInProgress
             )
 
             PredictionDisplayView(
@@ -28,39 +59,17 @@ struct MainDashboardView: View {
                 outcome: pipeline.lastOutcome
             )
 
-            HStack {
-                Label(pipeline.processingState, systemImage: "waveform")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-
-                Spacer()
-
-                if pipeline.lastCropSize.width > 0 {
-                    Text("\(Int(pipeline.lastCropSize.width))×\(Int(pipeline.lastCropSize.height))")
-                        .font(.caption2.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-
-                if settings.settings.isPaperPredictionMode {
-                    Text("Paper Prediction")
-                        .font(.caption.weight(.medium))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.blue.opacity(0.15))
-                        .clipShape(Capsule())
-                }
-
-                Text("Таймер: \(String(format: "%.1f", pipeline.decisionTimerRemaining)) сек")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
+            Text(pipeline.processingState)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(3)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             HStack {
                 Button(pipeline.isRunning ? "Остановить" : "Запустить") {
                     Task {
                         if pipeline.isRunning {
-                            await pipeline.stop()
+                            pipeline.stop()
                         } else {
                             await pipeline.start()
                         }
@@ -68,7 +77,7 @@ struct MainDashboardView: View {
                 }
                 .buttonStyle(.borderedProminent)
 
-                Button("Выбрать экран") {
+                Button("Выбрать область игры") {
                     NotificationCenter.default.post(name: .showRegionSetup, object: nil)
                 }
                 .buttonStyle(.bordered)

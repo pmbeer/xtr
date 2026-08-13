@@ -41,7 +41,7 @@ final class RegionFrameCapture: ObservableObject {
         )
     }
 
-    func startCapture(handler: @escaping (CGImage) -> Void) {
+    func startCapture(fps: Int, handler: @escaping (CGImage) -> Void) {
         guard captureRegion != nil else {
             lastError = "Область не выбрана"
             return
@@ -59,7 +59,6 @@ final class RegionFrameCapture: ObservableObject {
         isCapturing = true
         lastError = nil
 
-        let fps = SettingsManager.shared.settings.captureFrameRate
         let interval = 1.0 / Double(max(fps, 5))
 
         let t = DispatchSource.makeTimerSource(queue: captureQueue)

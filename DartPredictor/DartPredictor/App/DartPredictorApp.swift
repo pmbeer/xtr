@@ -24,7 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        Task { await PipelineCoordinator.shared.stop() }
+        PipelineCoordinator.shared.stop()
         return true
     }
 }

@@ -60,7 +60,8 @@ final class PipelineCoordinator: ObservableObject {
         profileManager.load()
         regionCapture.configure(region: region.rect)
 
-        regionCapture.startCapture { [weak self] image in
+        let fps = SettingsManager.shared.settings.captureFrameRate
+        regionCapture.startCapture(fps: fps) { [weak self] image in
             Task { @MainActor in
                 self?.handleFrame(image)
             }
