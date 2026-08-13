@@ -14,7 +14,7 @@ final class TimingModel: PredictionModel {
         if let counts = intervalResultMap[intervalBucket] {
             let total = counts.values.reduce(0, +)
             for (num, count) in counts {
-                scores[num] += Double(count) / Double(total) * 0.5
+                scores[num, default: 0] += Double(count) / Double(total) * 0.5
             }
         }
 
@@ -22,13 +22,13 @@ final class TimingModel: PredictionModel {
         if let counts = prepDurationMap[prepBucket] {
             let total = counts.values.reduce(0, +)
             for (num, count) in counts {
-                scores[num] += Double(count) / Double(total) * 0.5
+                scores[num, default: 0] += Double(count) / Double(total) * 0.5
             }
         }
 
         let rhythmScore = rhythmBasedScores(history: history, features: features)
         for (num, score) in rhythmScore {
-            scores[num] += score * 0.3
+            scores[num, default: 0] += score * 0.3
         }
 
         let hasScores = scores.values.contains { $0 > 0 }

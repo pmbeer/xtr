@@ -38,8 +38,7 @@ final class PipelineCoordinator: ObservableObject {
     func start() async {
         guard !isRunning else { return }
 
-        let settings = SettingsManager.shared.settings
-        guard let region = settings.monitorRegion else {
+        guard let region = SettingsManager.shared.monitorRegion else {
             processingState = "Выберите область экрана"
             return
         }

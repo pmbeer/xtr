@@ -44,7 +44,7 @@ final class PlayerProfileManager: ObservableObject {
         let id = UUID().uuidString
         var profile = PlayerProfile(id: id, name: name)
         profile.featureClusters.append(features.vector)
-        store.playerProfiles[id] = profile
+        store.updateActiveProfile(profile)
         profiles = Array(store.playerProfiles.values)
         return profile
     }
