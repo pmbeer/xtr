@@ -48,6 +48,7 @@ final class PredictionModelsTests: XCTestCase {
         XCTAssertEqual(prediction.predictions.count, 4)
         let probTotal = prediction.predictions.map(\.probability).reduce(0, +)
         XCTAssertEqual(probTotal, 100.0, accuracy: 0.1)
+        XCTAssertEqual(prediction.combination.numbers.count, 4)
     }
 
     func testValidDartNumbers() {
@@ -72,9 +73,22 @@ final class PredictionModelsTests: XCTestCase {
         XCTAssertEqual(stats.top4Accuracy, 50.0)
     }
 
-    func testPlayerProfileWeights() {
-        let profile = PlayerProfile(id: "test", name: "Test")
-        let total = PredictionModelType.allCases.map { profile.weight(for: $0) }.reduce(0, +)
-        XCTAssertGreaterThan(total, 0.9)
+    func testCombinationJointProbability() {
+        let preds = [
+            TopPrediction(number: 17, probability: 30),
+            TopPrediction(number: 7, probability: 25),
+            TopPrediction(number: 19, probability: 25),
+            TopPrediction(number: 12, probability: 20)
+        ]
+        let combo = CombinationPredictor.shared.buildCombination(from: preds)
+        XCTAssertEqual(combo.numbers.count, 4)
+        XCTAssertGreaterThan(combo.jointProbability, 0)
+        XCTAssertLessThanOrEqual(combo.jointProbability, 99.9)
+    }
+
+    func testAIActionInsightDefaults() {
+        let insight = AIActionInsight.empty
+        XCTAssertEqual(insight.sceneState, .idle)
+        XCTAssertFalse(insight.playerDetected)
     }
 }

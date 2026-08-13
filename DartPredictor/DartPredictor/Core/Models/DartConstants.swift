@@ -11,11 +11,12 @@ enum DartConstants {
     static let playerAnalysisScale: CGFloat = 0.35
     static let sequenceWindows = [3, 5, 10, 20, 50]
     static let defaultModelWeights: [PredictionModelType: Double] = [
-        .sequence: 0.20,
-        .frequency: 0.15,
-        .transition: 0.20,
-        .playerBehavior: 0.30,
-        .timing: 0.15
+        .sequence: 0.15,
+        .frequency: 0.10,
+        .transition: 0.15,
+        .playerBehavior: 0.20,
+        .timing: 0.10,
+        .aiAction: 0.30
     ]
     static let weightSmoothingAlpha: Double = 0.08
     static let learningPhases: [LearningPhase] = [.dataCollection, .calibration, .adaptiveLearning, .stableModel]
@@ -27,6 +28,7 @@ enum PredictionModelType: String, Codable, CaseIterable, Identifiable {
     case transition = "TransitionModel"
     case playerBehavior = "PlayerBehaviorModel"
     case timing = "TimingModel"
+    case aiAction = "AIActionModel"
 
     var id: String { rawValue }
 
@@ -37,6 +39,7 @@ enum PredictionModelType: String, Codable, CaseIterable, Identifiable {
         case .transition: return "Переходы"
         case .playerBehavior: return "Поведение игрока"
         case .timing: return "Временные паттерны"
+        case .aiAction: return "ИИ-анализ действий"
         }
     }
 }
@@ -69,8 +72,17 @@ enum PredictionOutcome: String, Codable {
 }
 
 enum CaptureRegionType: String, Codable, CaseIterable {
+    case gameScreen = "game_screen"
     case result = "result"
     case player = "player"
+
+    var displayName: String {
+        switch self {
+        case .gameScreen: return "Игровой экран"
+        case .result: return "Результаты (legacy)"
+        case .player: return "Игрок (legacy)"
+        }
+    }
 }
 
 struct CaptureRegion: Codable, Equatable {
@@ -182,6 +194,7 @@ struct TopPrediction: Identifiable, Equatable {
 
 struct EnsemblePrediction: Equatable {
     let predictions: [TopPrediction]
+    let combination: PredictedCombination
     let confidence: ConfidenceLevel
     let confidenceScore: Double
     let modelContributions: [PredictionModelType: [Int]]
@@ -189,6 +202,7 @@ struct EnsemblePrediction: Equatable {
 
     static let empty = EnsemblePrediction(
         predictions: [],
+        combination: PredictedCombination(numbers: [], individualProbabilities: [], jointProbability: 0, combinationScore: 0),
         confidence: .low,
         confidenceScore: 0,
         modelContributions: [:],

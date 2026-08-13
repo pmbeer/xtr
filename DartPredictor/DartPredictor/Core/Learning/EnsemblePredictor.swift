@@ -1,19 +1,23 @@
 import Foundation
 
-/// Model F — adaptive ensemble combining all models
+/// Model F — adaptive ensemble combining all models including AI
 final class EnsemblePredictor {
     private let models: [PredictionModel] = [
         SequenceModel(),
         FrequencyModel(),
         TransitionModel(),
         PlayerBehaviorModel(),
-        TimingModel()
+        TimingModel(),
+        AIActionModel()
     ]
+    private let aiModel = AIActionModel()
+    private let combinationPredictor = CombinationPredictor.shared
 
     func predict(
         history: [Int],
         features: PlayerFeatures,
-        weights: [PredictionModelType: Double]
+        weights: [PredictionModelType: Double],
+        aiInsight: AIActionInsight = .empty
     ) -> EnsemblePrediction {
         let start = CFAbsoluteTimeGetCurrent()
 
@@ -21,7 +25,12 @@ final class EnsemblePredictor {
         var contributions: [PredictionModelType: [Int]] = [:]
 
         for model in models {
-            let modelScores = model.predict(history: history, features: features)
+            let modelScores: [Int: Double]
+            if model.type == .aiAction {
+                modelScores = aiModel.predictFromInsight(aiInsight, features: features)
+            } else {
+                modelScores = model.predict(history: history, features: features)
+            }
             let weight = weights[model.type] ?? 0.1
             contributions[model.type] = topNumbers(from: modelScores, count: 4)
 
@@ -40,12 +49,14 @@ final class EnsemblePredictor {
             : topProbs
 
         let predictions = zip(top4, finalProbs).map { TopPrediction(number: $0, probability: $1) }
-        let confidence = computeConfidence(predictions: predictions, historyCount: history.count)
+        let combination = combinationPredictor.buildCombination(from: predictions)
+        let confidence = computeConfidence(predictions: predictions, historyCount: history.count, aiInsight: aiInsight)
 
         let elapsed = (CFAbsoluteTimeGetCurrent() - start) * 1000
 
         return EnsemblePrediction(
             predictions: predictions,
+            combination: combination,
             confidence: confidence.level,
             confidenceScore: confidence.score,
             modelContributions: contributions,
@@ -80,7 +91,8 @@ final class EnsemblePredictor {
 
     private func computeConfidence(
         predictions: [TopPrediction],
-        historyCount: Int
+        historyCount: Int,
+        aiInsight: AIActionInsight
     ) -> (level: ConfidenceLevel, score: Double) {
         guard let top = predictions.first else {
             return (.low, 0)
@@ -90,8 +102,9 @@ final class EnsemblePredictor {
         let topProb = top.probability
         let avgSpread = spread.reduce(0, +) / Double(spread.count)
         let dataFactor = min(Double(historyCount) / 100.0, 1.0)
+        let aiFactor = aiInsight.actionConfidence * 0.2
 
-        let score = (topProb / 100.0 * 0.5 + dataFactor * 0.3 + (topProb - avgSpread) / 100.0 * 0.2) * 100
+        let score = (topProb / 100.0 * 0.4 + dataFactor * 0.25 + (topProb - avgSpread) / 100.0 * 0.15 + aiFactor) * 100
         let clamped = min(max(score, 0), 100)
 
         let level: ConfidenceLevel

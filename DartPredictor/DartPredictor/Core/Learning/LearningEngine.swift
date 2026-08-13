@@ -9,11 +9,17 @@ final class LearningEngine: ObservableObject {
 
     private let ensemble = EnsemblePredictor()
     private var pendingPrediction: EnsemblePrediction?
-    private var pendingEntryId: UUID?
     private var lastFeatures: PlayerFeatures = .zero
+    private var lastAIInsight: AIActionInsight = .empty
 
-    func makePrediction(history: [Int], features: PlayerFeatures, profile: PlayerProfile) -> EnsemblePrediction {
+    func makePrediction(
+        history: [Int],
+        features: PlayerFeatures,
+        profile: PlayerProfile,
+        aiInsight: AIActionInsight = .empty
+    ) -> EnsemblePrediction {
         lastFeatures = features
+        lastAIInsight = aiInsight
         let weights = profile.modelWeights.reduce(into: [PredictionModelType: Double]()) { result, pair in
             if let type = PredictionModelType.allCases.first(where: { $0.rawValue == pair.key }) {
                 result[type] = pair.value
@@ -21,7 +27,12 @@ final class LearningEngine: ObservableObject {
         }
         modelWeights = weights.isEmpty ? DartConstants.defaultModelWeights : weights
 
-        let prediction = ensemble.predict(history: history, features: features, weights: modelWeights)
+        let prediction = ensemble.predict(
+            history: history,
+            features: features,
+            weights: modelWeights,
+            aiInsight: aiInsight
+        )
         pendingPrediction = prediction
 
         DebugLogger.shared.logPrediction(
@@ -38,7 +49,8 @@ final class LearningEngine: ObservableObject {
         history: [Int],
         features: PlayerFeatures,
         profile: inout PlayerProfile,
-        previousEntry: PredictionEntry?
+        previousEntry: PredictionEntry?,
+        aiInsight: AIActionInsight = .empty
     ) -> PredictionOutcome {
         var outcome: PredictionOutcome = .miss
 
@@ -61,6 +73,8 @@ final class LearningEngine: ObservableObject {
                 wasCorrect: hit,
                 modelHits: modelHits
             )
+
+            AIActionAnalyzer.shared.trainOnResult(actual, featureSequence: features.vector)
 
             updateWeights(profile: &profile, modelHits: modelHits)
             updatePhase(profile: &profile)
@@ -105,8 +119,7 @@ final class LearningEngine: ObservableObject {
         let total = PredictionModelType.allCases.map { profile.weight(for: $0) }.reduce(0, +)
         guard total > 0 else { return }
         for type in PredictionModelType.allCases {
-            let normalized = profile.weight(for: type) / total
-            profile.setWeight(normalized, for: type)
+            profile.setWeight(profile.weight(for: type) / total, for: type)
         }
     }
 

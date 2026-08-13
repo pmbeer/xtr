@@ -12,19 +12,33 @@ final class ScreenCaptureManager: NSObject, ObservableObject {
 
     private var stream: SCStream?
     private let captureQueue = DispatchQueue(label: "com.dartpredictor.capture", qos: .userInteractive)
-    private var resultHandler: ((CGImage, CaptureRegionType) -> Void)?
-    private var regions: [CaptureRegionType: CGRect] = [:]
+    private var frameHandler: ((CGImage) -> Void)?
+    private var monitorRect: CGRect?
     private let ciContext = CIContext(options: [.useSoftwareRenderer: false])
 
+    func configureMonitorRegion(_ rect: CGRect) {
+        monitorRect = rect
+    }
+
     func configure(regions: [CaptureRegion]) {
-        for region in regions {
-            self.regions[region.type] = region.rect
+        if let game = regions.first(where: { $0.type == .gameScreen }) {
+            monitorRect = game.rect
+            return
+        }
+        // Legacy: объединить result + player в одну область
+        let legacy = regions.filter { $0.type == .result || $0.type == .player }
+        if !legacy.isEmpty {
+            monitorRect = legacy.map(\.rect).reduce(legacy[0].rect) { $0.union($1) }
         }
     }
 
-    func startCapture(handler: @escaping (CGImage, CaptureRegionType) -> Void) async throws {
+    func startCapture(handler: @escaping (CGImage) -> Void) async throws {
         guard !isCapturing else { return }
-        resultHandler = handler
+        guard monitorRect != nil else {
+            throw CaptureError.noRegion
+        }
+
+        frameHandler = handler
 
         let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
         guard let display = content.displays.first else {
@@ -48,36 +62,35 @@ final class ScreenCaptureManager: NSObject, ObservableObject {
 
         stream = newStream
         await MainActor.run { isCapturing = true }
-        DebugLogger.shared.log("Screen capture started", category: "capture")
+        DebugLogger.shared.log("Screen capture started (unified monitor)", category: "capture")
     }
 
     func stopCapture() async {
         guard let stream else { return }
         try? await stream.stopCapture()
         self.stream = nil
-        resultHandler = nil
+        frameHandler = nil
         await MainActor.run { isCapturing = false }
         DebugLogger.shared.log("Screen capture stopped", category: "capture")
     }
 
     fileprivate func processFrame(_ pixelBuffer: CVPixelBuffer) {
-        guard let handler = resultHandler else { return }
+        guard let handler = frameHandler, let rect = monitorRect else { return }
         let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-
-        for (type, rect) in regions {
-            let cropped = ciImage.cropped(to: rect)
-            guard let cgImage = ciContext.createCGImage(cropped, from: cropped.extent) else { continue }
-            handler(cgImage, type)
-        }
+        let cropped = ciImage.cropped(to: rect)
+        guard let cgImage = ciContext.createCGImage(cropped, from: cropped.extent) else { return }
+        handler(cgImage)
     }
 
     enum CaptureError: LocalizedError {
         case noDisplay
+        case noRegion
         case streamFailed
 
         var errorDescription: String? {
             switch self {
             case .noDisplay: return "Не найден дисплей для захвата"
+            case .noRegion: return "Не выбрана область экрана для мониторинга"
             case .streamFailed: return "Ошибка запуска потока захвата"
             }
         }

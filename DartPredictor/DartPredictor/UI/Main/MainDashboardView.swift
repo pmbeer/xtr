@@ -6,9 +6,16 @@ struct MainDashboardView: View {
     @ObservedObject var settings = SettingsManager.shared
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
+            AIStatusPanel(
+                sceneState: pipeline.sceneState,
+                insight: pipeline.aiInsight,
+                detectedNumbers: pipeline.detectedNumbersOnScreen
+            )
+
             PredictionDisplayView(
                 predictions: pipeline.currentPrediction.predictions,
+                combination: pipeline.currentCombination,
                 confidence: pipeline.currentPrediction.confidence,
                 confidenceScore: pipeline.currentPrediction.confidenceScore
             )
@@ -54,7 +61,7 @@ struct MainDashboardView: View {
                 }
                 .buttonStyle(.borderedProminent)
 
-                Button("Выбрать области") {
+                Button("Выбрать экран") {
                     NotificationCenter.default.post(name: .showRegionSetup, object: nil)
                 }
                 .buttonStyle(.bordered)

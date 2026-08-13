@@ -3,9 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @ObservedObject var settings = SettingsManager.shared
     @State private var selectedTab = 0
-    @State private var showOnboarding = false
-    @State private var showResultSelector = false
-    @State private var showPlayerSelector = false
+    @State private var showMonitorSelector = false
 
     var body: some View {
         Group {
@@ -17,17 +15,24 @@ struct ContentView: View {
                 mainContent
             }
         }
-        .frame(minWidth: 700, minHeight: 500)
+        .frame(minWidth: 720, minHeight: 560)
         .onAppear {
             HistoryManager.shared.load()
             PlayerProfileManager.shared.load()
             AccuracyManager.shared.update(from: PlayerProfileManager.shared.activeProfile)
         }
         .onReceive(NotificationCenter.default.publisher(for: .showRegionSetup)) { _ in
-            showResultSelector = true
+            showMonitorSelector = true
         }
         .background {
-            regionSelectors
+            if showMonitorSelector {
+                RegionSelectorBridge(regionType: .gameScreen) { rect in
+                    showMonitorSelector = false
+                    if let rect {
+                        settings.setMonitorRegion(rect)
+                    }
+                }
+            }
         }
     }
 
@@ -45,47 +50,29 @@ struct ContentView: View {
                 .tabItem { Label("Обучение", systemImage: "brain") }
                 .tag(2)
 
-            SettingsTabView(
-                showResultSelector: $showResultSelector,
-                showPlayerSelector: $showPlayerSelector
-            )
+            SettingsTabView(showMonitorSelector: $showMonitorSelector)
                 .tabItem { Label("Настройки", systemImage: "gear") }
                 .tag(3)
         }
         .background(PredictionOverlay())
     }
-
-    @ViewBuilder
-    private var regionSelectors: some View {
-        if showResultSelector {
-            RegionSelectorBridge(regionType: .result) { rect in
-                showResultSelector = false
-                if let rect {
-                    settings.setRegion(CaptureRegion(type: .result, rect: rect))
-                }
-            }
-        }
-        if showPlayerSelector {
-            RegionSelectorBridge(regionType: .player) { rect in
-                showPlayerSelector = false
-                if let rect {
-                    settings.setRegion(CaptureRegion(type: .player, rect: rect))
-                }
-            }
-        }
-    }
 }
 
 struct SettingsTabView: View {
     @ObservedObject var settings = SettingsManager.shared
-    @Binding var showResultSelector: Bool
-    @Binding var showPlayerSelector: Bool
+    @Binding var showMonitorSelector: Bool
 
     var body: some View {
         Form {
-            Section("Области экрана") {
-                Button("Область результатов") { showResultSelector = true }
-                Button("Область игрока") { showPlayerSelector = true }
+            Section("Область мониторинга") {
+                Text("Выделите область экрана с игрой — ИИ будет анализировать игрока, броски и результаты.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Button("Выбрать игровой экран") { showMonitorSelector = true }
+                if let region = settings.monitorRegion {
+                    Text("Область: \(Int(region.rect.width))×\(Int(region.rect.height)) px")
+                        .font(.caption)
+                }
             }
 
             Section("Режим") {
@@ -102,6 +89,14 @@ struct SettingsTabView: View {
                         else { PredictionOverlayController.shared.hide() }
                     }
                 ))
+            }
+
+            Section("ИИ") {
+                Text("Vision Framework + нейросеть на CPU")
+                    .font(.caption)
+                Text("Анализ: поза, замах, бросок, результат, игрок")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Section("Отладка") {

@@ -1,7 +1,76 @@
 import SwiftUI
 
+struct AIStatusPanel: View {
+    let sceneState: GameSceneState
+    let insight: AIActionInsight
+    let detectedNumbers: [Int]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("ИИ-анализ экрана", systemImage: "brain.head.profile")
+                .font(.subheadline.weight(.semibold))
+
+            HStack(spacing: 12) {
+                Label(sceneState.rawValue, systemImage: sceneState.icon)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                if insight.playerDetected {
+                    Label("Игрок виден", systemImage: "person.fill.checkmark")
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                }
+            }
+
+            Text(insight.aiDescription)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+
+            if !detectedNumbers.isEmpty {
+                Text("Числа на экране: \(detectedNumbers.map(String.init).joined(separator: ", "))")
+                    .font(.caption.monospacedDigit())
+            }
+
+            ProgressView(value: insight.throwPhaseProgress) {
+                Text("Фаза броска")
+                    .font(.caption2)
+            }
+            .tint(.orange)
+        }
+        .padding(12)
+        .background(Color.secondary.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+}
+
+struct CombinationDisplayView: View {
+    let combination: PredictedCombination
+
+    var body: some View {
+        if !combination.numbers.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("КОМБИНАЦИЯ")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+
+                Text(combination.formatted)
+                    .font(.title2.weight(.bold).monospacedDigit())
+
+                HStack {
+                    Text("Совместная вероятность:")
+                        .font(.caption)
+                    Text(String(format: "%.1f%%", combination.jointProbability))
+                        .font(.caption.weight(.semibold).monospacedDigit())
+                }
+            }
+        }
+    }
+}
+
 struct PredictionDisplayView: View {
     let predictions: [TopPrediction]
+    let combination: PredictedCombination
     let confidence: ConfidenceLevel
     let confidenceScore: Double
 
@@ -10,6 +79,8 @@ struct PredictionDisplayView: View {
             Text("СЛЕДУЮЩИЙ ПРОГНОЗ")
                 .font(.headline)
                 .foregroundStyle(.secondary)
+
+            CombinationDisplayView(combination: combination)
 
             HStack(alignment: .top, spacing: 24) {
                 VStack(alignment: .leading, spacing: 8) {

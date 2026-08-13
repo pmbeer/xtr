@@ -165,6 +165,8 @@ final class RegionSelectionView: NSView {
 
     private func updateInstruction() {
         switch regionType {
+        case .gameScreen:
+            instructionLabel.stringValue = "Выделите область экрана с игрой (игрок + результаты). Перетащите мышь. Enter — подтвердить, Esc — отмена."
         case .result:
             instructionLabel.stringValue = "Выделите область с результатами бросков. Перетащите мышь. Enter — подтвердить, Esc — отмена."
         case .player:

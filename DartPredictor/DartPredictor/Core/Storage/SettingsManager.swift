@@ -23,7 +23,28 @@ final class SettingsManager: ObservableObject {
         guard let data = try? Data(contentsOf: storageURL),
               let decoded = try? decoder.decode(AppSettings.self, from: data) else { return }
         settings = decoded
+        migrateLegacyRegions()
         DebugLogger.shared.configure(enabled: decoded.debugLoggingEnabled)
+    }
+
+    var monitorRegion: CaptureRegion? {
+        if let game = region(for: .gameScreen) { return game }
+        if let result = region(for: .result) {
+            return CaptureRegion(type: .gameScreen, rect: result.rect)
+        }
+        return nil
+    }
+
+    func setMonitorRegion(_ rect: CGRect) {
+        setRegion(CaptureRegion(type: .gameScreen, rect: rect))
+    }
+
+    private func migrateLegacyRegions() {
+        guard region(for: .gameScreen) == nil else { return }
+        let legacy = settings.regions.filter { $0.type == .result || $0.type == .player }
+        guard !legacy.isEmpty else { return }
+        let united = legacy.map(\.rect).reduce(legacy[0].rect) { $0.union($1) }
+        setRegion(CaptureRegion(type: .gameScreen, rect: united))
     }
 
     func save() {
