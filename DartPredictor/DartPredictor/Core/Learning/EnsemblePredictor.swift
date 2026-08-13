@@ -3,6 +3,7 @@ import Foundation
 /// Model F — adaptive ensemble combining all models including AI
 final class EnsemblePredictor {
     private let models: [PredictionModel] = [
+        DiceMathModel(),
         SequenceModel(),
         FrequencyModel(),
         TransitionModel(),
@@ -62,6 +63,10 @@ final class EnsemblePredictor {
             history: history,
             fallback: predictions
         )
+        let alternatives = combinationPredictor.buildAlternativeCombinations(
+            scores: normalized,
+            count: DartConstants.minCombinationVariants
+        )
         let confidence = computeConfidence(
             predictions: predictions,
             combination: combination,
@@ -81,6 +86,7 @@ final class EnsemblePredictor {
         return EnsemblePrediction(
             predictions: predictions,
             combination: combination,
+            alternativeCombinations: alternatives,
             confidence: confidence.level,
             confidenceScore: confidence.score,
             modelContributions: contributions,
@@ -109,7 +115,13 @@ final class EnsemblePredictor {
     ) -> [PredictionModelType: Double] {
         var w = base.isEmpty ? DartConstants.defaultModelWeights : base
 
+        if historyCount >= 4 {
+            w[.diceMath] = (w[.diceMath] ?? 0.28) * 1.55
+            w[.sequence] = (w[.sequence] ?? 0.12) * 1.25
+            w[.transition] = (w[.transition] ?? 0.12) * 1.25
+        }
         if historyCount >= 8 {
+            w[.diceMath] = (w[.diceMath] ?? 0.28) * 1.35
             w[.sequence] = (w[.sequence] ?? 0.15) * 1.45
             w[.transition] = (w[.transition] ?? 0.15) * 1.35
             w[.frequency] = (w[.frequency] ?? 0.10) * 1.25
@@ -168,8 +180,13 @@ final class EnsemblePredictor {
         var parts: [String] = []
 
         if history.count >= 3 {
-            let tail = history.suffix(6).map(String.init).joined(separator: "→")
+            let tail = history.suffix(6).map { "\($0)(\(DiceMath.formatDice(grid: $0)))" }.joined(separator: "→")
             parts.append("история \(tail)")
+        }
+
+        if let diceNums = contributions[.diceMath], !diceNums.isEmpty {
+            let diceTop = diceNums.prefix(2).map { "\($0)" }.joined(separator: ",")
+            parts.append("кости: \(diceTop)")
         }
 
         if aiInsight.playerDetected {

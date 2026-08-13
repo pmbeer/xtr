@@ -2,27 +2,31 @@ import Foundation
 import CoreGraphics
 
 enum DartConstants {
-    static let validNumbers: Set<Int> = Set(1...20)
+  /// NARDBALL: сетка 1–36 (красная × синяя кость)
+    static let validNumbers: Set<Int> = Set(1...36)
     static let minHistoryCount = 1000
     static let topPredictionCount = 4
+    static let minCombinationVariants = 4
     static let ocrDebounceFrames = 3
     static let maxProcessingTimeMs: Double = 3000
     static let decisionWindowSeconds: Double = 5.0
     static let playerAnalysisScale: CGFloat = 0.35
     static let sequenceWindows = [3, 5, 10, 20, 50]
     static let defaultModelWeights: [PredictionModelType: Double] = [
-        .sequence: 0.15,
+        .diceMath: 0.28,
+        .sequence: 0.12,
         .frequency: 0.10,
-        .transition: 0.15,
-        .playerBehavior: 0.20,
-        .timing: 0.10,
-        .aiAction: 0.30
+        .transition: 0.12,
+        .playerBehavior: 0.14,
+        .timing: 0.08,
+        .aiAction: 0.24
     ]
     static let weightSmoothingAlpha: Double = 0.08
     static let learningPhases: [LearningPhase] = [.dataCollection, .calibration, .adaptiveLearning, .stableModel]
 }
 
 enum PredictionModelType: String, Codable, CaseIterable, Identifiable {
+    case diceMath = "DiceMathModel"
     case sequence = "SequenceModel"
     case frequency = "FrequencyModel"
     case transition = "TransitionModel"
@@ -34,6 +38,7 @@ enum PredictionModelType: String, Codable, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
+        case .diceMath: return "Математика костей"
         case .sequence: return "Последовательности"
         case .frequency: return "Частотность"
         case .transition: return "Переходы"
@@ -127,15 +132,15 @@ struct NormalizedRect: Codable, Equatable {
     }
 }
 
-/// Три зоны fon.bet: результаты (красная), игрок (зелёная), доска (синяя)
+/// Зоны NARDBALL / fon.bet: история сверху, сетка 1–36, видео
 struct GameWindowZones: Codable, Equatable {
-    /// Красная — история бросков и счёт
+    /// История выпадений (верхняя полоса с костями)
     var resultsZone: NormalizedRect
-    /// Зелёная — видео игрока
+    /// Видео игроков
     var playerZone: NormalizedRect
-    /// Синяя — мишень / доска
+    /// Сетка ставок 1–36
     var dartboardZone: NormalizedRect
-    /// Поле ставок 1–20 (исключаем из OCR результатов)
+    /// Фишки / кнопки ставок
     var bettingZone: NormalizedRect
     /// Зоны, которые ИИ полностью игнорирует (таймеры, overlay ставок)
     var ignoredZones: [NormalizedRect]
@@ -176,23 +181,28 @@ struct GameWindowZones: Codable, Equatable {
         try c.encode(ignoredZones, forKey: .ignoredZones)
     }
 
-    /// fon.bet live — только результаты + игрок; overlay и часы игнорируются
-    static let fonBetDefault = GameWindowZones(
-        // 🔴 Серия / кружки попаданий + счёт
-        resultsZone: NormalizedRect(x: 0.46, y: 0.56, width: 0.52, height: 0.40),
-        // 🟢 Правое видео — поведение игрока (без overlay)
-        playerZone: NormalizedRect(x: 0.52, y: 0.11, width: 0.46, height: 0.38),
-        // Не анализируется в v1.0.12+ (оставлено для совместимости)
-        dartboardZone: NormalizedRect(x: 0.02, y: 0.11, width: 0.48, height: 0.38),
-        // Только детект «прогнозы приняты», не таймер
-        bettingZone: NormalizedRect(x: 0.04, y: 0.50, width: 0.92, height: 0.14),
+    /// NARDBALL FORTUNE — история сверху, сетка 1–36, видео по центру
+    static let nardballDefault = GameWindowZones(
+        // Верхняя полоса истории (числа + красная/синяя кость)
+        resultsZone: NormalizedRect(x: 0.02, y: 0.06, width: 0.96, height: 0.11),
+        // Центральное видео
+        playerZone: NormalizedRect(x: 0.32, y: 0.22, width: 0.36, height: 0.32),
+        // Сетка ставок 1–36
+        dartboardZone: NormalizedRect(x: 0.08, y: 0.18, width: 0.58, height: 0.58),
+        // Фишки и кнопки «Повторить»
+        bettingZone: NormalizedRect(x: 0.12, y: 0.76, width: 0.76, height: 0.10),
         ignoredZones: [
-            // Центральный overlay: зелёный таймер SEC + кнопки 50/100/200…
-            NormalizedRect(x: 0.28, y: 0.27, width: 0.44, height: 0.22),
-            // Часы матча справа сверху (05:58:12)
-            NormalizedRect(x: 0.74, y: 0.09, width: 0.24, height: 0.06)
+            // Баланс / FORTUNE справа
+            NormalizedRect(x: 0.78, y: 0.02, width: 0.20, height: 0.12),
+            // Таймер до броска (15 сек)
+            NormalizedRect(x: 0.18, y: 0.28, width: 0.10, height: 0.14),
+            // Статистика / прогнозы снизу
+            NormalizedRect(x: 0.78, y: 0.88, width: 0.20, height: 0.10)
         ]
     )
+
+    /// Алиас для совместимости
+    static let fonBetDefault = nardballDefault
 
     /// Верхняя полоса зоны игрока — не анализируется
     static let playerTimerStripFraction: Double = 0.14
@@ -228,8 +238,8 @@ struct GameWindowZones: Codable, Equatable {
 }
 
 enum EditableZoneKind: String, CaseIterable, Identifiable {
-    case results = "Результаты"
-    case player = "Игрок"
+    case results = "История (сверху)"
+    case player = "Видео"
 
     var id: String { rawValue }
 
@@ -358,6 +368,7 @@ struct TopPrediction: Identifiable, Equatable {
 struct EnsemblePrediction: Equatable {
     let predictions: [TopPrediction]
     let combination: PredictedCombination
+    let alternativeCombinations: [PredictedCombination]
     let confidence: ConfidenceLevel
     let confidenceScore: Double
     let modelContributions: [PredictionModelType: [Int]]
@@ -367,6 +378,7 @@ struct EnsemblePrediction: Equatable {
     static let empty = EnsemblePrediction(
         predictions: [],
         combination: PredictedCombination(numbers: [], individualProbabilities: [], jointProbability: 0, combinationScore: 0),
+        alternativeCombinations: [],
         confidence: .low,
         confidenceScore: 0,
         modelContributions: [:],
@@ -443,8 +455,8 @@ struct PlayerProfile: Codable, Identifiable, Equatable {
 struct AppSettings: Codable, Equatable {
     var regions: [CaptureRegion] = []
     var selectedCaptureWindow: CaptureWindowInfo?
-    var gameWindowZones: GameWindowZones = .fonBetDefault
-    var zoneLayoutVersion: Int = 5
+    var gameWindowZones: GameWindowZones = .nardballDefault
+    var zoneLayoutVersion: Int = 6
     var isPaperPredictionMode: Bool = true
     var hasCompletedOnboarding: Bool = false
     var showFloatingOverlay: Bool = true

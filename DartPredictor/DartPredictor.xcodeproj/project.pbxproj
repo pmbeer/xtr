@@ -6,6 +6,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D1C2E3M4A5T6H7M8O9D0E1L2 /* DiceMathModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C2E3M4A5T6H7M8O9D0E1L3 /* DiceMathModel.swift */; };
+		D1C2E3M4A5T6H7M8A9T0H1M2 /* DiceMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C2E3M4A5T6H7M8A9T0H1M3 /* DiceMath.swift */; };
 		A000EB9490004C20836471A5 /* DartPredictorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20E10AE2AE84A2E84AE7CA1 /* DartPredictorApp.swift */; };
 		4F982958FF1D4ECF8BB5D9D8 /* AIActionAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E74FA84B5C463099AB54ED /* AIActionAnalyzer.swift */; };
 		4CA313149F89429BA43F62D2 /* BettingTimerRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 148B50D4B0B24378A6D1A352 /* BettingTimerRecognizer.swift */; };
@@ -58,6 +60,8 @@
 /* Begin PBXFileReference section */
 		A10000000000000000000004 /* DartPredictor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DartPredictor.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000005 /* DartPredictorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DartPredictorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D1C2E3M4A5T6H7M8O9D0E1L3 /* DiceMathModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiceMathModel.swift; path = DartPredictor/Core/Models/DiceMathModel.swift; sourceTree = SOURCE_ROOT; };
+		D1C2E3M4A5T6H7M8A9T0H1M3 /* DiceMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiceMath.swift; path = DartPredictor/Core/Models/DiceMath.swift; sourceTree = SOURCE_ROOT; };
 		E20E10AE2AE84A2E84AE7CA1 /* DartPredictorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DartPredictorApp.swift; path = DartPredictor/App/DartPredictorApp.swift; sourceTree = SOURCE_ROOT; };
 		57E74FA84B5C463099AB54ED /* AIActionAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AIActionAnalyzer.swift; path = DartPredictor/Core/AI/AIActionAnalyzer.swift; sourceTree = SOURCE_ROOT; };
 		148B50D4B0B24378A6D1A352 /* BettingTimerRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BettingTimerRecognizer.swift; path = DartPredictor/Core/AI/BettingTimerRecognizer.swift; sourceTree = SOURCE_ROOT; };
@@ -140,6 +144,8 @@
 			BC7D40FFDB954E82930D729A /* DebugLogger.swift */,
 			FFA5F9D8F4E14A78B72E3165 /* AIActionModel.swift */,
 			35D35D69D8354A648B1B12F0 /* DartConstants.swift */,
+			D1C2E3M4A5T6H7M8A9T0H1M3 /* DiceMath.swift */,
+			D1C2E3M4A5T6H7M8O9D0E1L3 /* DiceMathModel.swift */,
 			D9E9D13F746342FD88D1E2CA /* FrequencyModel.swift */,
 			742CB13E1D5B4D78925DF902 /* PlayerBehaviorModel.swift */,
 			1B1B0C8F55F840FC9479E4CA /* SceneModels.swift */,
@@ -240,6 +246,8 @@
 			E7AB45C5E5E4440DAAB57571 /* DebugLogger.swift in Sources */,
 			73098FBD890F41A9A98D92C7 /* AIActionModel.swift in Sources */,
 			B32D5B3CA3A14689824C95B3 /* DartConstants.swift in Sources */,
+			D1C2E3M4A5T6H7M8A9T0H1M2 /* DiceMath.swift in Sources */,
+			D1C2E3M4A5T6H7M8O9D0E1L2 /* DiceMathModel.swift in Sources */,
 			92878B6125094277B013682F /* FrequencyModel.swift in Sources */,
 			233AA1DB350042B696EAD5D6 /* PlayerBehaviorModel.swift in Sources */,
 			040DF5FEF845402E865111A5 /* SceneModels.swift in Sources */,

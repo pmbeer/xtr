@@ -8,14 +8,14 @@ final class NeuralActionClassifier {
 
     private let inputSize = 55  // 5 кадров × 11 признаков
     private let hiddenSize = 32
-    private let outputSize = 20 // числа 1–20
+    private let outputSize = 36 // NARDBALL 1–36
 
     private var weightsIH: [Double] = []
     private var weightsHO: [Double] = []
     private var biasH: [Double] = []
     private var biasO: [Double] = []
 
-    private let storageKey = "neural_action_classifier"
+    private let storageKey = "neural_action_classifier_v36"
 
     init() {
         loadOrInitialize()
@@ -123,7 +123,9 @@ final class NeuralActionClassifier {
     private func loadOrInitialize() {
         let url = storageURL()
         if let data = try? Data(contentsOf: url),
-           let saved = try? JSONDecoder().decode(NeuralWeights.self, from: data) {
+           let saved = try? JSONDecoder().decode(NeuralWeights.self, from: data),
+           saved.biasO.count == outputSize,
+           saved.weightsHO.count == hiddenSize * outputSize {
             weightsIH = saved.weightsIH
             weightsHO = saved.weightsHO
             biasH = saved.biasH

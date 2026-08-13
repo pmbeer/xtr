@@ -121,16 +121,16 @@ struct LivePreviewPanel: View {
                     .fill(Color.secondary.opacity(0.15))
                     .frame(height: 100)
                     .overlay {
-                        Text("Нет кадра — выберите окно Safari с fon.bet")
+                        Text("Нет кадра — выберите окно с NARDBALL / fon.bet")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
             }
 
             HStack(spacing: 8) {
-                zoneLegend(color: .red, label: "Результаты")
-                zoneLegend(color: .green, label: "Игрок")
-                zoneLegend(color: .blue.opacity(0.5), label: "Игнор")
+                zoneLegend(color: .red, label: "История")
+                zoneLegend(color: .green, label: "Видео")
+                zoneLegend(color: .cyan.opacity(0.6), label: "Сетка 1–36")
             }
             .font(.caption2)
 
@@ -255,12 +255,13 @@ struct ZoneOverlayView: View {
     var body: some View {
         GeometryReader { geo in
             let fit = aspectFit ?? PreviewAspectFit(containerSize: geo.size, imageSize: geo.size)
-            zoneBox(zones.playerZone, color: .green, label: "Игрок", fit: fit, dashed: false)
+            zoneBox(zones.dartboardZone, color: .cyan, label: "1–36", fit: fit, dashed: true)
+            zoneBox(zones.playerZone, color: .green, label: "Видео", fit: fit, dashed: false)
             playerAnalysisHint(zones: zones, fit: fit)
             ForEach(Array(zones.ignoredZones.enumerated()), id: \.offset) { idx, ignored in
-                ignoredZoneBox(ignored, label: idx == 0 ? "overlay" : "часы", fit: fit)
+                ignoredZoneBox(ignored, label: idx == 0 ? "баланс" : "таймер", fit: fit)
             }
-            zoneBox(zones.resultsZone, color: .red, label: "Результаты", fit: fit, dashed: false)
+            zoneBox(zones.resultsZone, color: .red, label: "История", fit: fit, dashed: false)
         }
         .allowsHitTesting(false)
     }
@@ -353,9 +354,9 @@ struct AIStatusPanel: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text("🔴 История бросков (\(ocrHitCount) OCR):")
+                    Text("🔴 История костей (\(ocrHitCount) OCR):")
                         .font(.caption2.weight(.semibold))
-                    Text(resultHistory.isEmpty ? "не видна — калибруйте зону «Результаты»" : resultHistory.map(String.init).joined(separator: " → "))
+                    Text(resultHistory.isEmpty ? "не видна — калибруйте зону «История» сверху" : resultHistory.map { "\($0)(\(DiceMath.formatDice(grid: $0)))" }.joined(separator: " → "))
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(resultHistory.isEmpty ? .orange : .primary)
                 }
@@ -432,13 +433,14 @@ struct CombinationDisplayView: View {
 struct PredictionDisplayView: View {
     let predictions: [TopPrediction]
     let combination: PredictedCombination
+    let alternativeCombinations: [PredictedCombination]
     let confidence: ConfidenceLevel
     let confidenceScore: Double
     var rationale: String = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("СЛЕДУЮЩАЯ СТАВКА · TOP-4")
+            Text("NARDBALL · СЛЕДУЮЩАЯ СТАВКА · TOP-4")
                 .font(.headline)
                 .foregroundStyle(.secondary)
 
@@ -446,6 +448,26 @@ struct PredictionDisplayView: View {
                 combination: combination,
                 confidenceScore: confidenceScore
             )
+
+            if !alternativeCombinations.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("4 ВАРИАНТА КОМБИНАЦИЙ")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                    ForEach(Array(alternativeCombinations.enumerated()), id: \.offset) { idx, alt in
+                        HStack {
+                            Text("\(idx + 1).")
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                            Text(alt.formatted)
+                                .font(.caption.weight(.semibold).monospacedDigit())
+                            Text(String(format: "%.0f%%", alt.jointProbability))
+                                .font(.caption2.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
 
             if !rationale.isEmpty {
                 Text(rationale)

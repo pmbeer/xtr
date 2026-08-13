@@ -165,9 +165,9 @@ final class GameAIAnalyzer {
         parts.append(motionLabel(playerMotion))
         if forecastsAccepted { parts.append("ставки закрыты") }
         if !resultHistory.isEmpty {
-            parts.append("попадания: \(resultHistory.map(String.init).joined(separator: "→"))")
+            parts.append("кости: \(resultHistory.suffix(8).map { "\($0)(\(DiceMath.formatDice(grid: $0)))" }.joined(separator: "→"))")
         }
-        parts.append("прогноз на следующую ставку")
+        parts.append("прогноз NARDBALL 1–36")
         return "ИИ · " + parts.joined(separator: " · ")
     }
 

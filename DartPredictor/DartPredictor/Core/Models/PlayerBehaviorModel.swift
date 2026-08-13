@@ -33,13 +33,16 @@ final class PlayerBehaviorModel: PredictionModel {
     }
 
     private func behaviorHeuristic(_ features: PlayerFeatures) -> [Int: Double] {
-        var scores = DartConstants.validNumbers.reduce(into: [Int: Double]()) { $0[$1] = 1.0 / 20.0 }
+        var scores = DartConstants.validNumbers.reduce(into: [Int: Double]()) {
+            $0[$1] = 1.0 / Double(DartConstants.validNumbers.count)
+        }
 
         let speedFactor = min(features.swingSpeed * 2, 1.0)
         let heightFactor = features.armHeight
+        let span = Double(DartConstants.validNumbers.count)
 
         for num in DartConstants.validNumbers {
-            let numFactor = Double(num) / 20.0
+            let numFactor = Double(num) / span
             let alignment = abs(numFactor - heightFactor) + abs(numFactor - speedFactor) * 0.5
             scores[num] = max(0.01, 1.0 - alignment)
         }

@@ -77,7 +77,7 @@ final class PipelineCoordinator: ObservableObject {
         guard !isRunning else { return }
 
         guard let window = SettingsManager.shared.selectedCaptureWindow else {
-            processingState = "Сначала выберите окно с игрой (Safari / fon.bet)"
+            processingState = "Сначала выберите окно NARDBALL (fon.bet)"
             return
         }
 

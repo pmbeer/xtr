@@ -7,7 +7,7 @@ struct MainDashboardView: View {
     @Binding var showWindowPicker: Bool
 
     @State private var isCalibratingZones = false
-    @State private var editingZones = GameWindowZones.fonBetDefault
+    @State private var editingZones = GameWindowZones.nardballDefault
     @State private var selectedZoneKind: EditableZoneKind = .results
 
     var body: some View {
@@ -37,7 +37,7 @@ struct MainDashboardView: View {
                 HStack {
                     Image(systemName: "macwindow.badge.plus")
                         .foregroundStyle(.blue)
-                    Text("Выберите окно Safari с fon.bet — ИИ будет смотреть это окно")
+                    Text("Выберите окно с NARDBALL (fon.bet) — ИИ читает историю костей сверху")
                         .font(.caption)
                     Spacer()
                     Button("Выбрать окно") { showWindowPicker = true }
@@ -83,7 +83,7 @@ struct MainDashboardView: View {
                         .buttonStyle(.borderedProminent)
 
                         Button("Сбросить по умолчанию") {
-                            editingZones = .fonBetDefault
+                            editingZones = .nardballDefault
                         }
                         .buttonStyle(.bordered)
 
@@ -114,6 +114,7 @@ struct MainDashboardView: View {
             PredictionDisplayView(
                 predictions: pipeline.currentPrediction.predictions,
                 combination: pipeline.currentCombination,
+                alternativeCombinations: pipeline.currentPrediction.alternativeCombinations,
                 confidence: pipeline.currentPrediction.confidence,
                 confidenceScore: pipeline.currentPrediction.confidenceScore,
                 rationale: pipeline.predictionRationale

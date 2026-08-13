@@ -45,7 +45,7 @@ final class CombinationPredictor {
             return buildCombination(from: fallback)
         }
 
-        let pool = Array(ranked.prefix(10))
+        let pool = Array(ranked.prefix(14))
         var best: PredictedCombination?
         var bestScore = -1.0
 

@@ -38,12 +38,12 @@ enum ResultsHistoryScanner {
         cells = dedupeCells(cells)
         guard !cells.isEmpty else { return [] }
 
-        // Vision: origin снизу — выше на экране = больше y
+        // NARDBALL: горизонтальная история сверху — слева направо
         cells.sort { a, b in
-            if abs(a.y - b.y) > 0.055 {
-                return a.y > b.y
+            if abs(a.x - b.x) > 0.032 {
+                return a.x < b.x
             }
-            return a.x < b.x
+            return a.y > b.y
         }
 
         return cells.map { cell in
