@@ -99,6 +99,7 @@ struct PendingPrediction: Codable, Identifiable {
     let createdAt: Date
     let betType: BetType
     let number: Int?
+    let predictedNumbers: [Int]
     let confidence: Double
     let reason: String
     let strategy: String
@@ -110,6 +111,7 @@ struct PendingPrediction: Codable, Identifiable {
         createdAt = Date()
         betType = recommendation.betType
         number = recommendation.number
+        predictedNumbers = recommendation.predictedNumbers
         confidence = recommendation.confidence
         reason = recommendation.reason
         strategy = recommendation.strategy
@@ -118,7 +120,21 @@ struct PendingPrediction: Codable, Identifiable {
     }
 
     func isCorrect(for sector: DartSector) -> Bool {
-        betType.matches(sector, number: number)
+        if !predictedNumbers.isEmpty {
+            let key = sector == .bullseye ? 25 : sector.rawValue
+            return predictedNumbers.contains(key)
+        }
+        return betType.matches(sector, number: number)
+    }
+
+    var displayBet: String {
+        if !predictedNumbers.isEmpty {
+            return predictedNumbers.map(String.init).joined(separator: ", ")
+        }
+        switch betType {
+        case .number: return number.map(String.init) ?? "?"
+        default: return betType.displayName
+        }
     }
 }
 
@@ -129,14 +145,49 @@ struct PredictionOutcome: Identifiable, Codable {
     let evaluatedAt: Date
     let betType: BetType
     let predictedNumber: Int?
+    let predictedNumbers: [Int]
     let actualSector: Int
     let wasCorrect: Bool
     let confidence: Double
     let behaviorKey: String
     let learningDelta: Double
 
+    init(
+        id: UUID,
+        predictedAt: Date,
+        evaluatedAt: Date,
+        betType: BetType,
+        predictedNumber: Int?,
+        predictedNumbers: [Int] = [],
+        actualSector: Int,
+        wasCorrect: Bool,
+        confidence: Double,
+        behaviorKey: String,
+        learningDelta: Double
+    ) {
+        self.id = id
+        self.predictedAt = predictedAt
+        self.evaluatedAt = evaluatedAt
+        self.betType = betType
+        self.predictedNumber = predictedNumber
+        self.predictedNumbers = predictedNumbers
+        self.actualSector = actualSector
+        self.wasCorrect = wasCorrect
+        self.confidence = confidence
+        self.behaviorKey = behaviorKey
+        self.learningDelta = learningDelta
+    }
+
     var displayResult: String {
         wasCorrect ? "✓ Верно" : "✗ Ошибка"
+    }
+
+    var displayPrediction: String {
+        if !predictedNumbers.isEmpty {
+            return predictedNumbers.map(String.init).joined(separator: ", ")
+        }
+        if let predictedNumber { return "\(predictedNumber)" }
+        return betType.displayName
     }
 }
 

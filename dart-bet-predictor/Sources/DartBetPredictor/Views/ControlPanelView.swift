@@ -55,7 +55,7 @@ struct ControlPanelView: View {
 
                 if let rec = coordinator.currentRecommendation {
                     HStack {
-                        Text("Ставка:")
+                        Text("4 прогноза:")
                             .foregroundStyle(.secondary)
                         Text(rec.displayBet)
                             .font(.title2.bold())
@@ -67,6 +67,16 @@ struct ControlPanelView: View {
                             .padding(.vertical, 2)
                             .background(.orange.opacity(0.2))
                             .clipShape(Capsule())
+                    }
+                    if rec.displayNumbers.count >= 2 {
+                        HStack(spacing: 8) {
+                            ForEach(rec.displayNumbers, id: \.self) { n in
+                                Text("\(n)")
+                                    .font(.headline.bold().monospacedDigit())
+                                    .frame(width: 36, height: 36)
+                                    .background(Circle().fill(.orange.opacity(0.25)))
+                            }
+                        }
                     }
                     Text(rec.reason)
                         .font(.caption)
@@ -288,10 +298,15 @@ struct ControlPanelView: View {
 
             HStack {
                 Text("Окно ставки")
-                Slider(value: $coordinator.bettingWindowSeconds, in: 3...8, step: 0.5)
+                Slider(value: $coordinator.bettingWindowSeconds, in: 6...15, step: 0.5)
                 Text(String(format: "%.0fс", coordinator.bettingWindowSeconds))
                     .font(.caption.monospacedDigit())
                     .frame(width: 28)
+            }
+            if let timer = coordinator.detectedTimerSeconds {
+                Text("Таймер на экране: \(String(format: "%.1f", timer))с")
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.blue)
             }
 
             HStack {
@@ -401,6 +416,11 @@ struct ControlPanelView: View {
                             .foregroundStyle(outcome.wasCorrect ? .green : .red)
                         Text("→ \(outcome.actualSector)")
                             .font(.caption.monospacedDigit())
+                        if !outcome.predictedNumbers.isEmpty {
+                            Text("[\(outcome.displayPrediction)]")
+                                .font(.caption2.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
                         Spacer()
                         Text(outcome.betType.displayName)
                             .font(.caption2)

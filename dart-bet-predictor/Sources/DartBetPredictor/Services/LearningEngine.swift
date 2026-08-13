@@ -55,6 +55,7 @@ final class LearningEngine: ObservableObject {
             evaluatedAt: Date(),
             betType: pending.betType,
             predictedNumber: pending.number,
+            predictedNumbers: pending.predictedNumbers,
             actualSector: actual.rawValue,
             wasCorrect: correct,
             confidence: pending.confidence,
@@ -84,12 +85,13 @@ final class LearningEngine: ObservableObject {
             contextKey: pending.features.contextKey,
             behaviorKey: behaviorDuringRound.behaviorKey,
             predictedBet: pending.betType,
-            predictedNumber: pending.number
+            predictedNumber: pending.number,
+            predictedNumbers: pending.predictedNumbers
         )
 
         lastLearningMessage = correct
-            ? "Верно! Точность: \(stats.recentAccuracyPercent)% → цель 99%"
-            : "Ошибка (\(pending.displayBet) ≠ \(actual)). Учусь… \(stats.recentAccuracyPercent)%"
+            ? "Верно! \(pending.displayBet) → \(actual) · \(stats.recentAccuracyPercent)% → 99%"
+            : "Не угадали (\(pending.displayBet) ≠ \(actual)). Учусь… \(stats.recentAccuracyPercent)%"
 
         save()
         return outcome
@@ -190,6 +192,80 @@ final class LearningEngine: ObservableObject {
             confidence: calibratedConfidence,
             reason: reason,
             strategy: "Адаптивное обучение"
+        )
+    }
+
+    /// 4 сектора — максимизируем шанс что один выпадет (цель 99%).
+    func adaptiveRecommendMultiPick(
+        history: [DartSector],
+        behavior: PlayerBehaviorSnapshot,
+        baseCandidates: [BetRecommendation]
+    ) -> BetRecommendation {
+        guard history.count >= 2 else {
+            return defaultMultiRecommendation()
+        }
+
+        let features = PredictionFeatures.build(
+            history: history,
+            behavior: behavior,
+            strategyVotes: strategyVoteMap(from: baseCandidates)
+        )
+
+        let probs = sectorModel.probabilities(
+            contextKey: features.contextKey,
+            behaviorKey: features.behaviorKey
+        )
+
+        var scores: [Int: Double] = [:]
+        for n in 1...20 {
+            scores[n] = probs[n] ?? 0.05
+        }
+
+        for candidate in baseCandidates {
+            if let n = candidate.number {
+                let w = stats.strategyWeights[candidate.strategy] ?? 1.0
+                scores[n, default: 0] += candidate.confidence * w
+            }
+            for n in candidate.predictedNumbers {
+                scores[n, default: 0] += candidate.confidence * 0.4
+            }
+        }
+
+        for (n, s) in sectorScores where (1...20).contains(n) {
+            scores[n, default: 0] += s * 0.25
+        }
+
+        let picks = MultiPickPredictor.topNumbers(from: scores, count: MultiPickPredictor.pickCount)
+        let rawConfidence = MultiPickPredictor.setConfidence(numbers: picks, scores: scores)
+        let calibrated = min(0.96, rawConfidence + min(0.12, stats.recentAccuracy * 0.08))
+
+        var reason = "4 прогноза: \(picks.map(String.init).joined(separator: ", "))"
+        if behavior.bodyDetected {
+            reason += " · \(behavior.phase.displayName)"
+        }
+        reason += " · шанс набора \(Int(calibrated * 100))%"
+        if stats.totalPredictions > 3 {
+            reason += " · точность \(stats.recentAccuracyPercent)%"
+        }
+
+        return BetRecommendation(
+            betType: .number,
+            number: picks.first,
+            predictedNumbers: picks,
+            confidence: calibrated,
+            reason: reason,
+            strategy: "Адаптивное обучение (4 сектора)"
+        )
+    }
+
+    private func defaultMultiRecommendation() -> BetRecommendation {
+        BetRecommendation(
+            betType: .number,
+            number: 7,
+            predictedNumbers: [7, 11, 14, 3],
+            confidence: 0.35,
+            reason: "Недостаточно данных",
+            strategy: "По умолчанию"
         )
     }
 
@@ -528,14 +604,5 @@ final class LearningEngine: ObservableObject {
             )
         }
         lastLearningMessage = "Загружено: \(stats.totalPredictions) прогнозов, точность \(stats.overallAccuracyPercent)%"
-    }
-}
-
-private extension PendingPrediction {
-    var displayBet: String {
-        switch betType {
-        case .number: return number.map(String.init) ?? "?"
-        default: return betType.displayName
-        }
     }
 }

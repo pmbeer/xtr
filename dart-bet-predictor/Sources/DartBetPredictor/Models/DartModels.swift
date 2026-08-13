@@ -63,14 +63,44 @@ enum BetType: String, CaseIterable, Identifiable, Codable {
 
 /// Рекомендация ставки с уровнем уверенности.
 struct BetRecommendation: Identifiable, Equatable {
-    let id = UUID()
+    let id: UUID
     let betType: BetType
     let number: Int?
+    /// До 4 секторов — цель: один из них выпадет (99%).
+    let predictedNumbers: [Int]
     let confidence: Double
     let reason: String
     let strategy: String
 
+    init(
+        betType: BetType,
+        number: Int?,
+        predictedNumbers: [Int] = [],
+        confidence: Double,
+        reason: String,
+        strategy: String,
+        id: UUID = UUID()
+    ) {
+        self.id = id
+        self.betType = betType
+        self.number = number
+        self.predictedNumbers = predictedNumbers
+        self.confidence = confidence
+        self.reason = reason
+        self.strategy = strategy
+    }
+
+    var displayNumbers: [Int] {
+        if !predictedNumbers.isEmpty { return predictedNumbers }
+        if let number { return [number] }
+        return []
+    }
+
     var displayBet: String {
+        let nums = displayNumbers
+        if nums.count >= 2 {
+            return nums.map(String.init).joined(separator: ", ")
+        }
         switch betType {
         case .number:
             if let number { return "\(number)" }

@@ -32,7 +32,8 @@ final class SectorProbabilityModel {
         contextKey: String,
         behaviorKey: String,
         predictedBet: BetType,
-        predictedNumber: Int?
+        predictedNumber: Int?,
+        predictedNumbers: [Int] = []
     ) {
         let actualKey = actual.rawValue
         totalSamples += 1
@@ -47,8 +48,16 @@ final class SectorProbabilityModel {
         updateMap(&beh, actualKey: actualKey, weight: 1.6)
         behaviorProbs[behaviorKey] = beh
 
-        // Штраф прогнозу, который не совпал с исходом
-        if let wrongKey = wrongSectorKey(bet: predictedBet, number: predictedNumber, actual: actual) {
+        if !predictedNumbers.isEmpty {
+            for n in predictedNumbers where n != actualKey {
+                if var ctxMap = contextProbs[contextKey] {
+                    let current = ctxMap[n] ?? smoothing
+                    ctxMap[n] = max(0.001, current - learningStep * 0.12)
+                    normalize(&ctxMap)
+                    contextProbs[contextKey] = ctxMap
+                }
+            }
+        } else if let wrongKey = wrongSectorKey(bet: predictedBet, number: predictedNumber, actual: actual) {
             if var ctxMap = contextProbs[contextKey] {
                 let current = ctxMap[wrongKey] ?? smoothing
                 ctxMap[wrongKey] = max(0.001, current - learningStep * 0.5)

@@ -21,7 +21,8 @@ final class MonitorCoordinator: ObservableObject {
     @Published var behaviorLatencyMs: Double = 0
     @Published var fps: Double = 0
     @Published var strategy: PredictionStrategy = .adaptiveLearning
-    @Published var bettingWindowSeconds: Double = 5.0
+    @Published var bettingWindowSeconds: Double = 10.0
+    @Published var detectedTimerSeconds: Double?
     @Published var pollIntervalMs: Double = HardwareProfile.recommendedPollIntervalMs
     @Published var pipelineStep: AnalysisPipelineStep = .idle
     @Published var statusMessage = "Выберите области «СЕРИЯ» и «Игрок», затем Старт"
@@ -115,6 +116,7 @@ final class MonitorCoordinator: ObservableObject {
         lastPlayerPhase = .idle
         throwTracker.engine.clearAwaiting()
         CaptureSessionRecorder.shared.startSession()
+        BettingTimerDetector.shared.reset()
 
         LaunchLogger.log("Monitor starting poll=\(pollIntervalMs)ms")
 
@@ -226,6 +228,18 @@ final class MonitorCoordinator: ObservableObject {
                 self.lastOCRTexts = result.rawTexts
                 self.lastSectorCount = result.sectors.count
                 self.visualChangeScore = result.visualChangeScore
+                BettingTimerDetector.shared.observeOCRTexts(result.rawTexts)
+
+                if case .bettingOpen = self.phase {
+                    BettingTimerDetector.shared.parseTimer(from: image) { detected in
+                        Task { @MainActor in
+                            if let detected {
+                                self.detectedTimerSeconds = detected
+                                self.bettingDeadline = Date().addingTimeInterval(detected)
+                            }
+                        }
+                    }
+                }
 
                 let engine = self.throwTracker.engine
                 let newThrow = self.throwTracker.update(
@@ -366,7 +380,7 @@ final class MonitorCoordinator: ObservableObject {
         lastPlayerPhase = .idle
 
         pipelineStep = .generatingForecast
-        let recommendation = PredictionEngine.shared.recommend(
+        let recommendation = MultiPickPredictor.recommend(
             history: throwTracker.history,
             behavior: currentPlayerBehavior,
             strategy: strategy
@@ -382,8 +396,15 @@ final class MonitorCoordinator: ObservableObject {
             PendingPrediction(from: recommendation, features: features, behavior: currentPlayerBehavior)
         )
 
-        // 5 сек на ставку на СЛЕДУЮЩИЙ бросок — только после подтверждённого результата
-        startBettingWindow(recommendation: recommendation, confirmedResult: event.sector)
+        let windowSec = BettingTimerDetector.shared.estimatedWindowSeconds
+        bettingWindowSeconds = windowSec
+
+        // 5–10 сек на ставку на СЛЕДУЮЩИЙ бросок — после подтверждённого результата
+        startBettingWindow(
+            recommendation: recommendation,
+            confirmedResult: event.sector,
+            duration: windowSec
+        )
         playAlertSound()
 
         if lastOutcome == nil {
@@ -421,12 +442,17 @@ final class MonitorCoordinator: ObservableObject {
         }
     }
 
-    private func startBettingWindow(recommendation: BetRecommendation, confirmedResult: DartSector) {
+    private func startBettingWindow(
+        recommendation: BetRecommendation,
+        confirmedResult: DartSector,
+        duration: Double
+    ) {
         bettingTimer?.invalidate()
         bettingWindowStart = Date()
-        bettingDeadline = Date().addingTimeInterval(bettingWindowSeconds)
+        bettingWindowSeconds = duration
+        bettingDeadline = Date().addingTimeInterval(duration)
         phase = .bettingOpen(
-            remainingSeconds: bettingWindowSeconds,
+            remainingSeconds: duration,
             recommendation: recommendation,
             confirmedResult: confirmedResult
         )

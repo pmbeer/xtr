@@ -125,10 +125,21 @@ struct PredictionOverlayView: View {
                 .font(.caption.bold())
                 .foregroundStyle(.red)
 
-            Text(recommendation.displayBet)
-                .font(.system(size: 56, weight: .black, design: .rounded))
-                .foregroundStyle(.orange)
-                .contentTransition(.numericText())
+            if recommendation.displayNumbers.count >= 2 {
+                HStack(spacing: 12) {
+                    ForEach(recommendation.displayNumbers, id: \.self) { n in
+                        Text("\(n)")
+                            .font(.system(size: 32, weight: .black, design: .rounded))
+                            .foregroundStyle(.orange)
+                            .frame(width: 52, height: 52)
+                            .background(Circle().fill(.orange.opacity(0.2)))
+                    }
+                }
+            } else {
+                Text(recommendation.displayBet)
+                    .font(.system(size: 56, weight: .black, design: .rounded))
+                    .foregroundStyle(.orange)
+            }
 
             Text(recommendation.betType.displayName)
                 .font(.title3)
