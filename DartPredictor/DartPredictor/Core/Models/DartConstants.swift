@@ -283,5 +283,5 @@ struct AppSettings: Codable, Equatable {
     var captureFrameRate: Int = 15
     var ocrFrameRate: Int = 10
     var activePlayerProfileId: String = PlayerProfile.unknownId
-    var debugLoggingEnabled: Bool = false
+    var debugLoggingEnabled: Bool = true
 }

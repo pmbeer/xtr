@@ -7,26 +7,23 @@ final class ScreenSceneAnalyzer {
     static let shared = ScreenSceneAnalyzer()
 
     private let aiAnalyzer = AIActionAnalyzer.shared
+    private let throwTracker = ThrowSequenceTracker()
     private let processingQueue = DispatchQueue(label: "com.dartpredictor.scene", qos: .userInteractive)
-
-    private var lastConfirmedNumbers: Set<Int> = []
-    private var pendingNumber: Int?
-    private var confirmationCount = 0
-    private var lastResultZone: CGRect?
-    private var previousPrimaryResult: Int?
+    private var isProcessing = false
 
     func analyzeFrame(_ image: CGImage, completion: @escaping (SceneAnalysisResult) -> Void) {
+        guard !isProcessing else { return }
+        isProcessing = true
         let start = CFAbsoluteTimeGetCurrent()
+
+        // OCR на увеличенной копии для лучшего распознавания
+        let ocrImage = scaleForOCR(image)
 
         aiAnalyzer.analyzeFrame(image) { [weak self] insight, features in
             guard let self else { return }
             self.processingQueue.async {
-                let numbers = self.detectNumbersInScene(image)
-                let confirmed = self.confirmNewThrow(
-                    numbers: numbers,
-                    insight: insight,
-                    features: features
-                )
+                let numbers = self.detectNumbersInScene(ocrImage)
+                let confirmed = self.throwTracker.process(detectedNumbers: numbers)
 
                 let result = SceneAnalysisResult(
                     timestamp: Date(),
@@ -38,6 +35,7 @@ final class ScreenSceneAnalyzer {
                     processingTimeMs: (CFAbsoluteTimeGetCurrent() - start) * 1000
                 )
 
+                self.isProcessing = false
                 DispatchQueue.main.async {
                     completion(result)
                 }
@@ -46,12 +44,29 @@ final class ScreenSceneAnalyzer {
     }
 
     func reset() {
-        lastConfirmedNumbers = []
-        pendingNumber = nil
-        confirmationCount = 0
-        lastResultZone = nil
-        previousPrimaryResult = nil
+        throwTracker.reset()
         aiAnalyzer.reset()
+        isProcessing = false
+    }
+
+    private func scaleForOCR(_ image: CGImage) -> CGImage {
+        let minWidth: CGFloat = 400
+        if CGFloat(image.width) >= minWidth { return image }
+
+        let scale = minWidth / CGFloat(image.width)
+        let newW = Int(CGFloat(image.width) * scale)
+        let newH = Int(CGFloat(image.height) * scale)
+        guard newW > 0, newH > 0,
+              let ctx = CGContext(
+                  data: nil, width: newW, height: newH,
+                  bitsPerComponent: 8, bytesPerRow: newW * 4,
+                  space: CGColorSpaceCreateDeviceRGB(),
+                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+              ) else { return image }
+
+        ctx.interpolationQuality = .high
+        ctx.draw(image, in: CGRect(x: 0, y: 0, width: newW, height: newH))
+        return ctx.makeImage() ?? image
     }
 
     private func detectNumbersInScene(_ image: CGImage) -> [DetectedNumber] {
@@ -59,6 +74,7 @@ final class ScreenSceneAnalyzer {
         request.recognitionLevel = .accurate
         request.usesLanguageCorrection = false
         request.recognitionLanguages = ["en-US"]
+        request.minimumTextHeight = 0.008
 
         let handler = VNImageRequestHandler(cgImage: image, options: [:])
         do { try handler.perform([request]) } catch {
@@ -69,93 +85,41 @@ final class ScreenSceneAnalyzer {
         guard let observations = request.results else { return [] }
 
         var detected: [DetectedNumber] = []
+        var seen = Set<Int>()
+
         for obs in observations {
             guard let candidate = obs.topCandidates(1).first else { continue }
             let text = candidate.string.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard let value = Int(text), DartConstants.validNumbers.contains(value) else {
-                // попробовать извлечь число из текста
-                if let extracted = extractNumber(from: text) {
-                    detected.append(DetectedNumber(
-                        value: extracted,
-                        boundingBox: obs.boundingBox,
-                        confidence: candidate.confidence
-                    ))
-                }
-                continue
+
+            let values: [Int]
+            if let v = Int(text), DartConstants.validNumbers.contains(v) {
+                values = [v]
+            } else {
+                values = extractAllNumbers(from: text)
             }
-            detected.append(DetectedNumber(
-                value: value,
-                boundingBox: obs.boundingBox,
-                confidence: candidate.confidence
-            ))
+
+            for value in values where !seen.contains(value) {
+                seen.insert(value)
+                detected.append(DetectedNumber(
+                    value: value,
+                    boundingBox: obs.boundingBox,
+                    confidence: candidate.confidence
+                ))
+            }
         }
         return detected
     }
 
-    private func extractNumber(from text: String) -> Int? {
+    private func extractAllNumbers(from text: String) -> [Int] {
         let pattern = #"\b(\d{1,2})\b"#
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
         let range = NSRange(text.startIndex..., in: text)
-        guard let match = regex.firstMatch(in: text, range: range),
-              let r = Range(match.range(at: 1), in: text) else { return nil }
-        let value = Int(text[r])
-        guard let value, DartConstants.validNumbers.contains(value) else { return nil }
-        return value
-    }
-
-    private func confirmNewThrow(
-        numbers: [DetectedNumber],
-        insight: AIActionInsight,
-        features: PlayerFeatures
-    ) -> Int? {
-        guard !numbers.isEmpty else { return nil }
-
-        // Приоритет: число в зоне результата (обычно крупный текст, центр/верх)
-        let primary = selectPrimaryResult(from: numbers)
-        guard let candidate = primary else { return nil }
-
-        // ИИ подтверждает: результат появился после фазы броска
-        let aiConfirms = insight.sceneState == .resultShown
-            || insight.sceneState == .resultPending
-            || insight.detectedAction == .recovery
-            || insight.throwPhaseProgress >= 0.8
-
-        if candidate.value == pendingNumber {
-            confirmationCount += 1
-        } else {
-            pendingNumber = candidate.value
-            confirmationCount = 1
-        }
-
-        guard confirmationCount >= DartConstants.ocrDebounceFrames else { return nil }
-
-        // Не дублировать тот же результат
-        if candidate.value == previousPrimaryResult { return nil }
-
-        // Требуем либо ИИ-подтверждение фазы, либо стабильный OCR
-        if !aiConfirms && confirmationCount < DartConstants.ocrDebounceFrames + 1 {
-            return nil
-        }
-
-        previousPrimaryResult = candidate.value
-        pendingNumber = nil
-        confirmationCount = 0
-        lastResultZone = candidate.boundingBox
-
-        DebugLogger.shared.log(
-            "Scene: новый результат \(candidate.value), ИИ: \(insight.detectedAction.rawValue)",
-            category: "ai"
-        )
-        return candidate.value
-    }
-
-    private func selectPrimaryResult(from numbers: [DetectedNumber]) -> DetectedNumber? {
-        // Эвристика: самое крупное / самое яркое число — bounding box area
-        numbers.max { a, b in
-            let areaA = a.boundingBox.width * a.boundingBox.height
-            let areaB = b.boundingBox.width * b.boundingBox.height
-            if areaA != areaB { return areaA < areaB }
-            return a.confidence < b.confidence
+        let matches = regex.matches(in: text, range: range)
+        return matches.compactMap { match -> Int? in
+            guard let r = Range(match.range(at: 1), in: text) else { return nil }
+            let value = Int(text[r])
+            guard let value, DartConstants.validNumbers.contains(value) else { return nil }
+            return value
         }
     }
 }

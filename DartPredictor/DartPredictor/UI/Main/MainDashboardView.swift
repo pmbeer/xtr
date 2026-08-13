@@ -32,8 +32,15 @@ struct MainDashboardView: View {
                 Label(pipeline.processingState, systemImage: "waveform")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(2)
 
                 Spacer()
+
+                if pipeline.lastCropSize.width > 0 {
+                    Text("\(Int(pipeline.lastCropSize.width))×\(Int(pipeline.lastCropSize.height))")
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
 
                 if settings.settings.isPaperPredictionMode {
                     Text("Paper Prediction")
