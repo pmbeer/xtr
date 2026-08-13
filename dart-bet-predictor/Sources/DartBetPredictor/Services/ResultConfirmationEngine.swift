@@ -84,7 +84,7 @@ final class ResultConfirmationEngine: ObservableObject {
             }
         }
 
-        guard let candidate = detectNewSector(previous: confirmedSnapshot, current: sectors) else {
+        guard let candidate = Self.detectNewSector(previous: confirmedSnapshot, current: sectors) else {
             return nil
         }
 

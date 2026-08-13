@@ -46,9 +46,10 @@ struct PipelineStatusView: View {
         case .idle: return 0
         case .watchingOutcome: return 1
         case .analyzingBehavior: return 2
-        case .evaluatingPrediction: return 3
-        case .learning: return 4
-        case .generatingForecast: return 5
+        case .awaitingResult: return 3
+        case .evaluatingPrediction: return 4
+        case .learning: return 5
+        case .generatingForecast: return 6
         }
     }
 }

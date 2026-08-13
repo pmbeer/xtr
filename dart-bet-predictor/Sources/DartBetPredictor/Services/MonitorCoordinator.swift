@@ -442,8 +442,7 @@ final class MonitorCoordinator: ObservableObject {
     }
 
     private func tickBettingWindow() {
-        guard let deadline = bettingDeadline,
-              let recommendation = currentRecommendation else {
+        guard let deadline = bettingDeadline else {
             phase = .waitingForThrow
             return
         }
