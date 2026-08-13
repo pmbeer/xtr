@@ -53,6 +53,8 @@ final class MonitorCoordinator: ObservableObject {
     private var playerFrameCounter = 0
     private var previewCounter = 0
     private var cancellables = Set<AnyCancellable>()
+    private var lastPlayerPhase: PlayerPhase = .idle
+    private var bettingWindowStart: Date?
 
     init() {
         throwTracker.objectWillChange
@@ -110,6 +112,8 @@ final class MonitorCoordinator: ObservableObject {
         playerCaptureSuccessCount = 0
         behaviorAccumulator.removeAll()
         SeriesFrameDiff.shared.reset()
+        lastPlayerPhase = .idle
+        throwTracker.engine.clearAwaiting()
         CaptureSessionRecorder.shared.startSession()
 
         LaunchLogger.log("Monitor starting poll=\(pollIntervalMs)ms")
@@ -167,6 +171,8 @@ final class MonitorCoordinator: ObservableObject {
         lastOCRTexts = []
         lastSectorCount = 0
         behaviorAccumulator.removeAll()
+        lastPlayerPhase = .idle
+        throwTracker.engine.clearAwaiting()
         phase = isRunning ? .waitingForThrow : .idle
         statusMessage = "История сброшена"
     }
@@ -221,24 +227,26 @@ final class MonitorCoordinator: ObservableObject {
                 self.lastSectorCount = result.sectors.count
                 self.visualChangeScore = result.visualChangeScore
 
+                let engine = self.throwTracker.engine
                 let newThrow = self.throwTracker.update(
                     with: result.sectors,
                     rawTexts: result.rawTexts,
                     parseMs: result.parseDurationMs
                 )
 
+                self.updateAwaitingPhaseUI()
+
                 if let newThrow {
                     LaunchLogger.log(
-                        "Throw: \(newThrow.sector) OCR=[\(result.rawTexts.joined(separator: ","))]"
+                        "Result confirmed: \(newThrow.sector) OCR=[\(result.rawTexts.joined(separator: ","))]"
                     )
-                    self.onNewThrowDetected(newThrow)
+                    self.onResultConfirmed(newThrow)
+                } else if engine.isAwaitingResult {
+                    // ждём стабильный результат
                 } else if result.sectors.isEmpty && result.visualChangeScore > 0.15 {
                     self.statusMessage = "Экран меняется, но OCR не читает числа — расширьте СЕРИЯ"
-                } else {
-                    self.bootstrapRecommendationIfNeeded()
-                    if self.isRunning && self.phase == .waitingForThrow {
-                        self.statusMessage = "Захват ✓ · \(result.sectors.count) секторов · OCR \(Int(result.parseDurationMs))мс"
-                    }
+                } else if self.phase == .waitingForThrow {
+                    self.statusMessage = "Слежение · \(result.sectors.count) секторов · ждём бросок игрока"
                 }
             }
         }
@@ -276,6 +284,9 @@ final class MonitorCoordinator: ObservableObject {
                 if self.behaviorAccumulator.count > 40 {
                     self.behaviorAccumulator.removeFirst()
                 }
+
+                self.handlePlayerMotion(snapshot)
+
                 if self.isRunning && self.phase == .waitingForThrow {
                     self.pipelineStep = .watchingOutcome
                 }
@@ -297,22 +308,48 @@ final class MonitorCoordinator: ObservableObject {
         }
     }
 
-    private func bootstrapRecommendationIfNeeded() {
-        guard currentRecommendation == nil, throwTracker.history.count >= 1 else { return }
+    private func handlePlayerMotion(_ snapshot: PlayerBehaviorSnapshot) {
+        let engine = throwTracker.engine
 
-        let recommendation = PredictionEngine.shared.recommend(
-            history: throwTracker.history,
-            behavior: currentPlayerBehavior,
-            strategy: strategy
-        )
-        currentRecommendation = recommendation
-        statusMessage = "Прогноз: \(recommendation.displayBet) (\(recommendation.confidencePercent)%)"
-        LaunchLogger.log("Bootstrap prediction: \(recommendation.displayBet)")
+        // Бросок: фаза release или резкий скачок движения после замаха
+        let throwDetected = snapshot.phase == .release && lastPlayerPhase != .release
+        let motionThrow = snapshot.motionIntensity > 0.1
+            && snapshot.phase == .release
+            && lastPlayerPhase == .windup
+
+        if (throwDetected || motionThrow) && !engine.isAwaitingResult {
+            if case .bettingOpen = phase { return } // не прерываем окно ставки
+
+            engine.markAwaitingResult(reason: "player_\(snapshot.phase.displayName)")
+            PlayerBehaviorAnalyzer.shared.markThrowDetected()
+            pipelineStep = .awaitingResult
+            statusMessage = "Бросок! Ждём результат на экране…"
+            updateAwaitingPhaseUI()
+            LaunchLogger.log("Player throw motion → awaiting result")
+        }
+
+        lastPlayerPhase = snapshot.phase
     }
 
-    private func onNewThrowDetected(_ event: ThrowEvent) {
-        PlayerBehaviorAnalyzer.shared.markThrowDetected()
+    private func updateAwaitingPhaseUI() {
+        let engine = throwTracker.engine
+        guard engine.isAwaitingResult else { return }
 
+        pipelineStep = .awaitingResult
+        phase = .awaitingResult(
+            pendingSector: engine.pendingSector,
+            stableReads: engine.stableReadCount,
+            requiredReads: 3
+        )
+
+        if let pending = engine.pendingSector {
+            statusMessage = "Результат: \(pending) — подтверждение \(engine.stableReadCount)/3"
+        } else {
+            statusMessage = "Ждём появления результата…"
+        }
+    }
+
+    private func onResultConfirmed(_ event: ThrowEvent) {
         let behaviorDuringRound = averagedBehavior()
 
         pipelineStep = .evaluatingPrediction
@@ -321,11 +358,12 @@ final class MonitorCoordinator: ObservableObject {
             behaviorDuringRound: behaviorDuringRound
         ) {
             lastOutcome = outcome
-            statusMessage = "\(outcome.displayResult): выпало \(event.sector), ставили \(outcomeDisplay(outcome))"
+            statusMessage = "\(outcome.displayResult): выпало \(event.sector)"
         }
 
         lastDetectedThrow = event
         behaviorAccumulator.removeAll()
+        lastPlayerPhase = .idle
 
         pipelineStep = .generatingForecast
         let recommendation = PredictionEngine.shared.recommend(
@@ -340,21 +378,19 @@ final class MonitorCoordinator: ObservableObject {
             behavior: currentPlayerBehavior,
             strategyVotes: [:]
         )
-        let pending = PendingPrediction(
-            from: recommendation,
-            features: features,
-            behavior: currentPlayerBehavior
+        learningEngine.setPending(
+            PendingPrediction(from: recommendation, features: features, behavior: currentPlayerBehavior)
         )
-        learningEngine.setPending(pending)
 
-        startBettingWindow(recommendation: recommendation)
+        // 5 сек на ставку на СЛЕДУЮЩИЙ бросок — только после подтверждённого результата
+        startBettingWindow(recommendation: recommendation, confirmedResult: event.sector)
         playAlertSound()
 
         if lastOutcome == nil {
-            statusMessage = "Бросок: \(event.sector) → ставка: \(recommendation.displayBet)"
+            statusMessage = "Выпало \(event.sector) → прогноз на следующий: \(recommendation.displayBet)"
         }
 
-        LaunchLogger.log("Prediction: \(recommendation.displayBet) conf=\(recommendation.confidencePercent)%")
+        LaunchLogger.log("Next throw prediction: \(recommendation.displayBet) after confirmed \(event.sector)")
         pipelineStep = .watchingOutcome
     }
 
@@ -385,10 +421,15 @@ final class MonitorCoordinator: ObservableObject {
         }
     }
 
-    private func startBettingWindow(recommendation: BetRecommendation) {
+    private func startBettingWindow(recommendation: BetRecommendation, confirmedResult: DartSector) {
         bettingTimer?.invalidate()
+        bettingWindowStart = Date()
         bettingDeadline = Date().addingTimeInterval(bettingWindowSeconds)
-        phase = .bettingOpen(remainingSeconds: bettingWindowSeconds, recommendation: recommendation)
+        phase = .bettingOpen(
+            remainingSeconds: bettingWindowSeconds,
+            recommendation: recommendation,
+            confirmedResult: confirmedResult
+        )
 
         let newTimer = Timer(timeInterval: 0.05, repeats: true) { [weak self] _ in
             guard let coordinator = self else { return }
@@ -411,12 +452,19 @@ final class MonitorCoordinator: ObservableObject {
         if remaining <= 0 {
             bettingTimer?.invalidate()
             bettingTimer = nil
+            bettingWindowStart = nil
             phase = .waitingForThrow
-            statusMessage = "Ожидание следующего броска…"
+            statusMessage = "Ожидание броска игрока…"
             return
         }
 
-        phase = .bettingOpen(remainingSeconds: remaining, recommendation: recommendation)
+        if case .bettingOpen(_, let rec, let confirmed) = phase {
+            phase = .bettingOpen(
+                remainingSeconds: remaining,
+                recommendation: rec,
+                confirmedResult: confirmed
+            )
+        }
     }
 
     private func updateFPS() {

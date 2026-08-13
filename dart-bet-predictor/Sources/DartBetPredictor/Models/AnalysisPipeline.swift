@@ -4,6 +4,7 @@ import Foundation
 enum AnalysisPipelineStep: String, CaseIterable {
     case idle
     case watchingOutcome      // читаем исход броска (СЕРИЯ)
+    case awaitingResult       // ждём подтверждения результата
     case analyzingBehavior    // анализ игрока
     case evaluatingPrediction // проверка прошлого прогноза
     case learning             // обучение модели
@@ -13,6 +14,7 @@ enum AnalysisPipelineStep: String, CaseIterable {
         switch self {
         case .idle: return "Ожидание"
         case .watchingOutcome: return "Исход броска"
+        case .awaitingResult: return "Ждём результат"
         case .analyzingBehavior: return "Поведение игрока"
         case .evaluatingPrediction: return "Проверка прогноза"
         case .learning: return "Обучение"
@@ -24,6 +26,7 @@ enum AnalysisPipelineStep: String, CaseIterable {
         switch self {
         case .idle: return "pause.circle"
         case .watchingOutcome: return "number.circle"
+        case .awaitingResult: return "clock.badge.questionmark"
         case .analyzingBehavior: return "figure.stand"
         case .evaluatingPrediction: return "checkmark.circle"
         case .learning: return "brain"

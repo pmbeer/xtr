@@ -77,27 +77,22 @@ final class SeriesOCRService {
 
         let observations = request.results ?? []
 
-        // FONBET: новый бросок обычно справа (больший midX в Vision coords — origin bottom-left)
+        // Слева → справа (типичная панель СЕРИЯ FONBET)
         let sorted = observations
             .compactMap { obs -> (CGRect, String)? in
                 guard let text = obs.topCandidates(1).first?.string else { return nil }
                 return (obs.boundingBox, text)
             }
-            .sorted { $0.0.midX > $1.0.midX }
+            .sorted { $0.0.midX < $1.0.midX }
 
         var sectors: [DartSector] = []
         var rawTexts: [String] = []
-        var seen = Set<Int>()
 
         for (_, text) in sorted {
             let cleaned = normalizeText(text)
             if let sector = parseSector(from: cleaned) {
-                let key = sector == .bullseye ? 25 : sector.rawValue
-                if !seen.contains(key) {
-                    sectors.append(sector)
-                    rawTexts.append(cleaned)
-                    seen.insert(key)
-                }
+                sectors.append(sector)
+                rawTexts.append(cleaned)
             }
         }
 

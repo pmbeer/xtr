@@ -13,8 +13,10 @@ struct PredictionOverlayView: View {
                 idleView
             case .waitingForThrow:
                 waitingView
-            case .bettingOpen(let remaining, let recommendation):
-                bettingView(remaining: remaining, recommendation: recommendation)
+            case .awaitingResult(let pending, let stable, let required):
+                awaitingResultView(pending: pending, stable: stable, required: required)
+            case .bettingOpen(let remaining, let recommendation, let confirmed):
+                bettingView(remaining: remaining, recommendation: recommendation, confirmed: confirmed)
             }
         }
         .padding(20)
@@ -69,12 +71,12 @@ struct PredictionOverlayView: View {
     private var waitingView: some View {
         VStack(spacing: 8) {
             ProgressView()
-            Text("Ожидание броска…")
+            Text("Ожидание броска игрока…")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
             if let last = coordinator.lastDetectedThrow {
-                Text("Последний: \(last.sector.description)")
+                Text("Последний результат: \(last.sector.description)")
                     .font(.caption)
             }
 
@@ -92,9 +94,34 @@ struct PredictionOverlayView: View {
         }
     }
 
-    private func bettingView(remaining: Double, recommendation: BetRecommendation) -> some View {
+    private func awaitingResultView(pending: DartSector?, stable: Int, required: Int) -> some View {
+        VStack(spacing: 8) {
+            Image(systemName: "clock.badge.checkmark")
+                .font(.largeTitle)
+                .foregroundStyle(.blue)
+            Text("Ждём результат броска")
+                .font(.headline)
+            if let pending {
+                Text("\(pending.description)")
+                    .font(.title.bold())
+                    .foregroundStyle(.orange)
+            }
+            Text("Подтверждение \(stable)/\(required)")
+                .font(.caption.monospacedDigit())
+            Text(coordinator.currentPlayerBehavior.summary)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            pipelineRow
+        }
+    }
+
+    private func bettingView(remaining: Double, recommendation: BetRecommendation, confirmed: DartSector) -> some View {
         VStack(spacing: 10) {
-            Text("СТАВКА!")
+            Text("Выпало: \(confirmed.description)")
+                .font(.caption.bold())
+                .foregroundStyle(.secondary)
+
+            Text("СТАВКА НА СЛЕДУЮЩИЙ!")
                 .font(.caption.bold())
                 .foregroundStyle(.red)
 

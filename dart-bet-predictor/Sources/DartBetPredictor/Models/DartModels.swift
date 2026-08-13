@@ -85,11 +85,18 @@ struct BetRecommendation: Identifiable, Equatable {
     }
 }
 
-/// Состояние окна ставки (5 секунд после броска).
+/// Состояние окна ставки (5 секунд после подтверждения результата).
 enum BettingPhase: Equatable {
     case idle
-    case bettingOpen(remainingSeconds: Double, recommendation: BetRecommendation)
     case waitingForThrow
+    /// Бросок выполнен — ждём стабильный результат на экране.
+    case awaitingResult(pendingSector: DartSector?, stableReads: Int, requiredReads: Int)
+    /// Результат подтверждён — 5 сек на ставку на СЛЕДУЮЩИЙ бросок.
+    case bettingOpen(
+        remainingSeconds: Double,
+        recommendation: BetRecommendation,
+        confirmedResult: DartSector
+    )
 }
 
 struct ThrowEvent: Equatable {

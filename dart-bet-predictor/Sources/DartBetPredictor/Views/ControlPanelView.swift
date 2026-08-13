@@ -160,19 +160,36 @@ struct ControlPanelView: View {
         case .idle:
             EmptyView()
         case .waitingForThrow:
-            Label("Ожидание броска…", systemImage: "hourglass")
+            Label("Ожидание броска игрока…", systemImage: "hourglass")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-        case .bettingOpen(let remaining, let rec):
+        case .awaitingResult(let pending, let stable, let required):
             HStack {
-                Image(systemName: "timer")
-                    .foregroundStyle(.red)
-                Text(String(format: "СТАВКА: %@ — %.1f сек", rec.displayBet, remaining))
-                    .font(.caption.bold())
-                    .foregroundStyle(.red)
+                Image(systemName: "clock.badge.checkmark")
+                    .foregroundStyle(.blue)
+                if let pending {
+                    Text("Ждём результат: \(pending.description) (\(stable)/\(required))")
+                        .font(.caption.bold())
+                } else {
+                    Text("Ждём результат на экране…")
+                        .font(.caption.bold())
+                }
             }
-            ProgressView(value: remaining, total: coordinator.bettingWindowSeconds)
-                .tint(.red)
+        case .bettingOpen(let remaining, let rec, let confirmed):
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Выпало: \(confirmed.description) → ставка на следующий: \(rec.displayBet)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                HStack {
+                    Image(systemName: "timer")
+                        .foregroundStyle(.red)
+                    Text(String(format: "СТАВКА — %.1f сек", remaining))
+                        .font(.caption.bold())
+                        .foregroundStyle(.red)
+                }
+                ProgressView(value: remaining, total: coordinator.bettingWindowSeconds)
+                    .tint(.red)
+            }
         }
     }
 
