@@ -65,8 +65,8 @@ final class TimingModel: PredictionModel {
         }
     }
 
-    private func bucket(_ value: Double, step: Double, max: Int) -> Int {
-        min(max, max(0, Int(value / step)))
+    private func bucket(_ value: Double, step: Double, maxBucket: Int) -> Int {
+        Swift.min(maxBucket, Swift.max(0, Int(value / step)))
     }
 
     func exportState() -> Data {

@@ -37,10 +37,10 @@ final class ScreenCaptureManager: ObservableObject {
         lastError = nil
 
         resultTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / Double(HardwareProfile.resultCaptureFPS), repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.captureResult() }
+            DispatchQueue.main.async { self?.captureResult() }
         }
         playerTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / Double(HardwareProfile.playerCaptureFPS), repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.capturePlayer() }
+            DispatchQueue.main.async { self?.capturePlayer() }
         }
         // Не блокируем runloop — timers на common mode.
         if let t = resultTimer { RunLoop.main.add(t, forMode: .common) }
