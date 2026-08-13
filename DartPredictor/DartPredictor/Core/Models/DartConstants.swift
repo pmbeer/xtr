@@ -138,12 +138,16 @@ struct GameWindowZones: Codable, Equatable {
     /// Поле ставок 1–20 (исключаем из OCR результатов)
     var bettingZone: NormalizedRect
 
-    /// Калибровка для fon.bet (Safari, типичная раскладка)
+    /// Калибровка fon.bet — Safari, окно с игрой (видео сверху, результаты снизу-справа)
     static let fonBetDefault = GameWindowZones(
-        resultsZone: NormalizedRect(x: 0.52, y: 0.60, width: 0.46, height: 0.34),
-        playerZone: NormalizedRect(x: 0.44, y: 0.17, width: 0.42, height: 0.40),
-        dartboardZone: NormalizedRect(x: 0.06, y: 0.17, width: 0.38, height: 0.40),
-        bettingZone: NormalizedRect(x: 0.10, y: 0.52, width: 0.40, height: 0.22)
+        // 🔴 Красная: нижний правый блок — счёт матча + кружки истории бросков
+        resultsZone: NormalizedRect(x: 0.50, y: 0.735, width: 0.48, height: 0.24),
+        // 🟢 Зелёная: правое видео (игрок), только верхняя панель стрима
+        playerZone: NormalizedRect(x: 0.395, y: 0.115, width: 0.355, height: 0.315),
+        // 🔵 Синяя: левое видео (мишень / доска)
+        dartboardZone: NormalizedRect(x: 0.045, y: 0.115, width: 0.345, height: 0.315),
+        // Поле ставок 1–20 (центр, не для результатов)
+        bettingZone: NormalizedRect(x: 0.075, y: 0.495, width: 0.415, height: 0.225)
     )
 }
 
@@ -341,6 +345,7 @@ struct AppSettings: Codable, Equatable {
     var regions: [CaptureRegion] = []
     var selectedCaptureWindow: CaptureWindowInfo?
     var gameWindowZones: GameWindowZones = .fonBetDefault
+    var zoneLayoutVersion: Int = 2
     var isPaperPredictionMode: Bool = true
     var hasCompletedOnboarding: Bool = false
     var showFloatingOverlay: Bool = true

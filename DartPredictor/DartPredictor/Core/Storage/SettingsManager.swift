@@ -24,7 +24,16 @@ final class SettingsManager: ObservableObject {
               let decoded = try? decoder.decode(AppSettings.self, from: data) else { return }
         settings = decoded
         migrateLegacyRegions()
+        migrateZoneLayout()
         DebugLogger.shared.configure(enabled: settings.debugLoggingEnabled)
+    }
+
+    private func migrateZoneLayout() {
+        if settings.zoneLayoutVersion < 2 {
+            settings.gameWindowZones = .fonBetDefault
+            settings.zoneLayoutVersion = 2
+            save()
+        }
     }
 
     var monitorRegion: CaptureRegion? {

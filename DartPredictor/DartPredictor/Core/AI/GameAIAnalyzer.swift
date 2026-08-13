@@ -9,21 +9,32 @@ final class GameAIAnalyzer {
     private let timerRecognizer = BettingTimerRecognizer.shared
     private let throwTracker = ThrowSequenceTracker()
     private let processingQueue = DispatchQueue(label: "com.dartpredictor.gameai", qos: .userInteractive)
-    private var isProcessing = false
-    private var latestImage: CGImage?
-    private var latestZones: GameWindowZones = .fonBetDefault
-    private var pendingCompletion: ((GameSnapshot) -> Void)?
     private var throwMotionDetected = false
     private var motionReleased = false
     private var prevDartboardBytes: [UInt8]?
     private var prevPlayerBytes: [UInt8]?
+    private var poseFrameCounter = 0
+
+    /// Быстрый live-анализ (~3 раза/сек) — не блокирует захват окна
+    func analyzeLive(image: CGImage, zones: GameWindowZones, completion: @escaping (GameSnapshot) -> Void) {
+        processingQueue.async { [weak self] in
+            guard let self else { return }
+            let snapshot = self.buildSnapshot(image: image, zones: zones, includePose: self.poseFrameCounter % 2 == 0)
+            self.poseFrameCounter += 1
+            DispatchQueue.main.async {
+                completion(snapshot)
+            }
+        }
+    }
 
     func analyze(image: CGImage, zones: GameWindowZones, completion: @escaping (GameSnapshot) -> Void) {
-        latestImage = image
-        latestZones = zones
-        pendingCompletion = completion
-        guard !isProcessing else { return }
-        drainQueue()
+        processingQueue.async { [weak self] in
+            guard let self else { return }
+            let snapshot = self.buildSnapshot(image: image, zones: zones, includePose: true)
+            DispatchQueue.main.async {
+                completion(snapshot)
+            }
+        }
     }
 
     func reset() {
@@ -32,19 +43,13 @@ final class GameAIAnalyzer {
         aiAction.reset()
         throwMotionDetected = false
         motionReleased = false
-        isProcessing = false
-        latestImage = nil
-        pendingCompletion = nil
         prevDartboardBytes = nil
         prevPlayerBytes = nil
+        poseFrameCounter = 0
     }
 
-    private func drainQueue() {
-        guard let image = latestImage, let completion = pendingCompletion else { return }
-        latestImage = nil
-        isProcessing = true
+    private func buildSnapshot(image: CGImage, zones: GameWindowZones, includePose: Bool) -> GameSnapshot {
         let start = CFAbsoluteTimeGetCurrent()
-        let zones = latestZones
         let scaled = scaleForAnalysis(image)
 
         let resultsCrop = WindowZoneCropper.crop(image: scaled, zone: zones.resultsZone)
@@ -52,112 +57,103 @@ final class GameAIAnalyzer {
         let dartboardCrop = WindowZoneCropper.crop(image: scaled, zone: zones.dartboardZone)
         let bettingCrop = WindowZoneCropper.crop(image: scaled, zone: zones.bettingZone)
 
-        processingQueue.async { [weak self] in
-            guard let self else { return }
+        // Live: только fast OCR в зонах результатов и ставок
+        let resultTexts = scanCrop(resultsCrop, accurate: false)
+        let resultNumbers = VisionTextScanner.extractDartNumbers(from: resultTexts)
+        let resultHistory = extractHistoryStrip(from: resultNumbers)
 
-            let resultTexts = self.scanCrop(resultsCrop)
-            let resultNumbers = VisionTextScanner.extractDartNumbers(from: resultTexts)
-            let resultHistory = self.extractHistoryStrip(from: resultNumbers)
+        let bettingTexts = scanCrop(bettingCrop, accurate: false)
+        let forecastsAccepted = detectForecastsAccepted(from: bettingTexts)
 
-            let bettingTexts = self.scanCrop(bettingCrop)
-            let forecastsAccepted = self.detectForecastsAccepted(from: bettingTexts)
+        let playerTimerCrop = playerCrop ?? scaled
+        let bettingSeconds = forecastsAccepted ? nil : self.timerRecognizer.recognize(from: playerTimerCrop)
 
-            let playerTimerCrop = playerCrop ?? scaled
-            let bettingSeconds = forecastsAccepted ? nil : self.timerRecognizer.recognize(from: playerTimerCrop)
+        let dartMotion = WindowZoneCropper.computeMotion(image: dartboardCrop, previousBytes: &prevDartboardBytes)
+        let playerMotion = WindowZoneCropper.computeMotion(image: playerCrop, previousBytes: &prevPlayerBytes)
+        let combinedMotion = max(dartMotion * 1.4, playerMotion)
 
-            let dartMotion = WindowZoneCropper.computeMotion(image: dartboardCrop, previousBytes: &self.prevDartboardBytes)
-            let playerMotion = WindowZoneCropper.computeMotion(image: playerCrop, previousBytes: &self.prevPlayerBytes)
-            let combinedMotion = max(dartMotion * 1.4, playerMotion)
-
-            if combinedMotion > 0.14 {
-                self.throwMotionDetected = true
-            } else if combinedMotion < 0.05 && self.throwMotionDetected {
-                self.motionReleased = true
-                self.throwMotionDetected = false
-            }
-
-            let confirmed = self.throwTracker.process(
-                detectedNumbers: resultNumbers,
-                motionReleased: self.motionReleased || dartMotion > 0.18
-            )
-            if confirmed != nil {
-                self.motionReleased = false
-            }
-
-            let group = DispatchGroup()
-            var playerInsight = AIActionInsight.empty
-            var playerFeatures = PlayerFeatures.zero
-
-            if let playerCrop {
-                group.enter()
-                self.aiAction.analyzeFrame(playerCrop) { insight, features in
-                    playerInsight = insight
-                    playerFeatures = features
-                    group.leave()
-                }
-            } else {
-                playerInsight.aiDescription = "ИИ: зона игрока не видна"
-            }
-
-            group.notify(queue: self.processingQueue) {
-                let throwInProgress = playerInsight.detectedAction == .throwMotion
-                    || playerInsight.detectedAction == .release
-                    || self.throwMotionDetected
-                    || dartMotion > 0.16
-
-                var enrichedInsight = playerInsight
-                enrichedInsight.motionIntensity = max(playerInsight.motionIntensity, combinedMotion)
-                enrichedInsight.aiDescription = self.buildZoneDescription(
-                    playerInsight: enrichedInsight,
-                    dartMotion: dartMotion,
-                    playerMotion: playerMotion,
-                    forecastsAccepted: forecastsAccepted,
-                    resultCount: resultHistory.count
-                )
-
-                let phase = self.classifyPhase(
-                    insight: enrichedInsight,
-                    resultHistory: resultHistory,
-                    bettingSeconds: bettingSeconds,
-                    forecastsAccepted: forecastsAccepted,
-                    throwMotion: self.throwMotionDetected,
-                    dartMotion: dartMotion,
-                    confirmedResult: confirmed
-                )
-
-                let snapshot = GameSnapshot(
-                    timestamp: Date(),
-                    detectedNumbers: resultNumbers,
-                    resultHistory: resultHistory,
-                    bettingSeconds: bettingSeconds,
-                    phase: phase,
-                    aiInsight: enrichedInsight,
-                    playerFeatures: playerFeatures,
-                    throwInProgress: throwInProgress,
-                    throwCompleted: confirmed != nil,
-                    confirmedResult: confirmed,
-                    forecastsAccepted: forecastsAccepted,
-                    dartboardMotion: dartMotion,
-                    playerMotion: playerMotion,
-                    processingTimeMs: (CFAbsoluteTimeGetCurrent() - start) * 1000
-                )
-
-                self.isProcessing = false
-                DispatchQueue.main.async {
-                    completion(snapshot)
-                    if self.latestImage != nil {
-                        self.drainQueue()
-                    }
-                }
-            }
+        if combinedMotion > 0.14 {
+            throwMotionDetected = true
+        } else if combinedMotion < 0.05 && throwMotionDetected {
+            motionReleased = true
+            throwMotionDetected = false
         }
+
+        let confirmed = throwTracker.process(
+            detectedNumbers: resultNumbers,
+            motionReleased: motionReleased || dartMotion > 0.18
+        )
+        if confirmed != nil {
+            motionReleased = false
+        }
+
+        var playerInsight = AIActionInsight.empty
+        var playerFeatures = PlayerFeatures.zero
+
+        if includePose, let playerCrop {
+            let semaphore = DispatchSemaphore(value: 0)
+            aiAction.analyzeFrame(playerCrop) { insight, features in
+                playerInsight = insight
+                playerFeatures = features
+                semaphore.signal()
+            }
+            _ = semaphore.wait(timeout: .now() + 1.2)
+        } else if let playerCrop {
+            playerInsight.aiDescription = "Игрок: движение \(Int(playerMotion * 100))%"
+            playerInsight.motionIntensity = playerMotion
+        } else {
+            playerInsight.aiDescription = "Зона игрока не видна"
+        }
+
+        let throwInProgress = playerInsight.detectedAction == .throwMotion
+            || playerInsight.detectedAction == .release
+            || throwMotionDetected
+            || dartMotion > 0.16
+
+        var enrichedInsight = playerInsight
+        enrichedInsight.motionIntensity = max(playerInsight.motionIntensity, combinedMotion)
+        enrichedInsight.aiDescription = buildZoneDescription(
+            playerInsight: enrichedInsight,
+            dartMotion: dartMotion,
+            playerMotion: playerMotion,
+            forecastsAccepted: forecastsAccepted,
+            resultHistory: resultHistory
+        )
+
+        let phase = classifyPhase(
+            insight: enrichedInsight,
+            resultHistory: resultHistory,
+            bettingSeconds: bettingSeconds,
+            forecastsAccepted: forecastsAccepted,
+            throwMotion: throwMotionDetected,
+            dartMotion: dartMotion,
+            confirmedResult: confirmed
+        )
+
+        return GameSnapshot(
+            timestamp: Date(),
+            detectedNumbers: resultNumbers,
+            resultHistory: resultHistory,
+            bettingSeconds: bettingSeconds,
+            phase: phase,
+            aiInsight: enrichedInsight,
+            playerFeatures: playerFeatures,
+            throwInProgress: throwInProgress,
+            throwCompleted: confirmed != nil,
+            confirmedResult: confirmed,
+            forecastsAccepted: forecastsAccepted,
+            dartboardMotion: dartMotion,
+            playerMotion: playerMotion,
+            processingTimeMs: (CFAbsoluteTimeGetCurrent() - start) * 1000
+        )
     }
 
-    private func scanCrop(_ crop: CGImage?) -> [VisionTextItem] {
+    private func scanCrop(_ crop: CGImage?, accurate: Bool) -> [VisionTextItem] {
         guard let crop else { return [] }
         let fast = VisionTextScanner.scan(image: crop, fast: true)
-        let accurate = VisionTextScanner.scan(image: crop, fast: false)
-        return VisionTextScanner.merge(fast, accurate)
+        if !accurate { return fast }
+        let merged = VisionTextScanner.scan(image: crop, fast: false)
+        return VisionTextScanner.merge(fast, merged)
     }
 
     private func extractHistoryStrip(from numbers: [DetectedNumber]) -> [Int] {
@@ -171,16 +167,14 @@ final class GameAIAnalyzer {
         dartMotion: Double,
         playerMotion: Double,
         forecastsAccepted: Bool,
-        resultCount: Int
+        resultHistory: [Int]
     ) -> String {
         var parts: [String] = []
         parts.append("Доска: \(motionLabel(dartMotion))")
         parts.append("Игрок: \(playerInsight.detectedAction.rawValue)")
-        if forecastsAccepted {
-            parts.append("ставки закрыты")
-        }
-        if resultCount > 0 {
-            parts.append("история: \(resultCount) чисел")
+        if forecastsAccepted { parts.append("ставки закрыты") }
+        if !resultHistory.isEmpty {
+            parts.append("история: \(resultHistory.map(String.init).joined(separator: "→"))")
         }
         return "ИИ · " + parts.joined(separator: " · ")
     }
@@ -194,12 +188,8 @@ final class GameAIAnalyzer {
     private func detectForecastsAccepted(from texts: [VisionTextItem]) -> Bool {
         for item in texts {
             let upper = item.text.uppercased()
-            if upper.contains("ПРОГНОЗЫ ПРИНЯТЫ") || upper.contains("ПРОГНОЗЫПРИНЯТЫ") {
-                return true
-            }
-            if upper.contains("ПРИНЯТЫ") && upper.contains("ПРОГНОЗ") {
-                return true
-            }
+            if upper.contains("ПРОГНОЗЫ ПРИНЯТЫ") || upper.contains("ПРОГНОЗЫПРИНЯТЫ") { return true }
+            if upper.contains("ПРИНЯТЫ") && upper.contains("ПРОГНОЗ") { return true }
         }
         return false
     }
@@ -216,31 +206,21 @@ final class GameAIAnalyzer {
         if throwMotion || dartMotion > 0.18 || insight.detectedAction == .throwMotion || insight.detectedAction == .windup {
             return .throwing
         }
-        if confirmedResult != nil {
-            return .resultShown
-        }
-        if forecastsAccepted {
-            return .watchingResults
-        }
-        if let sec = bettingSeconds, sec > 0 && sec <= 25 {
-            return .bettingWindow
-        }
+        if confirmedResult != nil { return .resultShown }
+        if forecastsAccepted { return .watchingResults }
+        if let sec = bettingSeconds, sec > 0 && sec <= 25 { return .bettingWindow }
         if insight.playerDetected && (insight.detectedAction == .aim || insight.detectedAction == .stance) {
             return .playerPreparing
         }
-        if insight.playerDetected || insight.motionIntensity > 0.08 {
-            return .playerVisible
-        }
-        if !resultHistory.isEmpty {
-            return .watchingResults
-        }
+        if insight.playerDetected || insight.motionIntensity > 0.08 { return .playerVisible }
+        if !resultHistory.isEmpty { return .watchingResults }
         return .idle
     }
 
     private func scaleForAnalysis(_ image: CGImage) -> CGImage {
-        let minWidth: CGFloat = 960
-        if CGFloat(image.width) >= minWidth { return image }
-        let scale = minWidth / CGFloat(image.width)
+        let targetWidth: CGFloat = 720
+        if CGFloat(image.width) <= targetWidth { return image }
+        let scale = targetWidth / CGFloat(image.width)
         let w = Int(CGFloat(image.width) * scale)
         let h = Int(CGFloat(image.height) * scale)
         guard w > 0, h > 0,
@@ -249,7 +229,7 @@ final class GameAIAnalyzer {
                   space: CGColorSpaceCreateDeviceRGB(),
                   bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
               ) else { return image }
-        ctx.interpolationQuality = .high
+        ctx.interpolationQuality = .medium
         ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
         return ctx.makeImage() ?? image
     }

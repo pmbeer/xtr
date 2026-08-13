@@ -88,20 +88,30 @@ struct ZoneOverlayView: View {
 
     var body: some View {
         GeometryReader { geo in
-            zoneBox(zones.dartboardZone, color: .blue, in: geo.size)
-            zoneBox(zones.playerZone, color: .green, in: geo.size)
-            zoneBox(zones.resultsZone, color: .red, in: geo.size)
+            zoneBox(zones.dartboardZone, color: .blue, label: "Доска", in: geo.size)
+            zoneBox(zones.playerZone, color: .green, label: "Игрок", in: geo.size)
+            zoneBox(zones.resultsZone, color: .red, label: "Результаты", in: geo.size)
         }
         .allowsHitTesting(false)
     }
 
-    private func zoneBox(_ zone: NormalizedRect, color: Color, in size: CGSize) -> some View {
+    private func zoneBox(_ zone: NormalizedRect, color: Color, label: String, in size: CGSize) -> some View {
         let rect = zone.cgRect(for: size)
-        return Rectangle()
-            .strokeBorder(color.opacity(0.85), lineWidth: 2)
-            .background(color.opacity(0.08))
-            .frame(width: rect.width, height: rect.height)
-            .position(x: rect.midX, y: rect.midY)
+        return ZStack(alignment: .topLeading) {
+            Rectangle()
+                .strokeBorder(color.opacity(0.9), lineWidth: 2)
+                .background(color.opacity(0.1))
+                .frame(width: rect.width, height: rect.height)
+                .position(x: rect.midX, y: rect.midY)
+            Text(label)
+                .font(.system(size: 9, weight: .bold))
+                .padding(.horizontal, 4)
+                .padding(.vertical, 2)
+                .background(color.opacity(0.85))
+                .foregroundStyle(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 3))
+                .position(x: rect.minX + 36, y: rect.minY + 10)
+        }
     }
 }
 

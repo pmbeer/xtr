@@ -31,6 +31,8 @@ final class PipelineCoordinator: ObservableObject {
     @Published var dartboardMotion: Double = 0
     @Published var playerZoneMotion: Double = 0
     @Published var isLiveAnalyzing = false
+    @Published var lastLiveUpdate: Date?
+    @Published var liveTick: Int = 0
     @Published var bettingSecondsOnScreen: Double?
     @Published var throwInProgress = false
     @Published var framesProcessed: Int = 0
@@ -52,11 +54,17 @@ final class PipelineCoordinator: ObservableObject {
     private let store = PredictionStore.shared
 
     private var timerCancellable: AnyCancellable?
+    private var analysisCancellable: AnyCancellable?
+    private var heartbeatCancellable: AnyCancellable?
     private var permissionCancellable: AnyCancellable?
     private var lastPendingEntry: PredictionEntry?
     private var currentFeatures: PlayerFeatures = .zero
     private var currentAIInsight: AIActionInsight = .empty
     private var activeBackend: CaptureBackend = .none
+    private var latestFrame: CGImage?
+    private var lastCaptureCount = 0
+    private var staleCaptureSeconds = 0
+    private var analysisInFlight = false
 
     func start() async {
         guard !isRunning else { return }
@@ -89,7 +97,9 @@ final class PipelineCoordinator: ObservableObject {
             activeBackend = .windowCapture
             captureBackend = .windowCapture
             isRunning = true
-            processingState = "ИИ анализирует окно «\(window.shortLabel)»..."
+            staleCaptureSeconds = 0
+            lastCaptureCount = 0
+            processingState = "LIVE · захват окна «\(window.shortLabel)»..."
             DebugLogger.shared.log("Capture backend: Window SCK \(window.displayTitle)", category: "capture")
         } catch {
             captureError = error.localizedDescription
@@ -99,6 +109,8 @@ final class PipelineCoordinator: ObservableObject {
 
         if isRunning {
             startDecisionTimer()
+            startLiveAnalysisLoop()
+            startHeartbeat()
             publishInitialPrediction()
         }
     }
@@ -109,9 +121,14 @@ final class PipelineCoordinator: ObservableObject {
         isRunning = false
         processingState = "Остановлен"
         timerCancellable?.cancel()
+        analysisCancellable?.cancel()
+        heartbeatCancellable?.cancel()
         permissionCancellable?.cancel()
         captureBackend = .none
         activeBackend = .none
+        latestFrame = nil
+        analysisInFlight = false
+        isLiveAnalyzing = false
     }
 
     func requestPermission() {
@@ -120,7 +137,6 @@ final class PipelineCoordinator: ObservableObject {
         startPermissionPolling()
     }
 
-    /// Снимок окна после выбора — проверка что программа видит игру
     func testCapturePreview() async {
         guard let window = SettingsManager.shared.selectedCaptureWindow else { return }
 
@@ -178,25 +194,94 @@ final class PipelineCoordinator: ObservableObject {
             }
     }
 
+    /// Захват: только обновление превью (без тяжёлого ИИ на каждый кадр)
     private func handleFrame(_ image: CGImage) {
-        captureFrames = windowCapture.framesCaptured
-        lastCropSize = windowCapture.lastCropSize
+        latestFrame = image
         livePreviewImage = image
+        captureFrames = windowCapture.framesCaptured
+        lastCropSize = CGSize(width: image.width, height: image.height)
         captureError = windowCapture.lastError
         needsScreenPermission = !regionCapture.hasScreenPermission
-        isLiveAnalyzing = true
+        liveTick += 1
+    }
 
-        let zones = SettingsManager.shared.settings.gameWindowZones
-        gameAI.analyze(image: image, zones: zones) { [weak self] snapshot in
-            Task { @MainActor in
-                self?.applySnapshot(snapshot)
+    /// ИИ: отдельный таймер 3 Гц — не блокирует поток кадров
+    private func startLiveAnalysisLoop() {
+        analysisCancellable?.cancel()
+        analysisCancellable = Timer.publish(every: 0.33, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                self?.runLiveAnalysis()
             }
+    }
+
+    private func runLiveAnalysis() {
+        guard isRunning, let frame = latestFrame else { return }
+        if analysisInFlight { return }
+
+        analysisInFlight = true
+        isLiveAnalyzing = true
+        let zones = SettingsManager.shared.settings.gameWindowZones
+
+        gameAI.analyzeLive(image: frame, zones: zones) { [weak self] snapshot in
+            Task { @MainActor in
+                guard let self else { return }
+                self.analysisInFlight = false
+                self.isLiveAnalyzing = false
+                self.applySnapshot(snapshot)
+            }
+        }
+    }
+
+    /// Пульс UI + перезапуск захвата если кадры остановились
+    private func startHeartbeat() {
+        heartbeatCancellable?.cancel()
+        heartbeatCancellable = Timer.publish(every: 1.0, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                guard let self, self.isRunning else { return }
+
+                let count = self.windowCapture.framesCaptured
+                if count == self.lastCaptureCount {
+                    self.staleCaptureSeconds += 1
+                } else {
+                    self.staleCaptureSeconds = 0
+                    self.lastCaptureCount = count
+                }
+
+                if self.staleCaptureSeconds >= 4 {
+                    self.staleCaptureSeconds = 0
+                    Task { await self.restartCapture() }
+                }
+
+                if let last = self.lastLiveUpdate,
+                   Date().timeIntervalSince(last) > 2.0,
+                   !self.analysisInFlight {
+                    self.runLiveAnalysis()
+                }
+            }
+    }
+
+    private func restartCapture() async {
+        guard isRunning, let window = SettingsManager.shared.selectedCaptureWindow else { return }
+        processingState = "LIVE · переподключение захвата..."
+        await windowCapture.stopCapture()
+        let handler: (CGImage) -> Void = { [weak self] image in
+            Task { @MainActor in
+                self?.handleFrame(image)
+            }
+        }
+        do {
+            try await windowCapture.startCapture(windowID: window.windowID, handler: handler)
+            processingState = "LIVE · захват восстановлен"
+        } catch {
+            captureError = error.localizedDescription
         }
     }
 
     private func applySnapshot(_ snapshot: GameSnapshot, analyzeOnly: Bool = false) {
         framesProcessed += 1
-        isLiveAnalyzing = false
+        lastLiveUpdate = Date()
         gamePhase = snapshot.phase
         sceneState = snapshot.aiInsight.sceneState
         aiInsight = snapshot.aiInsight
@@ -215,16 +300,15 @@ final class PipelineCoordinator: ObservableObject {
         }
 
         let history = resultHistoryNumbers.map(String.init).joined(separator: " → ")
-        var status = "LIVE · Фаза: \(snapshot.phase.rawValue)"
-        if !history.isEmpty { status += " · История: \(history)" }
+        var status = "LIVE · кадр \(captureFrames) · анализ #\(framesProcessed)"
+        status += " · \(snapshot.phase.rawValue)"
+        if !history.isEmpty { status += " · 🔴 \(history)" }
         if let sec = snapshot.bettingSeconds {
-            status += " · Таймер: \(String(format: "%.1f", sec))с"
+            status += " · ⏱ \(String(format: "%.1f", sec))с"
         }
-        if snapshot.forecastsAccepted {
-            status += " · Ставки закрыты"
-        }
+        if snapshot.forecastsAccepted { status += " · ставки закрыты" }
         if snapshot.throwInProgress { status += " · БРОСОК" }
-        status += " · Доска \(Int(snapshot.dartboardMotion * 100))%"
+        status += " · 🔵\(Int(snapshot.dartboardMotion * 100))% 🟢\(Int(snapshot.playerMotion * 100))%"
         if !analyzeOnly {
             processingState = status
         }
