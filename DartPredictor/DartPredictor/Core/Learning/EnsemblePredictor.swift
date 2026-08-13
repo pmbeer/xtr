@@ -64,6 +64,7 @@ final class EnsemblePredictor {
         )
         let confidence = computeConfidence(
             predictions: predictions,
+            combination: combination,
             historyCount: history.count,
             aiInsight: aiInsight
         )
@@ -144,9 +145,16 @@ final class EnsemblePredictor {
     }
 
     private func applyFollowUpBoost(scores: inout [Int: Double], history: [Int]) {
-        let followUp = ThrowHistoryMerger.followUpScores(from: history, depth: 6)
+        let followUp = ThrowHistoryMerger.followUpScores(from: history, depth: 10)
         for (num, prob) in followUp {
-            scores[num, default: 0] += prob * 0.22
+            scores[num, default: 0] += prob * 0.35
+        }
+
+        if let last = history.last {
+            let transition = ThrowHistoryMerger.followUpScores(from: history, depth: 3)
+            for (num, prob) in transition where num != last {
+                scores[num, default: 0] += prob * 0.15
+            }
         }
     }
 
@@ -199,6 +207,7 @@ final class EnsemblePredictor {
 
     private func computeConfidence(
         predictions: [TopPrediction],
+        combination: PredictedCombination,
         historyCount: Int,
         aiInsight: AIActionInsight
     ) -> (level: ConfidenceLevel, score: Double) {
@@ -209,17 +218,19 @@ final class EnsemblePredictor {
         let spread = predictions.map(\.probability)
         let topProb = top.probability
         let avgSpread = spread.reduce(0, +) / Double(spread.count)
-        let dataFactor = min(Double(historyCount) / 80.0, 1.0)
-        let aiFactor = aiInsight.actionConfidence * 0.25 + (aiInsight.playerDetected ? 0.1 : 0)
+        let historyFactor = min(Double(historyCount) / 10.0, 1.0)
+        let jointFactor = combination.jointProbability / 100.0
+        let aiFactor = aiInsight.actionConfidence * 0.2 + (aiInsight.playerDetected ? 0.12 : 0)
+        let spreadBonus = max(0, (topProb - avgSpread) / 100.0) * 0.12
 
-        let score = (topProb / 100.0 * 0.35 + dataFactor * 0.3 + (topProb - avgSpread) / 100.0 * 0.15 + aiFactor) * 100
-        let clamped = min(max(score, 0), 100)
+        let raw = topProb / 100.0 * 0.22 + historyFactor * 0.28 + jointFactor * 0.38 + aiFactor + spreadBonus
+        let score = min(99.0, max(0, raw * 100))
 
         let level: ConfidenceLevel
-        if clamped >= 58 && historyCount >= 40 { level = .high }
-        else if clamped >= 32 && historyCount >= 12 { level = .medium }
+        if score >= 72 && historyCount >= 6 { level = .high }
+        else if score >= 48 && historyCount >= 3 { level = .medium }
         else { level = .low }
 
-        return (level, clamped)
+        return (level, score)
     }
 }

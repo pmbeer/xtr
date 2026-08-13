@@ -317,6 +317,7 @@ struct AIStatusPanel: View {
     let sceneState: GameSceneState
     let insight: AIActionInsight
     let resultHistory: [Int]
+    let ocrHitCount: Int
     let bettingSeconds: Double?
     let throwInProgress: Bool
     let dartboardMotion: Double
@@ -352,10 +353,11 @@ struct AIStatusPanel: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text("🔴 История бросков:")
+                    Text("🔴 История бросков (\(ocrHitCount) OCR):")
                         .font(.caption2.weight(.semibold))
-                    Text(resultHistory.isEmpty ? "—" : resultHistory.map(String.init).joined(separator: " → "))
+                    Text(resultHistory.isEmpty ? "не видна — калибруйте зону «Результаты»" : resultHistory.map(String.init).joined(separator: " → "))
                         .font(.caption.monospacedDigit())
+                        .foregroundStyle(resultHistory.isEmpty ? .orange : .primary)
                 }
                 HStack {
                     Text("🟢 Поведение:")
@@ -394,11 +396,12 @@ struct AIStatusPanel: View {
 
 struct CombinationDisplayView: View {
     let combination: PredictedCombination
+    var confidenceScore: Double = 0
 
     var body: some View {
         if !combination.numbers.isEmpty {
             VStack(alignment: .leading, spacing: 6) {
-                Text("КОМБИНАЦИЯ")
+                Text("ПОБЕДНАЯ КОМБИНАЦИЯ")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.secondary)
 
@@ -406,10 +409,20 @@ struct CombinationDisplayView: View {
                     .font(.title2.weight(.bold).monospacedDigit())
 
                 HStack {
-                    Text("Совместная вероятность:")
+                    Text("Шанс комбинации:")
                         .font(.caption)
                     Text(String(format: "%.1f%%", combination.jointProbability))
                         .font(.caption.weight(.semibold).monospacedDigit())
+                }
+
+                if confidenceScore > 0 {
+                    HStack {
+                        Text("Уверенность ИИ:")
+                            .font(.caption)
+                        Text(String(format: "%.0f%%", confidenceScore))
+                            .font(.caption.weight(.bold).monospacedDigit())
+                            .foregroundStyle(confidenceScore >= 70 ? .green : confidenceScore >= 45 ? .orange : .secondary)
+                    }
                 }
             }
         }
@@ -429,7 +442,10 @@ struct PredictionDisplayView: View {
                 .font(.headline)
                 .foregroundStyle(.secondary)
 
-            CombinationDisplayView(combination: combination)
+            CombinationDisplayView(
+                combination: combination,
+                confidenceScore: confidenceScore
+            )
 
             if !rationale.isEmpty {
                 Text(rationale)

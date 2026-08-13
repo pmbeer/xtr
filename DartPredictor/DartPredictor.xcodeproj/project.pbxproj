@@ -10,6 +10,7 @@
 		4F982958FF1D4ECF8BB5D9D8 /* AIActionAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E74FA84B5C463099AB54ED /* AIActionAnalyzer.swift */; };
 		4CA313149F89429BA43F62D2 /* BettingTimerRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 148B50D4B0B24378A6D1A352 /* BettingTimerRecognizer.swift */; };
 		CCAEF59E1E5C4CB8A6915DC0 /* GameAIAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD11B82669647D8BD3DE04E /* GameAIAnalyzer.swift */; };
+		R1H2S3C4A5N6E7R8H9I0S1T2 /* ResultsHistoryScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = R1H2S3C4A5N6E7R8H9I0S1T3 /* ResultsHistoryScanner.swift */; };
 		D796E570FB3C4BDEB104F299 /* NeuralActionClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311FA4B7971C4160A0B2463B /* NeuralActionClassifier.swift */; };
 		E812E471AC6A42C08A602DCC /* ScreenSceneAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87435F92F81A4D8480869572 /* ScreenSceneAnalyzer.swift */; };
 		8D89B21CD59244B0BB85185D /* VisionTextScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BEA4F0F2174A3AA505A988 /* VisionTextScanner.swift */; };
@@ -61,6 +62,7 @@
 		57E74FA84B5C463099AB54ED /* AIActionAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AIActionAnalyzer.swift; path = DartPredictor/Core/AI/AIActionAnalyzer.swift; sourceTree = SOURCE_ROOT; };
 		148B50D4B0B24378A6D1A352 /* BettingTimerRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BettingTimerRecognizer.swift; path = DartPredictor/Core/AI/BettingTimerRecognizer.swift; sourceTree = SOURCE_ROOT; };
 		0AD11B82669647D8BD3DE04E /* GameAIAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GameAIAnalyzer.swift; path = DartPredictor/Core/AI/GameAIAnalyzer.swift; sourceTree = SOURCE_ROOT; };
+		R1H2S3C4A5N6E7R8H9I0S1T3 /* ResultsHistoryScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ResultsHistoryScanner.swift; path = DartPredictor/Core/AI/ResultsHistoryScanner.swift; sourceTree = SOURCE_ROOT; };
 		311FA4B7971C4160A0B2463B /* NeuralActionClassifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NeuralActionClassifier.swift; path = DartPredictor/Core/AI/NeuralActionClassifier.swift; sourceTree = SOURCE_ROOT; };
 		87435F92F81A4D8480869572 /* ScreenSceneAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ScreenSceneAnalyzer.swift; path = DartPredictor/Core/AI/ScreenSceneAnalyzer.swift; sourceTree = SOURCE_ROOT; };
 		97BEA4F0F2174A3AA505A988 /* VisionTextScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = VisionTextScanner.swift; path = DartPredictor/Core/AI/VisionTextScanner.swift; sourceTree = SOURCE_ROOT; };
@@ -118,6 +120,7 @@
 			57E74FA84B5C463099AB54ED /* AIActionAnalyzer.swift */,
 			148B50D4B0B24378A6D1A352 /* BettingTimerRecognizer.swift */,
 			0AD11B82669647D8BD3DE04E /* GameAIAnalyzer.swift */,
+			R1H2S3C4A5N6E7R8H9I0S1T3 /* ResultsHistoryScanner.swift */,
 			311FA4B7971C4160A0B2463B /* NeuralActionClassifier.swift */,
 			87435F92F81A4D8480869572 /* ScreenSceneAnalyzer.swift */,
 			97BEA4F0F2174A3AA505A988 /* VisionTextScanner.swift */,
@@ -217,6 +220,7 @@
 			4F982958FF1D4ECF8BB5D9D8 /* AIActionAnalyzer.swift in Sources */,
 			4CA313149F89429BA43F62D2 /* BettingTimerRecognizer.swift in Sources */,
 			CCAEF59E1E5C4CB8A6915DC0 /* GameAIAnalyzer.swift in Sources */,
+			R1H2S3C4A5N6E7R8H9I0S1T2 /* ResultsHistoryScanner.swift in Sources */,
 			D796E570FB3C4BDEB104F299 /* NeuralActionClassifier.swift in Sources */,
 			E812E471AC6A42C08A602DCC /* ScreenSceneAnalyzer.swift in Sources */,
 			8D89B21CD59244B0BB85185D /* VisionTextScanner.swift in Sources */,

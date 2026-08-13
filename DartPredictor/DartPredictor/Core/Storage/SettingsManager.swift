@@ -29,22 +29,22 @@ final class SettingsManager: ObservableObject {
     }
 
     private func migrateZoneLayout() {
-        if settings.zoneLayoutVersion < 4 {
+        if settings.zoneLayoutVersion < 5 {
             settings.gameWindowZones = .fonBetDefault
-            settings.zoneLayoutVersion = 4
+            settings.zoneLayoutVersion = 5
             save()
         }
     }
 
     func setGameWindowZones(_ zones: GameWindowZones) {
         settings.gameWindowZones = zones
-        settings.zoneLayoutVersion = 4
+        settings.zoneLayoutVersion = 5
         save()
     }
 
     func resetGameWindowZonesToDefault() {
         settings.gameWindowZones = .fonBetDefault
-        settings.zoneLayoutVersion = 4
+        settings.zoneLayoutVersion = 5
         save()
     }
 

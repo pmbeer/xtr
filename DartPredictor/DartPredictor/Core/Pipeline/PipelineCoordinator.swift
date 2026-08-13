@@ -43,6 +43,7 @@ final class PipelineCoordinator: ObservableObject {
     @Published var needsScreenPermission = false
     @Published var captureBackend: CaptureBackend = .none
     @Published var predictionRationale: String = ""
+    @Published var ocrHitCount: Int = 0
 
     private let regionCapture = RegionFrameCapture.shared
     private let windowCapture = WindowCaptureManager.shared
@@ -69,6 +70,8 @@ final class PipelineCoordinator: ObservableObject {
     private var lastPredictionHistory: [Int] = []
     private var lastLivePredictionAt: Date = .distantPast
     private var lastPoseSignature: String = ""
+    private var lastOcrStrip: [Int] = []
+    private var lastComboNumbers: [Int] = []
 
     func start() async {
         guard !isRunning else { return }
@@ -324,37 +327,53 @@ final class PipelineCoordinator: ObservableObject {
         }
     }
 
-    /// Обновляет TOP-4 в online без ожидания подтверждённого броска
+    /// Обновляет TOP-4 на каждый ход по истории попаданий + ИИ
     private func refreshLivePrediction(snapshot: GameSnapshot) {
         let profile = profileManager.activeProfile
+        let liveOCR = snapshot.resultHistory
+        ocrHitCount = liveOCR.count
+
         let mergedHistory = ThrowHistoryMerger.merge(
             stored: profile.throwHistory,
-            liveOCR: snapshot.resultHistory
+            liveOCR: liveOCR
         )
+        let predictionHistory: [Int] = liveOCR.count >= 1 ? liveOCR : mergedHistory
 
-        let historyChanged = mergedHistory != lastPredictionHistory
+        let ocrChanged = liveOCR != lastOcrStrip
+        if ocrChanged { lastOcrStrip = liveOCR }
+
+        let historyChanged = predictionHistory != lastPredictionHistory
         let interval = Date().timeIntervalSince(lastLivePredictionAt)
-        let timerTick = interval >= 0.85
-        let bettingActive = snapshot.phase == .bettingWindow || snapshot.bettingSeconds != nil
-        let nextBetPhase = snapshot.phase == .bettingWindow || snapshot.phase == .playerPreparing
+        let timerTick = interval >= 0.45
+        let bettingPhase = snapshot.phase == .bettingWindow
+            || snapshot.phase == .playerPreparing
+            || snapshot.phase == .watchingResults
         let poseSignature = "\(snapshot.aiInsight.detectedAction.rawValue)-\(Int(snapshot.playerFeatures.armHeight * 100))-\(Int(snapshot.playerFeatures.bodyTilt * 100))"
         let poseChanged = snapshot.aiInsight.playerDetected && poseSignature != lastPoseSignature
 
-        guard historyChanged || timerTick || bettingActive || nextBetPhase || poseChanged else { return }
+        guard predictionHistory.count >= 1 || bettingPhase || timerTick || ocrChanged || poseChanged else { return }
 
-        lastPredictionHistory = mergedHistory
+        lastPredictionHistory = predictionHistory
         lastLivePredictionAt = Date()
         if poseChanged { lastPoseSignature = poseSignature }
 
         let prediction = learningEngine.makePrediction(
-            history: mergedHistory,
+            history: predictionHistory,
             features: currentFeatures,
             profile: profile,
             aiInsight: currentAIInsight
         )
+
+        let comboChanged = prediction.combination.numbers != lastComboNumbers
+        lastComboNumbers = prediction.combination.numbers
+
         currentPrediction = prediction
         currentCombination = prediction.combination
         predictionRationale = prediction.rationale
+
+        if ocrChanged || comboChanged {
+            processingState = "ИИ · попадания \(liveOCR.count): \(liveOCR.map(String.init).joined(separator: "→")) · комбо \(prediction.combination.formatted)"
+        }
     }
 
     func onZonesUpdated() {
@@ -362,6 +381,8 @@ final class PipelineCoordinator: ObservableObject {
         lastPredictionHistory = []
         lastLivePredictionAt = .distantPast
         lastPoseSignature = ""
+        lastOcrStrip = []
+        lastComboNumbers = []
         if isRunning, latestFrame != nil {
             runLiveAnalysis()
         } else if SettingsManager.shared.selectedCaptureWindow != nil {

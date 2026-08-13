@@ -64,25 +64,22 @@ final class ThrowSequenceTracker {
     }
 
     private func detectNewFromHistory(_ strip: [Int]) -> Int? {
-        guard strip.count >= 1 else {
-            historySignature = strip
+        guard !strip.isEmpty else {
+            historySignature = []
             return nil
         }
 
         if strip == historySignature { return nil }
 
+        var newValue: Int? = nil
         if strip.count > historySignature.count {
-            historySignature = strip
-            return strip.last
-        }
-
-        if let last = strip.last, last != historySignature.last {
-            historySignature = strip
-            return last
+            newValue = strip.last
+        } else if let last = strip.last, historySignature.last != last {
+            newValue = last
         }
 
         historySignature = strip
-        return nil
+        return newValue
     }
 
     /// В красной зоне — самый правый результат в истории

@@ -178,8 +178,8 @@ struct GameWindowZones: Codable, Equatable {
 
     /// fon.bet live — только результаты + игрок; overlay и часы игнорируются
     static let fonBetDefault = GameWindowZones(
-        // 🔴 Серия / кружки истории + счёт (нижний правый блок)
-        resultsZone: NormalizedRect(x: 0.52, y: 0.66, width: 0.46, height: 0.30),
+        // 🔴 Серия / кружки попаданий + счёт
+        resultsZone: NormalizedRect(x: 0.46, y: 0.56, width: 0.52, height: 0.40),
         // 🟢 Правое видео — поведение игрока (без overlay)
         playerZone: NormalizedRect(x: 0.52, y: 0.11, width: 0.46, height: 0.38),
         // Не анализируется в v1.0.12+ (оставлено для совместимости)
@@ -444,7 +444,7 @@ struct AppSettings: Codable, Equatable {
     var regions: [CaptureRegion] = []
     var selectedCaptureWindow: CaptureWindowInfo?
     var gameWindowZones: GameWindowZones = .fonBetDefault
-    var zoneLayoutVersion: Int = 4
+    var zoneLayoutVersion: Int = 5
     var isPaperPredictionMode: Bool = true
     var hasCompletedOnboarding: Bool = false
     var showFloatingOverlay: Bool = true

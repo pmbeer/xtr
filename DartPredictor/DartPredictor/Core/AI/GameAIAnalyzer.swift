@@ -56,9 +56,8 @@ final class GameAIAnalyzer {
         )
         let bettingCrop = WindowZoneCropper.crop(image: scaled, zone: zones.bettingZone)
 
-        let resultTexts = scanCrop(resultsCrop, accurate: false)
-        let resultNumbers = VisionTextScanner.extractDartNumbers(from: resultTexts)
-        let resultHistory = extractHistoryStrip(from: resultNumbers)
+        let resultHistory = ResultsHistoryScanner.extract(from: resultsCrop)
+        let resultNumbers = ResultsHistoryScanner.toDetectedNumbers(resultHistory)
 
         let bettingTexts = scanCrop(bettingCrop, accurate: false)
         let forecastsAccepted = detectForecastsAccepted(from: bettingTexts)
@@ -153,12 +152,6 @@ final class GameAIAnalyzer {
         return VisionTextScanner.merge(fast, merged)
     }
 
-    private func extractHistoryStrip(from numbers: [DetectedNumber]) -> [Int] {
-        numbers
-            .sorted { $0.boundingBox.origin.x < $1.boundingBox.origin.x }
-            .map(\.value)
-    }
-
     private func buildZoneDescription(
         playerInsight: AIActionInsight,
         playerMotion: Double,
@@ -170,7 +163,7 @@ final class GameAIAnalyzer {
         parts.append(motionLabel(playerMotion))
         if forecastsAccepted { parts.append("ставки закрыты") }
         if !resultHistory.isEmpty {
-            parts.append("серия: \(resultHistory.map(String.init).joined(separator: "→"))")
+            parts.append("попадания: \(resultHistory.map(String.init).joined(separator: "→"))")
         }
         parts.append("прогноз на следующую ставку")
         return "ИИ · " + parts.joined(separator: " · ")

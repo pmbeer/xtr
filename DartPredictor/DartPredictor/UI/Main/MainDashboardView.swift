@@ -104,6 +104,7 @@ struct MainDashboardView: View {
                 sceneState: pipeline.sceneState,
                 insight: pipeline.aiInsight,
                 resultHistory: pipeline.resultHistoryNumbers,
+                ocrHitCount: pipeline.ocrHitCount,
                 bettingSeconds: pipeline.bettingSecondsOnScreen,
                 throwInProgress: pipeline.throwInProgress,
                 dartboardMotion: pipeline.dartboardMotion,
