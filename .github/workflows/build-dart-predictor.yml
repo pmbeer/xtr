@@ -16,6 +16,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Resolve version from tag
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#dart-predictor-v}"
+            TAG_NAME="${GITHUB_REF_NAME}"
+          else
+            VERSION="1.0.9"
+            TAG_NAME="dart-predictor-v${VERSION}"
+          fi
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+          echo "DMG_NAME=DartPredictor-${VERSION}-macOS-Universal.dmg" >> "$GITHUB_ENV"
+          echo "TAG_NAME=${TAG_NAME}" >> "$GITHUB_ENV"
+          echo "Resolved version: ${VERSION} (tag: ${TAG_NAME})"
+
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
@@ -24,34 +38,36 @@ jobs:
           cd DartPredictor
           chmod +x scripts/*.sh
           export ARCH="x86_64 arm64"
-          export DMG_NAME="DartPredictor-1.0.7-macOS-Universal.dmg"
+          export DMG_NAME="${DMG_NAME}"
           ./scripts/build_dmg.sh
 
       - name: Verify build
         run: |
           ls -la DartPredictor/build/
-          file DartPredictor/build/DartPredictor.app/Contents/MacOS/DartPredictor
+          file "DartPredictor/build/${DMG_NAME}"
+          test -f "DartPredictor/build/${DMG_NAME}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DartPredictor-macOS-Universal
-          path: DartPredictor/build/DartPredictor-1.0.7-macOS-Universal.dmg
+          name: DartPredictor-macOS-Universal-${{ env.VERSION }}
+          path: DartPredictor/build/${{ env.DMG_NAME }}
           retention-days: 90
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: dart-predictor-v1.0.7
-          name: DartPredictor v1.0.7 — live online + точные зоны fon.bet
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || env.TAG_NAME }}
+          name: DartPredictor v${{ env.VERSION }}
           body: |
-            ## DartPredictor v1.0.7
+            ## DartPredictor v${{ env.VERSION }}
 
-            - **Live online**: захват и ИИ разделены — данные обновляются каждые 0.33с без Stop/Start
-            - **Зоны перекалиброваны** по fon.bet: доска слева, игрок справа, результаты снизу-справа
-            - Автопереподключение захвата если кадры остановились
-            - Подписи на рамках зон в превью
-          files: DartPredictor/build/DartPredictor-1.0.7-macOS-Universal.dmg
+            Скачайте `DartPredictor-${{ env.VERSION }}-macOS-Universal.dmg` ниже.
+
+            - Выбор окна Safari/fon.bet
+            - Live online анализ (зоны: доска / игрок / результаты)
+            - Прогноз TOP-4 комбинаций
+          files: DartPredictor/build/${{ env.DMG_NAME }}
           draft: false
           prerelease: false
           generate_release_notes: false
