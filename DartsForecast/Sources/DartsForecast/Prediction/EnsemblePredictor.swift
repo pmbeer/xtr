@@ -1,7 +1,7 @@
 import Foundation
 
 /// Модель F — адаптивный ансамбль независимых стратегий.
-public final class EnsemblePredictor: @unchecked Sendable {
+final class EnsemblePredictor: @unchecked Sendable {
     private let models: [PredictionModel]
     private let lock = NSLock()
 

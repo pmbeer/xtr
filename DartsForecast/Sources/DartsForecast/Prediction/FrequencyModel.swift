@@ -1,7 +1,7 @@
 import Foundation
 
 /// Модель B — горячие/холодные числа, частота, recency, conditional после предыдущего.
-public final class FrequencyModel: PredictionModel {
+final class FrequencyModel: PredictionModel {
     let kind: ModelKind = .frequency
 
     private struct State: Codable {

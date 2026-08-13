@@ -1,7 +1,7 @@
 import Foundation
 
 /// Подтверждение нового броска: изменение → стабильность N кадров → событие.
-public actor ThrowDetector {
+actor ThrowDetector {
     private var lastConfirmed: Int?
     private var candidate: Int?
     private var stableCount = 0

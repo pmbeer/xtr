@@ -9,7 +9,7 @@ import ScreenCaptureKit
 
 /// Захват выбранных областей. OCR — только result-region; player — downscaled.
 @MainActor
-public final class ScreenCaptureManager: ObservableObject {
+final class ScreenCaptureManager: ObservableObject {
     @Published private(set) var lastError: String?
     @Published private(set) var isRunning = false
 

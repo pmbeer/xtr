@@ -2,7 +2,7 @@ import AppKit
 import CoreGraphics
 import Foundation
 
-public struct ScreenCaptureRegion: Codable, Equatable, Sendable {
+struct ScreenCaptureRegion: Codable, Equatable, Sendable {
     /// Глобальные координаты в системе CG (origin снизу-слева).
     var cgRect: CGRect
     var displayID: CGDirectDisplayID

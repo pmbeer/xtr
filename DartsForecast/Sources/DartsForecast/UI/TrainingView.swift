@@ -1,6 +1,6 @@
 import SwiftUI
 
-public struct TrainingView: View {
+struct TrainingView: View {
     @ObservedObject var pipeline: PipelineCoordinator
 
     var body: some View {

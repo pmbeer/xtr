@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-public struct FloatingOverlayView: View {
+struct FloatingOverlayView: View {
     @ObservedObject var pipeline: PipelineCoordinator
 
     var body: some View {
@@ -46,7 +46,7 @@ public struct FloatingOverlayView: View {
     }
 }
 
-public enum FloatingOverlayController {
+enum FloatingOverlayController {
     private static var window: NSPanel?
     private static var hosting: NSHostingView<FloatingOverlayView>?
 

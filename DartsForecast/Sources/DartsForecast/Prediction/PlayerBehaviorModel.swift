@@ -1,7 +1,7 @@
 import Foundation
 
 /// Модель D — связь визуальных признаков с результатом.
-public final class PlayerBehaviorModel: PredictionModel {
+final class PlayerBehaviorModel: PredictionModel {
     let kind: ModelKind = .playerBehavior
 
     private struct State: Codable {

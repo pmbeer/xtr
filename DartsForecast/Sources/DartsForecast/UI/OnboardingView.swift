@@ -1,7 +1,7 @@
 import SwiftUI
 import CoreGraphics
 
-public struct OnboardingView: View {
+struct OnboardingView: View {
     @ObservedObject var pipeline: PipelineCoordinator
     @State private var step = 0
 

@@ -2,7 +2,7 @@ import Foundation
 import Combine
 
 @MainActor
-public final class AccuracyManager: ObservableObject {
+final class AccuracyManager: ObservableObject {
     @Published private(set) var snapshot = AccuracySnapshot()
 
     func record(actual: Int, predicted: [Int]) {

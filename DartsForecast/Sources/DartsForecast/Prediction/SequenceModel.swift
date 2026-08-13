@@ -1,7 +1,7 @@
 import Foundation
 
 /// Модель A — повторяющиеся последовательности (окна 3/5/10/20/50).
-public final class SequenceModel: PredictionModel {
+final class SequenceModel: PredictionModel {
     let kind: ModelKind = .sequence
 
     private struct State: Codable {

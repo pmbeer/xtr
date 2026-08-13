@@ -1,7 +1,7 @@
 import Foundation
 
 /// Профиль железа под MacBook Pro 2018 / 8 GB / Intel.
-public enum HardwareProfile {
+enum HardwareProfile {
     /// Макс. FPS захвата области результата.
     static let resultCaptureFPS: Int = 8
     /// Макс. FPS анализа игрока.

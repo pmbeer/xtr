@@ -1,7 +1,7 @@
 import Foundation
 
 /// Визуальные признаки игрока, извлечённые из последовательности кадров.
-public struct PlayerFeatures: Codable, Equatable, Sendable {
+struct PlayerFeatures: Codable, Equatable, Sendable {
     var bodyDetected: Bool = false
     /// Наклон корпуса −1…1 (влево/вправо).
     var torsoLean: Double = 0
@@ -36,7 +36,7 @@ public struct PlayerFeatures: Codable, Equatable, Sendable {
 }
 
 /// Один кадр анализа игрока (лёгкий снимок).
-public struct PlayerFrameSample: Sendable {
+struct PlayerFrameSample: Sendable {
     let timestamp: Date
     let motionEnergy: Double
     let centroidY: Double

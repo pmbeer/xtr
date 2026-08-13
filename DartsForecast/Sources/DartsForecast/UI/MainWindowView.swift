@@ -1,6 +1,6 @@
 import SwiftUI
 
-public struct MainWindowView: View {
+struct MainWindowView: View {
     @ObservedObject var pipeline: PipelineCoordinator
     @State private var selectedTab = 0
     @State private var testNumber = "17"
@@ -218,7 +218,7 @@ public struct MainWindowView: View {
     }
 }
 
-public struct DecisionTimerView: View {
+struct DecisionTimerView: View {
     let deadline: Date?
     @State private var remaining: Double = 0
 

@@ -2,7 +2,7 @@ import Foundation
 import Combine
 
 @MainActor
-public final class HistoryManager: ObservableObject {
+final class HistoryManager: ObservableObject {
     @Published private(set) var records: [ThrowRecord] = []
     @Published private(set) var sequence: [Int] = []
 

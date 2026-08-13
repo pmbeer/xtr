@@ -2,13 +2,13 @@ import Foundation
 import Combine
 import CoreGraphics
 
-public struct CaptureRegions: Codable, Equatable {
+struct CaptureRegions: Codable, Equatable {
     var resultRegion: ScreenCaptureRegion?
     var playerRegion: ScreenCaptureRegion?
 }
 
 @MainActor
-public final class SettingsManager: ObservableObject {
+final class SettingsManager: ObservableObject {
     @Published var regions = CaptureRegions()
     @Published var paperMode: Bool = true
     @Published var onboardingDone: Bool = false

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Запись одного броска + прогноз + факт.
-public struct ThrowRecord: Codable, Identifiable, Equatable, Sendable {
+struct ThrowRecord: Codable, Identifiable, Equatable, Sendable {
     var id: UUID
     var index: Int
     var timestamp: Date
@@ -47,7 +47,7 @@ public struct ThrowRecord: Codable, Identifiable, Equatable, Sendable {
 }
 
 /// Текущий ТОП-4 прогноз.
-public struct Top4Prediction: Equatable, Sendable {
+struct Top4Prediction: Equatable, Sendable {
     struct Item: Equatable, Identifiable, Sendable {
         var id: Int { number }
         let number: Int
@@ -76,7 +76,7 @@ public struct Top4Prediction: Equatable, Sendable {
     var probabilities: [Double] { items.map(\.probability) }
 }
 
-public struct AccuracySnapshot: Codable, Equatable, Sendable {
+struct AccuracySnapshot: Codable, Equatable, Sendable {
     var totalPredictions: Int = 0
     var successes: Int = 0
     var misses: Int = 0

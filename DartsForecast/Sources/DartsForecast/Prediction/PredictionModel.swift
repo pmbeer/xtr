@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol PredictionModel: AnyObject {
+protocol PredictionModel: AnyObject {
     var kind: ModelKind { get }
     /// Возвращает score для каждого числа 1…20,25. Не обязан быть нормализован.
     func score(history: [Int], features: PlayerFeatures) -> [Int: Double]
@@ -9,7 +9,7 @@ public protocol PredictionModel: AnyObject {
     func importState(_ data: Data)
 }
 
-public enum ScoreNormalizer {
+enum ScoreNormalizer {
     /// Нормализует scores → вероятности, сумма = 1.
     static func probabilities(from scores: [Int: Double]) -> [Int: Double] {
         var clipped: [Int: Double] = [:]

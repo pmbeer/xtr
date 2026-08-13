@@ -1,6 +1,6 @@
 import Foundation
 
-public enum DebugLog {
+enum DebugLog {
     private static let queue = DispatchQueue(label: "com.pmbeer.DartsForecast.log", qos: .utility)
     private static let formatter: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()

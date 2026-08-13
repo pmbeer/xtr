@@ -1,7 +1,7 @@
 import Foundation
 
 /// Модель E — временные паттерны (интервал, подготовка, ритм).
-public final class TimingModel: PredictionModel {
+final class TimingModel: PredictionModel {
     let kind: ModelKind = .timing
 
     private struct State: Codable {

@@ -3,7 +3,7 @@ import Combine
 
 /// Цикл: факт → проверка прогноза → обучение → новый ТОП-4.
 @MainActor
-public final class LearningEngine: ObservableObject {
+final class LearningEngine: ObservableObject {
     let ensemble = EnsemblePredictor()
     let accuracy = AccuracyManager()
     let profiles = PlayerProfileManager()

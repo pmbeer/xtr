@@ -8,7 +8,7 @@ private final class PassthroughLabel: NSTextField {
     override func hitTest(_ point: CGPoint) -> NSView? { nil }
 }
 
-public final class NativeRegionSelectorView: NSView {
+final class NativeRegionSelectorView: NSView {
     var titleText: String = "Выделите область" {
         didSet { titleLabel?.stringValue = titleText }
     }
@@ -204,7 +204,7 @@ private final class RegionSelectorPanel: NSPanel {
     override var canBecomeMain: Bool { true }
 }
 
-public final class RegionSelectorController: NSObject, NSWindowDelegate {
+final class RegionSelectorController: NSObject, NSWindowDelegate {
     private static var active: RegionSelectorController?
 
     private var panel: RegionSelectorPanel?

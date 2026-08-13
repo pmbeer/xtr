@@ -3,7 +3,7 @@ import Vision
 import CoreGraphics
 
 /// Анализ последовательности кадров игрока (уменьшенное разрешение).
-public actor PlayerVisionAnalyzer {
+actor PlayerVisionAnalyzer {
     private var samples: [PlayerFrameSample] = []
     private var lastThrowTime: Date?
     private var prepStart: Date?

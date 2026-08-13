@@ -1,7 +1,7 @@
 import Foundation
 
 /// Модель C — таблица переходов previous → next.
-public final class TransitionModel: PredictionModel {
+final class TransitionModel: PredictionModel {
     let kind: ModelKind = .transition
 
     private struct State: Codable {

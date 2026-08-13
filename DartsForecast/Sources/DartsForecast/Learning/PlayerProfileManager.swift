@@ -2,7 +2,7 @@ import Foundation
 import Combine
 
 @MainActor
-public final class PlayerProfileManager: ObservableObject {
+final class PlayerProfileManager: ObservableObject {
     @Published private(set) var profiles: [PlayerProfile] = []
     @Published private(set) var activeProfileID: String = PlayerProfile.unknownID
 

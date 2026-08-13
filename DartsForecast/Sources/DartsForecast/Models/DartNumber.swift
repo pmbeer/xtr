@@ -1,7 +1,7 @@
 import Foundation
 
 /// Допустимые числа дартса: 1…20 и булл (25).
-public enum DartNumber: Int, Codable, CaseIterable, Hashable, CustomStringConvertible, Sendable {
+enum DartNumber: Int, Codable, CaseIterable, Hashable, CustomStringConvertible, Sendable {
     case n1 = 1, n2, n3, n4, n5, n6, n7, n8, n9, n10
     case n11, n12, n13, n14, n15, n16, n17, n18, n19, n20
     case bull = 25
@@ -37,7 +37,7 @@ public enum DartNumber: Int, Codable, CaseIterable, Hashable, CustomStringConver
     }
 }
 
-public enum ModelKind: String, Codable, CaseIterable, Identifiable, Sendable {
+enum ModelKind: String, Codable, CaseIterable, Identifiable, Sendable {
     case sequence
     case frequency
     case transition
@@ -68,7 +68,7 @@ public enum ModelKind: String, Codable, CaseIterable, Identifiable, Sendable {
     }
 }
 
-public enum ConfidenceLevel: String, Codable, Sendable {
+enum ConfidenceLevel: String, Codable, Sendable {
     case high = "HIGH"
     case medium = "MEDIUM"
     case low = "LOW"
@@ -76,7 +76,7 @@ public enum ConfidenceLevel: String, Codable, Sendable {
     var displayName: String { rawValue }
 }
 
-public enum LearningPhase: String, Codable, Sendable {
+enum LearningPhase: String, Codable, Sendable {
     case dataCollection = "СБОР ДАННЫХ"
     case calibration = "КАЛИБРОВКА"
     case adaptiveLearning = "АДАПТИВНОЕ ОБУЧЕНИЕ"

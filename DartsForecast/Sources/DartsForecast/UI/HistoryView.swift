@@ -1,6 +1,6 @@
 import SwiftUI
 
-public struct HistoryView: View {
+struct HistoryView: View {
     let records: [ThrowRecord]
 
     var body: some View {

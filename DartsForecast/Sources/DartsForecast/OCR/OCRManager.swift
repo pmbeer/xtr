@@ -2,14 +2,14 @@ import Foundation
 import Vision
 import CoreGraphics
 
-public struct OCRReading: Sendable {
+struct OCRReading: Sendable {
     let number: DartNumber?
     let rawText: String
     let confidence: Float
 }
 
 /// OCR только области результата. Лёгкий, без GPU-моделей.
-public actor OCRManager {
+actor OCRManager {
     private var busy = false
 
     func recognize(image: CGImage) async -> OCRReading {

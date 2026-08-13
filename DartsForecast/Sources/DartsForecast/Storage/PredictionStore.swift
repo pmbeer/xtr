@@ -1,6 +1,6 @@
 import Foundation
 
-public struct PersistedState: Codable {
+struct PersistedState: Codable {
     var history: [ThrowRecord]
     var resultSequence: [Int]
     var accuracy: AccuracySnapshot
@@ -12,7 +12,7 @@ public struct PersistedState: Codable {
 }
 
 @MainActor
-public final class PredictionStore {
+final class PredictionStore {
     static let shared = PredictionStore()
 
     private let url: URL

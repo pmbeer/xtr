@@ -4,7 +4,7 @@ import CoreGraphics
 
 /// Полный pipeline: Capture → OCR → Throw → Vision → Predict → Learn → Persist.
 @MainActor
-public final class PipelineCoordinator: ObservableObject {
+final class PipelineCoordinator: ObservableObject {
     let capture = ScreenCaptureManager()
     let settings = SettingsManager()
     let history = HistoryManager()

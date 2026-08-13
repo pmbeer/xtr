@@ -1,6 +1,6 @@
 import Foundation
 
-public struct PlayerProfile: Codable, Identifiable, Equatable, Sendable {
+struct PlayerProfile: Codable, Identifiable, Equatable, Sendable {
     var id: String
     var displayName: String
     var createdAt: Date
