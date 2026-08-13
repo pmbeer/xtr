@@ -24,6 +24,29 @@ enum GameSceneState: String, Codable, CaseIterable {
     }
 }
 
+/// Фаза игры (ИИ)
+enum GamePhase: String, Codable {
+    case idle = "Ожидание"
+    case playerVisible = "Игрок на экране"
+    case playerPreparing = "Игрок готовится"
+    case throwing = "Бросок!"
+    case resultShown = "Результат"
+    case bettingWindow = "Время на ставку"
+    case watchingResults = "Смотрим результаты"
+
+    var icon: String {
+        switch self {
+        case .idle: return "moon.zzz"
+        case .playerVisible: return "person.fill"
+        case .playerPreparing: return "figure.stand"
+        case .throwing: return "figure.handball"
+        case .resultShown: return "number.circle.fill"
+        case .bettingWindow: return "timer"
+        case .watchingResults: return "eye"
+        }
+    }
+}
+
 /// Распознанное действие игрока (ИИ)
 enum PlayerActionType: String, Codable, CaseIterable {
     case none = "Нет действия"
@@ -62,6 +85,20 @@ struct AIActionInsight: Codable, Equatable {
     static let empty = AIActionInsight()
 }
 
+/// Полный снимок игровой сцены (ИИ)
+struct GameSnapshot: Equatable {
+    let timestamp: Date
+    let detectedNumbers: [DetectedNumber]
+    let bettingSeconds: Double?
+    let phase: GamePhase
+    let aiInsight: AIActionInsight
+    let playerFeatures: PlayerFeatures
+    let throwInProgress: Bool
+    let throwCompleted: Bool
+    let confirmedResult: Int?
+    let processingTimeMs: Double
+}
+
 /// Прогнозируемая комбинация 4 чисел
 struct PredictedCombination: Codable, Equatable, Identifiable {
     let id: UUID
@@ -89,7 +126,7 @@ struct PredictedCombination: Codable, Equatable, Identifiable {
     }
 }
 
-/// Результат анализа одного кадра сцены
+/// Результат анализа одного кадра сцены (legacy)
 struct SceneAnalysisResult: Equatable {
     let timestamp: Date
     let sceneState: GameSceneState

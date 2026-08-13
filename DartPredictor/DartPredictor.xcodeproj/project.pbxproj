@@ -6,89 +6,97 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		52B5DADD7B2E4965AC4ED2B6 /* DartPredictorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68365610F69A4511B0B3AD8D /* DartPredictorApp.swift */; };
-		4E47C89AE2C447158476C944 /* AIActionAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D145A713C5BC4295ACED5BB3 /* AIActionAnalyzer.swift */; };
-		B36FBDC4CE9F44E78CE5B351 /* NeuralActionClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61A4B8D20774417D94773619 /* NeuralActionClassifier.swift */; };
-		81556CC3F8BB414894EE8710 /* ScreenSceneAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8446149A2690441CA0624A49 /* ScreenSceneAnalyzer.swift */; };
-		483B7930392A4443849F9284 /* AccuracyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 883035428C7D406BA35897B1 /* AccuracyManager.swift */; };
-		3DF38F7039054909855823B2 /* CaptureGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFD711928CD6465196E624CA /* CaptureGeometry.swift */; };
-		45A08AA220184BBB8887B7A9 /* ScreenCaptureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F50E3F575E62416FBFDCD67F /* ScreenCaptureManager.swift */; };
-		31025372F8C2427EBC1D219F /* ThrowDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 026C352F94D1424BB383F93C /* ThrowDetector.swift */; };
-		E0A3B74EAD0A458FB4FB0E8F /* ThrowSequenceTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E22580C7EEF4FE48B7CF815 /* ThrowSequenceTracker.swift */; };
-		6B97345B98B74383AEA3D21F /* CombinationPredictor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 879018E91BCC4778BA323982 /* CombinationPredictor.swift */; };
-		ED4010D4F1524B4DA76B75D3 /* EnsemblePredictor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA6E469B17AB42CE88B9A855 /* EnsemblePredictor.swift */; };
-		66B2C49AD02A45269CD727D1 /* LearningEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B65C458B35A444DBA08F8B37 /* LearningEngine.swift */; };
-		E72362AAE528481C81F6409D /* PlayerProfileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF031CE8C0A34A4EA3DCDB05 /* PlayerProfileManager.swift */; };
-		80550AC0732B47C397CB0CD9 /* DebugLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDB087299A5C46BD8119E7B2 /* DebugLogger.swift */; };
-		F747A9D6C08943DF9D0ED585 /* AIActionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF40DCF82AA84762B90A74B3 /* AIActionModel.swift */; };
-		C912881E5F994D2B95D598DF /* DartConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = F513484A8A5E495DB3B939D8 /* DartConstants.swift */; };
-		2E609657AFD047F1AE45630E /* FrequencyModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4C7B4BE416C455AA5AFD7B7 /* FrequencyModel.swift */; };
-		AC544F2A5031465EAE0FBA9D /* PlayerBehaviorModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E73EC5A8C783498A8B6760AE /* PlayerBehaviorModel.swift */; };
-		8920F1A15FAF4FD3BC993767 /* SceneModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1924033ADDF24F0890C44793 /* SceneModels.swift */; };
-		0FEB0910E66B4070A190EA16 /* SequenceModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 967B3D45693D460BB0DA2467 /* SequenceModel.swift */; };
-		85C89FE555F74C949071AF7F /* TimingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88E0C7A5B3BA43938B666B72 /* TimingModel.swift */; };
-		E3972663B7B54412AEA7AEF2 /* TransitionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D29C04303B341559C35DB48 /* TransitionModel.swift */; };
-		6292E458D8934E84A70929CD /* OCRManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA657C0C504427E96E0392E /* OCRManager.swift */; };
-		B785BAAEBC074EDDBB3CB7CD /* PipelineCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A636A379124A4D96BAC7AC1A /* PipelineCoordinator.swift */; };
-		4FCEC1B41D534683AD4DF0FB /* HistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F270622436DA43BA8F91DD71 /* HistoryManager.swift */; };
-		660B949E0E7140DAB50EA0F2 /* PredictionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E22D5FD85F6424BBDFD3331 /* PredictionStore.swift */; };
-		B1B8E260863A4C9694123287 /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CFC22CC5DDF47B59F56C2F2 /* SettingsManager.swift */; };
-		74C44AE00DD74B90BFEE58A5 /* PlayerVisionAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F752CD262AD745ABBCF05919 /* PlayerVisionAnalyzer.swift */; };
-		DDF5C647649C441AADCF4C69 /* HistoryTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710AE88EFE7B4105854FA3A0 /* HistoryTabView.swift */; };
-		CDDB01AE5B3C452EAE919561 /* LearningTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 207AC3A97B4D41A7B7B23A14 /* LearningTabView.swift */; };
-		926EABF7999746E7979EBACB /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4908FA7978C34161B56B1E2D /* ContentView.swift */; };
-		852DD72C0AB24D1DA5A31A86 /* MainDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27D6BCF3D15748FB9E0A3833 /* MainDashboardView.swift */; };
-		C0FAC0A35FFA47CFB88FD56D /* PredictionDisplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F64F4D2A39C4673982B9185 /* PredictionDisplayView.swift */; };
-		8FC59C084C0044178BCAD42C /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB7B04219ECF447BAAA37B3E /* OnboardingView.swift */; };
-		FA42C5EB9EDE40849641F53A /* PredictionOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84D91183B944853AC7B81FF /* PredictionOverlay.swift */; };
-		1A9CA7200531421FB0983F56 /* RegionSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3663B5FA545543D493FD5CFD /* RegionSelector.swift */; };
-		DB06F48809814EFDB0928313 /* PredictionModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B02453A40540D39305573C /* PredictionModelsTests.swift */; };
-		C52F6698B3E841A7B69DAF31 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ABD2D31652E140A8B3B07B87 /* Assets.xcassets */; };
+		A000EB9490004C20836471A5 /* DartPredictorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20E10AE2AE84A2E84AE7CA1 /* DartPredictorApp.swift */; };
+		4F982958FF1D4ECF8BB5D9D8 /* AIActionAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E74FA84B5C463099AB54ED /* AIActionAnalyzer.swift */; };
+		4CA313149F89429BA43F62D2 /* BettingTimerRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 148B50D4B0B24378A6D1A352 /* BettingTimerRecognizer.swift */; };
+		CCAEF59E1E5C4CB8A6915DC0 /* GameAIAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD11B82669647D8BD3DE04E /* GameAIAnalyzer.swift */; };
+		D796E570FB3C4BDEB104F299 /* NeuralActionClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311FA4B7971C4160A0B2463B /* NeuralActionClassifier.swift */; };
+		E812E471AC6A42C08A602DCC /* ScreenSceneAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87435F92F81A4D8480869572 /* ScreenSceneAnalyzer.swift */; };
+		8D89B21CD59244B0BB85185D /* VisionTextScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BEA4F0F2174A3AA505A988 /* VisionTextScanner.swift */; };
+		F3222F573193412890D52DAD /* AccuracyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D0734816409457A8A8AFD84 /* AccuracyManager.swift */; };
+		B77AD4D0779340D8B732385E /* CaptureGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C1D786C7844AA186C26BE5 /* CaptureGeometry.swift */; };
+		BD56C945F76B4B83A92C6E35 /* RegionFrameCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = C95F50E58A8E4E44890EBB95 /* RegionFrameCapture.swift */; };
+		016A41C8700841F4902BC308 /* ScreenCaptureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0503739BAC9046E0AFCCD62A /* ScreenCaptureManager.swift */; };
+		5361FE211A934D9EA511E4E9 /* ThrowDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C8980A621784B999B39AAB6 /* ThrowDetector.swift */; };
+		734A235C02A1451FA8A08584 /* ThrowSequenceTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E48855080B0451D81EED20D /* ThrowSequenceTracker.swift */; };
+		5EE8B9E9A6B3405EBBE4F92D /* CombinationPredictor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA72D82ACFC64818BD4FD36A /* CombinationPredictor.swift */; };
+		B77A60E4763C43BC94245CF7 /* EnsemblePredictor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5823C57AAD104EF2A475A63C /* EnsemblePredictor.swift */; };
+		F1D1E2985D5F4719AD90D50A /* LearningEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B1291FA56A64D0EBD68B932 /* LearningEngine.swift */; };
+		2655AAE704084CFDB866DAD5 /* PlayerProfileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 185D6CF5CD9A4D79B9CC8036 /* PlayerProfileManager.swift */; };
+		E7AB45C5E5E4440DAAB57571 /* DebugLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC7D40FFDB954E82930D729A /* DebugLogger.swift */; };
+		73098FBD890F41A9A98D92C7 /* AIActionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFA5F9D8F4E14A78B72E3165 /* AIActionModel.swift */; };
+		B32D5B3CA3A14689824C95B3 /* DartConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35D35D69D8354A648B1B12F0 /* DartConstants.swift */; };
+		92878B6125094277B013682F /* FrequencyModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9E9D13F746342FD88D1E2CA /* FrequencyModel.swift */; };
+		233AA1DB350042B696EAD5D6 /* PlayerBehaviorModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742CB13E1D5B4D78925DF902 /* PlayerBehaviorModel.swift */; };
+		040DF5FEF845402E865111A5 /* SceneModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B1B0C8F55F840FC9479E4CA /* SceneModels.swift */; };
+		063EF34FAFCC4CF2988876A4 /* SequenceModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0C3D87DF624AB690A30FF5 /* SequenceModel.swift */; };
+		1564DCE6F6C241039EC26CCE /* TimingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4EBC9E1ACC044D685233589 /* TimingModel.swift */; };
+		52AE57AC630F41BA89DBBC92 /* TransitionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB05BDCFA62742D5BC199F43 /* TransitionModel.swift */; };
+		E62AE31CA65B455789785779 /* OCRManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E06F4FF39E404AE5937E45B4 /* OCRManager.swift */; };
+		B9DEBC400A7E4479BF7EE628 /* PipelineCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 171FFB3858164B9EB4F190C4 /* PipelineCoordinator.swift */; };
+		B4BB39E067A04001A37C61CB /* HistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8953B7AA8D9C4F889621778C /* HistoryManager.swift */; };
+		746C2C8E60B94635B1F9D9E7 /* PredictionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20BD13788F564D6E93CA7A2A /* PredictionStore.swift */; };
+		994E8EAFD1FD440FBD542FF7 /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C03A918A0948DA9321D3C1 /* SettingsManager.swift */; };
+		CD331BAC93164E7B8956281E /* PlayerVisionAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D71171E6C5DB45D0BBE5FBDF /* PlayerVisionAnalyzer.swift */; };
+		76672A9C544C4738811D33FB /* HistoryTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F71B610B527D4255A9291AC6 /* HistoryTabView.swift */; };
+		2A72ECC355EA4278B3DCE978 /* LearningTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C845A9E58E9473F8EDD1090 /* LearningTabView.swift */; };
+		827E69AF35C94CBB8FF84250 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFAC650571A643BD80E158B4 /* ContentView.swift */; };
+		BF7B943129F8463587EBE6B7 /* MainDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 420108D4C10443F4B709A5F1 /* MainDashboardView.swift */; };
+		F93A4061244047B59A421D0D /* PredictionDisplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB33DEAC24714416AAFAC24C /* PredictionDisplayView.swift */; };
+		06491A5D412044D4968A6D78 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7153FFA561AA476DBD1F460C /* OnboardingView.swift */; };
+		D5422BC4C95E4656B20003D6 /* PredictionOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CC8E8B78DC143FBA5A6DB71 /* PredictionOverlay.swift */; };
+		C9248B15CA924BE9B4E75119 /* RegionSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7D783C169947A4BFF69782 /* RegionSelector.swift */; };
+		F92B9050E0BB407C8F4D88A4 /* PredictionModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D81A170C5538445391197CAB /* PredictionModelsTests.swift */; };
+		3A74AE723F8A41468972D82A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5B628A430A1F4C8E9F9CE7F4 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		A10000000000000000000004 /* DartPredictor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DartPredictor.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000005 /* DartPredictorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DartPredictorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		68365610F69A4511B0B3AD8D /* DartPredictorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DartPredictorApp.swift; path = DartPredictor/App/DartPredictorApp.swift; sourceTree = SOURCE_ROOT; };
-		D145A713C5BC4295ACED5BB3 /* AIActionAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AIActionAnalyzer.swift; path = DartPredictor/Core/AI/AIActionAnalyzer.swift; sourceTree = SOURCE_ROOT; };
-		61A4B8D20774417D94773619 /* NeuralActionClassifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NeuralActionClassifier.swift; path = DartPredictor/Core/AI/NeuralActionClassifier.swift; sourceTree = SOURCE_ROOT; };
-		8446149A2690441CA0624A49 /* ScreenSceneAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ScreenSceneAnalyzer.swift; path = DartPredictor/Core/AI/ScreenSceneAnalyzer.swift; sourceTree = SOURCE_ROOT; };
-		883035428C7D406BA35897B1 /* AccuracyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AccuracyManager.swift; path = DartPredictor/Core/Accuracy/AccuracyManager.swift; sourceTree = SOURCE_ROOT; };
-		FFD711928CD6465196E624CA /* CaptureGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CaptureGeometry.swift; path = DartPredictor/Core/Capture/CaptureGeometry.swift; sourceTree = SOURCE_ROOT; };
-		F50E3F575E62416FBFDCD67F /* ScreenCaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ScreenCaptureManager.swift; path = DartPredictor/Core/Capture/ScreenCaptureManager.swift; sourceTree = SOURCE_ROOT; };
-		026C352F94D1424BB383F93C /* ThrowDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ThrowDetector.swift; path = DartPredictor/Core/Detection/ThrowDetector.swift; sourceTree = SOURCE_ROOT; };
-		7E22580C7EEF4FE48B7CF815 /* ThrowSequenceTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ThrowSequenceTracker.swift; path = DartPredictor/Core/Detection/ThrowSequenceTracker.swift; sourceTree = SOURCE_ROOT; };
-		879018E91BCC4778BA323982 /* CombinationPredictor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CombinationPredictor.swift; path = DartPredictor/Core/Learning/CombinationPredictor.swift; sourceTree = SOURCE_ROOT; };
-		CA6E469B17AB42CE88B9A855 /* EnsemblePredictor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EnsemblePredictor.swift; path = DartPredictor/Core/Learning/EnsemblePredictor.swift; sourceTree = SOURCE_ROOT; };
-		B65C458B35A444DBA08F8B37 /* LearningEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LearningEngine.swift; path = DartPredictor/Core/Learning/LearningEngine.swift; sourceTree = SOURCE_ROOT; };
-		DF031CE8C0A34A4EA3DCDB05 /* PlayerProfileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PlayerProfileManager.swift; path = DartPredictor/Core/Learning/PlayerProfileManager.swift; sourceTree = SOURCE_ROOT; };
-		EDB087299A5C46BD8119E7B2 /* DebugLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DebugLogger.swift; path = DartPredictor/Core/Logging/DebugLogger.swift; sourceTree = SOURCE_ROOT; };
-		DF40DCF82AA84762B90A74B3 /* AIActionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AIActionModel.swift; path = DartPredictor/Core/Models/AIActionModel.swift; sourceTree = SOURCE_ROOT; };
-		F513484A8A5E495DB3B939D8 /* DartConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DartConstants.swift; path = DartPredictor/Core/Models/DartConstants.swift; sourceTree = SOURCE_ROOT; };
-		F4C7B4BE416C455AA5AFD7B7 /* FrequencyModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FrequencyModel.swift; path = DartPredictor/Core/Models/FrequencyModel.swift; sourceTree = SOURCE_ROOT; };
-		E73EC5A8C783498A8B6760AE /* PlayerBehaviorModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PlayerBehaviorModel.swift; path = DartPredictor/Core/Models/PlayerBehaviorModel.swift; sourceTree = SOURCE_ROOT; };
-		1924033ADDF24F0890C44793 /* SceneModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SceneModels.swift; path = DartPredictor/Core/Models/SceneModels.swift; sourceTree = SOURCE_ROOT; };
-		967B3D45693D460BB0DA2467 /* SequenceModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SequenceModel.swift; path = DartPredictor/Core/Models/SequenceModel.swift; sourceTree = SOURCE_ROOT; };
-		88E0C7A5B3BA43938B666B72 /* TimingModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TimingModel.swift; path = DartPredictor/Core/Models/TimingModel.swift; sourceTree = SOURCE_ROOT; };
-		2D29C04303B341559C35DB48 /* TransitionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TransitionModel.swift; path = DartPredictor/Core/Models/TransitionModel.swift; sourceTree = SOURCE_ROOT; };
-		9BA657C0C504427E96E0392E /* OCRManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OCRManager.swift; path = DartPredictor/Core/OCR/OCRManager.swift; sourceTree = SOURCE_ROOT; };
-		A636A379124A4D96BAC7AC1A /* PipelineCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PipelineCoordinator.swift; path = DartPredictor/Core/Pipeline/PipelineCoordinator.swift; sourceTree = SOURCE_ROOT; };
-		F270622436DA43BA8F91DD71 /* HistoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HistoryManager.swift; path = DartPredictor/Core/Storage/HistoryManager.swift; sourceTree = SOURCE_ROOT; };
-		4E22D5FD85F6424BBDFD3331 /* PredictionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PredictionStore.swift; path = DartPredictor/Core/Storage/PredictionStore.swift; sourceTree = SOURCE_ROOT; };
-		0CFC22CC5DDF47B59F56C2F2 /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsManager.swift; path = DartPredictor/Core/Storage/SettingsManager.swift; sourceTree = SOURCE_ROOT; };
-		F752CD262AD745ABBCF05919 /* PlayerVisionAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PlayerVisionAnalyzer.swift; path = DartPredictor/Core/Vision/PlayerVisionAnalyzer.swift; sourceTree = SOURCE_ROOT; };
-		710AE88EFE7B4105854FA3A0 /* HistoryTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HistoryTabView.swift; path = DartPredictor/UI/History/HistoryTabView.swift; sourceTree = SOURCE_ROOT; };
-		207AC3A97B4D41A7B7B23A14 /* LearningTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LearningTabView.swift; path = DartPredictor/UI/Learning/LearningTabView.swift; sourceTree = SOURCE_ROOT; };
-		4908FA7978C34161B56B1E2D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = DartPredictor/UI/Main/ContentView.swift; sourceTree = SOURCE_ROOT; };
-		27D6BCF3D15748FB9E0A3833 /* MainDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MainDashboardView.swift; path = DartPredictor/UI/Main/MainDashboardView.swift; sourceTree = SOURCE_ROOT; };
-		2F64F4D2A39C4673982B9185 /* PredictionDisplayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PredictionDisplayView.swift; path = DartPredictor/UI/Main/PredictionDisplayView.swift; sourceTree = SOURCE_ROOT; };
-		CB7B04219ECF447BAAA37B3E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OnboardingView.swift; path = DartPredictor/UI/Onboarding/OnboardingView.swift; sourceTree = SOURCE_ROOT; };
-		C84D91183B944853AC7B81FF /* PredictionOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PredictionOverlay.swift; path = DartPredictor/UI/Overlay/PredictionOverlay.swift; sourceTree = SOURCE_ROOT; };
-		3663B5FA545543D493FD5CFD /* RegionSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RegionSelector.swift; path = DartPredictor/UI/RegionSelector/RegionSelector.swift; sourceTree = SOURCE_ROOT; };
-		D8B02453A40540D39305573C /* PredictionModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PredictionModelsTests.swift; path = DartPredictorTests/PredictionModelsTests.swift; sourceTree = SOURCE_ROOT; };
-		ABD2D31652E140A8B3B07B87 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = DartPredictor/Resources/Assets.xcassets; sourceTree = SOURCE_ROOT; };
-		3BB00A6956364479980E7CFF /* DartPredictor.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DartPredictor/DartPredictor.entitlements; sourceTree = SOURCE_ROOT; };
-		243D2B2B66364FD1BC4C5D98 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = DartPredictor/Info.plist; sourceTree = SOURCE_ROOT; };
+		E20E10AE2AE84A2E84AE7CA1 /* DartPredictorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DartPredictorApp.swift; path = DartPredictor/App/DartPredictorApp.swift; sourceTree = SOURCE_ROOT; };
+		57E74FA84B5C463099AB54ED /* AIActionAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AIActionAnalyzer.swift; path = DartPredictor/Core/AI/AIActionAnalyzer.swift; sourceTree = SOURCE_ROOT; };
+		148B50D4B0B24378A6D1A352 /* BettingTimerRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BettingTimerRecognizer.swift; path = DartPredictor/Core/AI/BettingTimerRecognizer.swift; sourceTree = SOURCE_ROOT; };
+		0AD11B82669647D8BD3DE04E /* GameAIAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GameAIAnalyzer.swift; path = DartPredictor/Core/AI/GameAIAnalyzer.swift; sourceTree = SOURCE_ROOT; };
+		311FA4B7971C4160A0B2463B /* NeuralActionClassifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NeuralActionClassifier.swift; path = DartPredictor/Core/AI/NeuralActionClassifier.swift; sourceTree = SOURCE_ROOT; };
+		87435F92F81A4D8480869572 /* ScreenSceneAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ScreenSceneAnalyzer.swift; path = DartPredictor/Core/AI/ScreenSceneAnalyzer.swift; sourceTree = SOURCE_ROOT; };
+		97BEA4F0F2174A3AA505A988 /* VisionTextScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = VisionTextScanner.swift; path = DartPredictor/Core/AI/VisionTextScanner.swift; sourceTree = SOURCE_ROOT; };
+		9D0734816409457A8A8AFD84 /* AccuracyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AccuracyManager.swift; path = DartPredictor/Core/Accuracy/AccuracyManager.swift; sourceTree = SOURCE_ROOT; };
+		66C1D786C7844AA186C26BE5 /* CaptureGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CaptureGeometry.swift; path = DartPredictor/Core/Capture/CaptureGeometry.swift; sourceTree = SOURCE_ROOT; };
+		C95F50E58A8E4E44890EBB95 /* RegionFrameCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RegionFrameCapture.swift; path = DartPredictor/Core/Capture/RegionFrameCapture.swift; sourceTree = SOURCE_ROOT; };
+		0503739BAC9046E0AFCCD62A /* ScreenCaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ScreenCaptureManager.swift; path = DartPredictor/Core/Capture/ScreenCaptureManager.swift; sourceTree = SOURCE_ROOT; };
+		9C8980A621784B999B39AAB6 /* ThrowDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ThrowDetector.swift; path = DartPredictor/Core/Detection/ThrowDetector.swift; sourceTree = SOURCE_ROOT; };
+		3E48855080B0451D81EED20D /* ThrowSequenceTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ThrowSequenceTracker.swift; path = DartPredictor/Core/Detection/ThrowSequenceTracker.swift; sourceTree = SOURCE_ROOT; };
+		DA72D82ACFC64818BD4FD36A /* CombinationPredictor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CombinationPredictor.swift; path = DartPredictor/Core/Learning/CombinationPredictor.swift; sourceTree = SOURCE_ROOT; };
+		5823C57AAD104EF2A475A63C /* EnsemblePredictor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EnsemblePredictor.swift; path = DartPredictor/Core/Learning/EnsemblePredictor.swift; sourceTree = SOURCE_ROOT; };
+		1B1291FA56A64D0EBD68B932 /* LearningEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LearningEngine.swift; path = DartPredictor/Core/Learning/LearningEngine.swift; sourceTree = SOURCE_ROOT; };
+		185D6CF5CD9A4D79B9CC8036 /* PlayerProfileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PlayerProfileManager.swift; path = DartPredictor/Core/Learning/PlayerProfileManager.swift; sourceTree = SOURCE_ROOT; };
+		BC7D40FFDB954E82930D729A /* DebugLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DebugLogger.swift; path = DartPredictor/Core/Logging/DebugLogger.swift; sourceTree = SOURCE_ROOT; };
+		FFA5F9D8F4E14A78B72E3165 /* AIActionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AIActionModel.swift; path = DartPredictor/Core/Models/AIActionModel.swift; sourceTree = SOURCE_ROOT; };
+		35D35D69D8354A648B1B12F0 /* DartConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DartConstants.swift; path = DartPredictor/Core/Models/DartConstants.swift; sourceTree = SOURCE_ROOT; };
+		D9E9D13F746342FD88D1E2CA /* FrequencyModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FrequencyModel.swift; path = DartPredictor/Core/Models/FrequencyModel.swift; sourceTree = SOURCE_ROOT; };
+		742CB13E1D5B4D78925DF902 /* PlayerBehaviorModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PlayerBehaviorModel.swift; path = DartPredictor/Core/Models/PlayerBehaviorModel.swift; sourceTree = SOURCE_ROOT; };
+		1B1B0C8F55F840FC9479E4CA /* SceneModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SceneModels.swift; path = DartPredictor/Core/Models/SceneModels.swift; sourceTree = SOURCE_ROOT; };
+		9B0C3D87DF624AB690A30FF5 /* SequenceModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SequenceModel.swift; path = DartPredictor/Core/Models/SequenceModel.swift; sourceTree = SOURCE_ROOT; };
+		A4EBC9E1ACC044D685233589 /* TimingModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TimingModel.swift; path = DartPredictor/Core/Models/TimingModel.swift; sourceTree = SOURCE_ROOT; };
+		CB05BDCFA62742D5BC199F43 /* TransitionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TransitionModel.swift; path = DartPredictor/Core/Models/TransitionModel.swift; sourceTree = SOURCE_ROOT; };
+		E06F4FF39E404AE5937E45B4 /* OCRManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OCRManager.swift; path = DartPredictor/Core/OCR/OCRManager.swift; sourceTree = SOURCE_ROOT; };
+		171FFB3858164B9EB4F190C4 /* PipelineCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PipelineCoordinator.swift; path = DartPredictor/Core/Pipeline/PipelineCoordinator.swift; sourceTree = SOURCE_ROOT; };
+		8953B7AA8D9C4F889621778C /* HistoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HistoryManager.swift; path = DartPredictor/Core/Storage/HistoryManager.swift; sourceTree = SOURCE_ROOT; };
+		20BD13788F564D6E93CA7A2A /* PredictionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PredictionStore.swift; path = DartPredictor/Core/Storage/PredictionStore.swift; sourceTree = SOURCE_ROOT; };
+		92C03A918A0948DA9321D3C1 /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsManager.swift; path = DartPredictor/Core/Storage/SettingsManager.swift; sourceTree = SOURCE_ROOT; };
+		D71171E6C5DB45D0BBE5FBDF /* PlayerVisionAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PlayerVisionAnalyzer.swift; path = DartPredictor/Core/Vision/PlayerVisionAnalyzer.swift; sourceTree = SOURCE_ROOT; };
+		F71B610B527D4255A9291AC6 /* HistoryTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HistoryTabView.swift; path = DartPredictor/UI/History/HistoryTabView.swift; sourceTree = SOURCE_ROOT; };
+		7C845A9E58E9473F8EDD1090 /* LearningTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LearningTabView.swift; path = DartPredictor/UI/Learning/LearningTabView.swift; sourceTree = SOURCE_ROOT; };
+		EFAC650571A643BD80E158B4 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = DartPredictor/UI/Main/ContentView.swift; sourceTree = SOURCE_ROOT; };
+		420108D4C10443F4B709A5F1 /* MainDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MainDashboardView.swift; path = DartPredictor/UI/Main/MainDashboardView.swift; sourceTree = SOURCE_ROOT; };
+		DB33DEAC24714416AAFAC24C /* PredictionDisplayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PredictionDisplayView.swift; path = DartPredictor/UI/Main/PredictionDisplayView.swift; sourceTree = SOURCE_ROOT; };
+		7153FFA561AA476DBD1F460C /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OnboardingView.swift; path = DartPredictor/UI/Onboarding/OnboardingView.swift; sourceTree = SOURCE_ROOT; };
+		5CC8E8B78DC143FBA5A6DB71 /* PredictionOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PredictionOverlay.swift; path = DartPredictor/UI/Overlay/PredictionOverlay.swift; sourceTree = SOURCE_ROOT; };
+		CE7D783C169947A4BFF69782 /* RegionSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RegionSelector.swift; path = DartPredictor/UI/RegionSelector/RegionSelector.swift; sourceTree = SOURCE_ROOT; };
+		D81A170C5538445391197CAB /* PredictionModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PredictionModelsTests.swift; path = DartPredictorTests/PredictionModelsTests.swift; sourceTree = SOURCE_ROOT; };
+		5B628A430A1F4C8E9F9CE7F4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = DartPredictor/Resources/Assets.xcassets; sourceTree = SOURCE_ROOT; };
+		CCEA328E46C34CBD86C3AFB0 /* DartPredictor.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DartPredictor/DartPredictor.entitlements; sourceTree = SOURCE_ROOT; };
+		E85E8E1E6E2B448CA48A5CB7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = DartPredictor/Info.plist; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -98,48 +106,52 @@
 
 /* Begin PBXGroup section */
 		A10000000000000000000006 = {isa = PBXGroup; children = (
-			68365610F69A4511B0B3AD8D /* DartPredictorApp.swift */,
-			D145A713C5BC4295ACED5BB3 /* AIActionAnalyzer.swift */,
-			61A4B8D20774417D94773619 /* NeuralActionClassifier.swift */,
-			8446149A2690441CA0624A49 /* ScreenSceneAnalyzer.swift */,
-			883035428C7D406BA35897B1 /* AccuracyManager.swift */,
-			FFD711928CD6465196E624CA /* CaptureGeometry.swift */,
-			F50E3F575E62416FBFDCD67F /* ScreenCaptureManager.swift */,
-			026C352F94D1424BB383F93C /* ThrowDetector.swift */,
-			7E22580C7EEF4FE48B7CF815 /* ThrowSequenceTracker.swift */,
-			879018E91BCC4778BA323982 /* CombinationPredictor.swift */,
-			CA6E469B17AB42CE88B9A855 /* EnsemblePredictor.swift */,
-			B65C458B35A444DBA08F8B37 /* LearningEngine.swift */,
-			DF031CE8C0A34A4EA3DCDB05 /* PlayerProfileManager.swift */,
-			EDB087299A5C46BD8119E7B2 /* DebugLogger.swift */,
-			DF40DCF82AA84762B90A74B3 /* AIActionModel.swift */,
-			F513484A8A5E495DB3B939D8 /* DartConstants.swift */,
-			F4C7B4BE416C455AA5AFD7B7 /* FrequencyModel.swift */,
-			E73EC5A8C783498A8B6760AE /* PlayerBehaviorModel.swift */,
-			1924033ADDF24F0890C44793 /* SceneModels.swift */,
-			967B3D45693D460BB0DA2467 /* SequenceModel.swift */,
-			88E0C7A5B3BA43938B666B72 /* TimingModel.swift */,
-			2D29C04303B341559C35DB48 /* TransitionModel.swift */,
-			9BA657C0C504427E96E0392E /* OCRManager.swift */,
-			A636A379124A4D96BAC7AC1A /* PipelineCoordinator.swift */,
-			F270622436DA43BA8F91DD71 /* HistoryManager.swift */,
-			4E22D5FD85F6424BBDFD3331 /* PredictionStore.swift */,
-			0CFC22CC5DDF47B59F56C2F2 /* SettingsManager.swift */,
-			F752CD262AD745ABBCF05919 /* PlayerVisionAnalyzer.swift */,
-			710AE88EFE7B4105854FA3A0 /* HistoryTabView.swift */,
-			207AC3A97B4D41A7B7B23A14 /* LearningTabView.swift */,
-			4908FA7978C34161B56B1E2D /* ContentView.swift */,
-			27D6BCF3D15748FB9E0A3833 /* MainDashboardView.swift */,
-			2F64F4D2A39C4673982B9185 /* PredictionDisplayView.swift */,
-			CB7B04219ECF447BAAA37B3E /* OnboardingView.swift */,
-			C84D91183B944853AC7B81FF /* PredictionOverlay.swift */,
-			3663B5FA545543D493FD5CFD /* RegionSelector.swift */,
-			ABD2D31652E140A8B3B07B87 /* Assets.xcassets */,
-			3BB00A6956364479980E7CFF /* DartPredictor.entitlements */,
-			243D2B2B66364FD1BC4C5D98 /* Info.plist */,
+			E20E10AE2AE84A2E84AE7CA1 /* DartPredictorApp.swift */,
+			57E74FA84B5C463099AB54ED /* AIActionAnalyzer.swift */,
+			148B50D4B0B24378A6D1A352 /* BettingTimerRecognizer.swift */,
+			0AD11B82669647D8BD3DE04E /* GameAIAnalyzer.swift */,
+			311FA4B7971C4160A0B2463B /* NeuralActionClassifier.swift */,
+			87435F92F81A4D8480869572 /* ScreenSceneAnalyzer.swift */,
+			97BEA4F0F2174A3AA505A988 /* VisionTextScanner.swift */,
+			9D0734816409457A8A8AFD84 /* AccuracyManager.swift */,
+			66C1D786C7844AA186C26BE5 /* CaptureGeometry.swift */,
+			C95F50E58A8E4E44890EBB95 /* RegionFrameCapture.swift */,
+			0503739BAC9046E0AFCCD62A /* ScreenCaptureManager.swift */,
+			9C8980A621784B999B39AAB6 /* ThrowDetector.swift */,
+			3E48855080B0451D81EED20D /* ThrowSequenceTracker.swift */,
+			DA72D82ACFC64818BD4FD36A /* CombinationPredictor.swift */,
+			5823C57AAD104EF2A475A63C /* EnsemblePredictor.swift */,
+			1B1291FA56A64D0EBD68B932 /* LearningEngine.swift */,
+			185D6CF5CD9A4D79B9CC8036 /* PlayerProfileManager.swift */,
+			BC7D40FFDB954E82930D729A /* DebugLogger.swift */,
+			FFA5F9D8F4E14A78B72E3165 /* AIActionModel.swift */,
+			35D35D69D8354A648B1B12F0 /* DartConstants.swift */,
+			D9E9D13F746342FD88D1E2CA /* FrequencyModel.swift */,
+			742CB13E1D5B4D78925DF902 /* PlayerBehaviorModel.swift */,
+			1B1B0C8F55F840FC9479E4CA /* SceneModels.swift */,
+			9B0C3D87DF624AB690A30FF5 /* SequenceModel.swift */,
+			A4EBC9E1ACC044D685233589 /* TimingModel.swift */,
+			CB05BDCFA62742D5BC199F43 /* TransitionModel.swift */,
+			E06F4FF39E404AE5937E45B4 /* OCRManager.swift */,
+			171FFB3858164B9EB4F190C4 /* PipelineCoordinator.swift */,
+			8953B7AA8D9C4F889621778C /* HistoryManager.swift */,
+			20BD13788F564D6E93CA7A2A /* PredictionStore.swift */,
+			92C03A918A0948DA9321D3C1 /* SettingsManager.swift */,
+			D71171E6C5DB45D0BBE5FBDF /* PlayerVisionAnalyzer.swift */,
+			F71B610B527D4255A9291AC6 /* HistoryTabView.swift */,
+			7C845A9E58E9473F8EDD1090 /* LearningTabView.swift */,
+			EFAC650571A643BD80E158B4 /* ContentView.swift */,
+			420108D4C10443F4B709A5F1 /* MainDashboardView.swift */,
+			DB33DEAC24714416AAFAC24C /* PredictionDisplayView.swift */,
+			7153FFA561AA476DBD1F460C /* OnboardingView.swift */,
+			5CC8E8B78DC143FBA5A6DB71 /* PredictionOverlay.swift */,
+			CE7D783C169947A4BFF69782 /* RegionSelector.swift */,
+			5B628A430A1F4C8E9F9CE7F4 /* Assets.xcassets */,
+			CCEA328E46C34CBD86C3AFB0 /* DartPredictor.entitlements */,
+			E85E8E1E6E2B448CA48A5CB7 /* Info.plist */,
 		); name = DartPredictor; sourceTree = "<group>"; };
 		A10000000000000000000007 = {isa = PBXGroup; children = (
-			D8B02453A40540D39305573C /* PredictionModelsTests.swift */,
+			D81A170C5538445391197CAB /* PredictionModelsTests.swift */,
 		); path = DartPredictorTests; sourceTree = "<group>"; };
 		A10000000000000000000014 = {isa = PBXGroup; children = (
 			A10000000000000000000004 /* DartPredictor.app */,
@@ -184,50 +196,54 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		A10000000000000000000010 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (C52F6698B3E841A7B69DAF31); runOnlyForDeploymentPostprocessing = 0; };
+		A10000000000000000000010 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (3A74AE723F8A41468972D82A); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		A10000000000000000000008 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (
-			52B5DADD7B2E4965AC4ED2B6 /* DartPredictorApp.swift in Sources */,
-			4E47C89AE2C447158476C944 /* AIActionAnalyzer.swift in Sources */,
-			B36FBDC4CE9F44E78CE5B351 /* NeuralActionClassifier.swift in Sources */,
-			81556CC3F8BB414894EE8710 /* ScreenSceneAnalyzer.swift in Sources */,
-			483B7930392A4443849F9284 /* AccuracyManager.swift in Sources */,
-			3DF38F7039054909855823B2 /* CaptureGeometry.swift in Sources */,
-			45A08AA220184BBB8887B7A9 /* ScreenCaptureManager.swift in Sources */,
-			31025372F8C2427EBC1D219F /* ThrowDetector.swift in Sources */,
-			E0A3B74EAD0A458FB4FB0E8F /* ThrowSequenceTracker.swift in Sources */,
-			6B97345B98B74383AEA3D21F /* CombinationPredictor.swift in Sources */,
-			ED4010D4F1524B4DA76B75D3 /* EnsemblePredictor.swift in Sources */,
-			66B2C49AD02A45269CD727D1 /* LearningEngine.swift in Sources */,
-			E72362AAE528481C81F6409D /* PlayerProfileManager.swift in Sources */,
-			80550AC0732B47C397CB0CD9 /* DebugLogger.swift in Sources */,
-			F747A9D6C08943DF9D0ED585 /* AIActionModel.swift in Sources */,
-			C912881E5F994D2B95D598DF /* DartConstants.swift in Sources */,
-			2E609657AFD047F1AE45630E /* FrequencyModel.swift in Sources */,
-			AC544F2A5031465EAE0FBA9D /* PlayerBehaviorModel.swift in Sources */,
-			8920F1A15FAF4FD3BC993767 /* SceneModels.swift in Sources */,
-			0FEB0910E66B4070A190EA16 /* SequenceModel.swift in Sources */,
-			85C89FE555F74C949071AF7F /* TimingModel.swift in Sources */,
-			E3972663B7B54412AEA7AEF2 /* TransitionModel.swift in Sources */,
-			6292E458D8934E84A70929CD /* OCRManager.swift in Sources */,
-			B785BAAEBC074EDDBB3CB7CD /* PipelineCoordinator.swift in Sources */,
-			4FCEC1B41D534683AD4DF0FB /* HistoryManager.swift in Sources */,
-			660B949E0E7140DAB50EA0F2 /* PredictionStore.swift in Sources */,
-			B1B8E260863A4C9694123287 /* SettingsManager.swift in Sources */,
-			74C44AE00DD74B90BFEE58A5 /* PlayerVisionAnalyzer.swift in Sources */,
-			DDF5C647649C441AADCF4C69 /* HistoryTabView.swift in Sources */,
-			CDDB01AE5B3C452EAE919561 /* LearningTabView.swift in Sources */,
-			926EABF7999746E7979EBACB /* ContentView.swift in Sources */,
-			852DD72C0AB24D1DA5A31A86 /* MainDashboardView.swift in Sources */,
-			C0FAC0A35FFA47CFB88FD56D /* PredictionDisplayView.swift in Sources */,
-			8FC59C084C0044178BCAD42C /* OnboardingView.swift in Sources */,
-			FA42C5EB9EDE40849641F53A /* PredictionOverlay.swift in Sources */,
-			1A9CA7200531421FB0983F56 /* RegionSelector.swift in Sources */,
+			A000EB9490004C20836471A5 /* DartPredictorApp.swift in Sources */,
+			4F982958FF1D4ECF8BB5D9D8 /* AIActionAnalyzer.swift in Sources */,
+			4CA313149F89429BA43F62D2 /* BettingTimerRecognizer.swift in Sources */,
+			CCAEF59E1E5C4CB8A6915DC0 /* GameAIAnalyzer.swift in Sources */,
+			D796E570FB3C4BDEB104F299 /* NeuralActionClassifier.swift in Sources */,
+			E812E471AC6A42C08A602DCC /* ScreenSceneAnalyzer.swift in Sources */,
+			8D89B21CD59244B0BB85185D /* VisionTextScanner.swift in Sources */,
+			F3222F573193412890D52DAD /* AccuracyManager.swift in Sources */,
+			B77AD4D0779340D8B732385E /* CaptureGeometry.swift in Sources */,
+			BD56C945F76B4B83A92C6E35 /* RegionFrameCapture.swift in Sources */,
+			016A41C8700841F4902BC308 /* ScreenCaptureManager.swift in Sources */,
+			5361FE211A934D9EA511E4E9 /* ThrowDetector.swift in Sources */,
+			734A235C02A1451FA8A08584 /* ThrowSequenceTracker.swift in Sources */,
+			5EE8B9E9A6B3405EBBE4F92D /* CombinationPredictor.swift in Sources */,
+			B77A60E4763C43BC94245CF7 /* EnsemblePredictor.swift in Sources */,
+			F1D1E2985D5F4719AD90D50A /* LearningEngine.swift in Sources */,
+			2655AAE704084CFDB866DAD5 /* PlayerProfileManager.swift in Sources */,
+			E7AB45C5E5E4440DAAB57571 /* DebugLogger.swift in Sources */,
+			73098FBD890F41A9A98D92C7 /* AIActionModel.swift in Sources */,
+			B32D5B3CA3A14689824C95B3 /* DartConstants.swift in Sources */,
+			92878B6125094277B013682F /* FrequencyModel.swift in Sources */,
+			233AA1DB350042B696EAD5D6 /* PlayerBehaviorModel.swift in Sources */,
+			040DF5FEF845402E865111A5 /* SceneModels.swift in Sources */,
+			063EF34FAFCC4CF2988876A4 /* SequenceModel.swift in Sources */,
+			1564DCE6F6C241039EC26CCE /* TimingModel.swift in Sources */,
+			52AE57AC630F41BA89DBBC92 /* TransitionModel.swift in Sources */,
+			E62AE31CA65B455789785779 /* OCRManager.swift in Sources */,
+			B9DEBC400A7E4479BF7EE628 /* PipelineCoordinator.swift in Sources */,
+			B4BB39E067A04001A37C61CB /* HistoryManager.swift in Sources */,
+			746C2C8E60B94635B1F9D9E7 /* PredictionStore.swift in Sources */,
+			994E8EAFD1FD440FBD542FF7 /* SettingsManager.swift in Sources */,
+			CD331BAC93164E7B8956281E /* PlayerVisionAnalyzer.swift in Sources */,
+			76672A9C544C4738811D33FB /* HistoryTabView.swift in Sources */,
+			2A72ECC355EA4278B3DCE978 /* LearningTabView.swift in Sources */,
+			827E69AF35C94CBB8FF84250 /* ContentView.swift in Sources */,
+			BF7B943129F8463587EBE6B7 /* MainDashboardView.swift in Sources */,
+			F93A4061244047B59A421D0D /* PredictionDisplayView.swift in Sources */,
+			06491A5D412044D4968A6D78 /* OnboardingView.swift in Sources */,
+			D5422BC4C95E4656B20003D6 /* PredictionOverlay.swift in Sources */,
+			C9248B15CA924BE9B4E75119 /* RegionSelector.swift in Sources */,
 		); runOnlyForDeploymentPostprocessing = 0; };
 		A10000000000000000000009 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (
-			DB06F48809814EFDB0928313 /* PredictionModelsTests.swift in Sources */,
+			F92B9050E0BB407C8F4D88A4 /* PredictionModelsTests.swift in Sources */,
 		); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 

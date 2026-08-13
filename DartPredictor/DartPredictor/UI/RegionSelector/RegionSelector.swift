@@ -311,14 +311,10 @@ final class RegionSelectionView: NSView {
     }
 
     private func confirmSelection(rect: CGRect) {
-        let screenFrame = window?.screen?.frame ?? NSScreen.main?.frame ?? .zero
-        let flipped = CGRect(
-            x: screenFrame.origin.x + rect.origin.x,
-            y: screenFrame.origin.y + screenFrame.height - rect.origin.y - rect.height,
-            width: rect.width,
-            height: rect.height
-        )
-        onConfirm?(flipped)
+        guard let window else { return }
+        let windowRect = convert(rect, to: nil)
+        let screenRect = window.convertToScreen(windowRect)
+        onConfirm?(screenRect)
     }
 
     private func rectFromPoints(_ a: CGPoint, _ b: CGPoint) -> CGRect {

@@ -14,17 +14,23 @@ final class PipelineCoordinator: ObservableObject {
     @Published var processingState: String = "Ожидание"
     @Published var lastPlayerFeatures: PlayerFeatures = .zero
     @Published var sceneState: GameSceneState = .idle
+    @Published var gamePhase: GamePhase = .idle
     @Published var aiInsight: AIActionInsight = .empty
     @Published var currentCombination: PredictedCombination = PredictedCombination(
         numbers: [], individualProbabilities: [], jointProbability: 0, combinationScore: 0
     )
     @Published var detectedNumbersOnScreen: [Int] = []
+    @Published var bettingSecondsOnScreen: Double?
+    @Published var throwInProgress = false
     @Published var framesProcessed: Int = 0
     @Published var captureFrames: Int = 0
     @Published var lastCropSize: CGSize = .zero
+    @Published var livePreviewImage: CGImage?
+    @Published var captureError: String?
+    @Published var needsScreenPermission = false
 
-    private let captureManager = ScreenCaptureManager.shared
-    private let sceneAnalyzer = ScreenSceneAnalyzer.shared
+    private let regionCapture = RegionFrameCapture.shared
+    private let gameAI = GameAIAnalyzer.shared
     private let learningEngine = LearningEngine.shared
     private let historyManager = HistoryManager.shared
     private let profileManager = PlayerProfileManager.shared
@@ -32,87 +38,106 @@ final class PipelineCoordinator: ObservableObject {
     private let store = PredictionStore.shared
 
     private var timerCancellable: AnyCancellable?
-    private var statusTimer: AnyCancellable?
     private var lastPendingEntry: PredictionEntry?
     private var currentFeatures: PlayerFeatures = .zero
     private var currentAIInsight: AIActionInsight = .empty
-    private var frameCounter = 0
-    private let frameSkip = 0
 
     func start() async {
         guard !isRunning else { return }
 
         guard let region = SettingsManager.shared.monitorRegion else {
-            processingState = "Выберите область экрана"
+            processingState = "Сначала выберите область игры"
             return
         }
 
-        captureManager.configureMonitorRegion(region.rect)
-        profileManager.load()
+        if !regionCapture.checkScreenRecordingPermission() {
+            needsScreenPermission = true
+            processingState = "Нужно разрешение «Запись экрана»"
+            regionCapture.requestScreenRecordingPermission()
+            return
+        }
 
-        do {
-            try await captureManager.startCapture { [weak self] image in
-                Task { @MainActor in
-                    self?.handleMonitorFrame(image)
-                }
+        profileManager.load()
+        regionCapture.configure(region: region.rect)
+
+        regionCapture.startCapture { [weak self] image in
+            Task { @MainActor in
+                self?.handleFrame(image)
             }
-            isRunning = true
-            processingState = "ИИ наблюдает экран..."
+        }
+
+        isRunning = regionCapture.isCapturing
+        if isRunning {
+            processingState = "ИИ анализирует область игры..."
             startDecisionTimer()
-            startStatusRefresh()
             publishInitialPrediction()
-        } catch {
-            processingState = "Ошибка: \(error.localizedDescription)"
-            DebugLogger.shared.logCaptureError(error.localizedDescription)
+        } else {
+            captureError = regionCapture.lastError
+            processingState = regionCapture.lastError ?? "Не удалось запустить захват"
         }
     }
 
-    func stop() async {
-        await captureManager.stopCapture()
-        sceneAnalyzer.reset()
+    func stop() {
+        regionCapture.stopCapture()
+        gameAI.reset()
         isRunning = false
         processingState = "Остановлен"
         timerCancellable?.cancel()
-        statusTimer?.cancel()
+        livePreviewImage = nil
     }
 
-    private func handleMonitorFrame(_ image: CGImage) {
-        frameCounter += 1
-        guard frameCounter % (frameSkip + 1) == 0 else { return }
+    func requestPermission() {
+        regionCapture.requestScreenRecordingPermission()
+        needsScreenPermission = false
+    }
 
-        captureFrames = captureManager.framesCaptured
-        lastCropSize = captureManager.lastCropSize
+    private func handleFrame(_ image: CGImage) {
+        captureFrames = regionCapture.framesCaptured
+        lastCropSize = CGSize(width: image.width, height: image.height)
+        livePreviewImage = image
+        captureError = regionCapture.lastError
+        needsScreenPermission = !regionCapture.hasScreenPermission
 
-        sceneAnalyzer.analyzeFrame(image) { [weak self] result in
+        gameAI.analyze(image: image) { [weak self] snapshot in
             Task { @MainActor in
-                self?.applySceneResult(result)
+                self?.applySnapshot(snapshot)
             }
         }
     }
 
-    private func applySceneResult(_ result: SceneAnalysisResult) {
+    private func applySnapshot(_ snapshot: GameSnapshot) {
         framesProcessed += 1
-        sceneState = result.sceneState
-        aiInsight = result.aiInsight
-        currentAIInsight = result.aiInsight
-        lastPlayerFeatures = result.playerFeatures
-        currentFeatures = result.playerFeatures
-        detectedNumbersOnScreen = result.detectedNumbers.map(\.value)
+        gamePhase = snapshot.phase
+        sceneState = snapshot.aiInsight.sceneState
+        aiInsight = snapshot.aiInsight
+        currentAIInsight = snapshot.aiInsight
+        lastPlayerFeatures = snapshot.playerFeatures
+        currentFeatures = snapshot.playerFeatures
+        detectedNumbersOnScreen = snapshot.detectedNumbers.map(\.value)
+        bettingSecondsOnScreen = snapshot.bettingSeconds
+        throwInProgress = snapshot.throwInProgress
 
-        let nums = detectedNumbersOnScreen.map(String.init).joined(separator: ", ")
-        if detectedNumbersOnScreen.isEmpty {
-            processingState = "Кадр \(framesProcessed) · OCR: нет чисел · \(result.sceneState.rawValue)"
-        } else {
-            processingState = "Кадр \(framesProcessed) · Числа: \(nums) · \(result.aiInsight.detectedAction.rawValue)"
+        if let sec = snapshot.bettingSeconds {
+            decisionTimerRemaining = sec
         }
 
-        if let newThrow = result.confirmedNewThrow {
+        let nums = detectedNumbersOnScreen.map(String.init).joined(separator: ", ")
+        var status = "Фаза: \(snapshot.phase.rawValue)"
+        if !nums.isEmpty { status += " · Числа: \(nums)" }
+        if let sec = snapshot.bettingSeconds {
+            status += " · Таймер: \(String(format: "%.1f", sec))с"
+        }
+        if snapshot.throwInProgress { status += " · БРОСОК" }
+        status += " · \(snapshot.aiInsight.detectedAction.rawValue)"
+        processingState = status
+
+        if let newThrow = snapshot.confirmedResult {
             Task { await handleConfirmedThrow(newThrow) }
         }
     }
 
     private func publishInitialPrediction() {
-        var profile = profileManager.activeProfile
+        let profile = profileManager.activeProfile
         let prediction = learningEngine.makePrediction(
             history: profile.throwHistory,
             features: .zero,
@@ -121,12 +146,11 @@ final class PipelineCoordinator: ObservableObject {
         )
         currentPrediction = prediction
         currentCombination = prediction.combination
-        processingState = "Прогноз готов · ожидание результатов на экране"
     }
 
     private func handleConfirmedThrow(_ number: Int) async {
         let startTime = CFAbsoluteTimeGetCurrent()
-        processingState = "Результат \(number) → обучение..."
+        processingState = "✓ Результат \(number) → ИИ обучается..."
 
         var profile = profileManager.activeProfile
         let history = profile.throwHistory
@@ -152,7 +176,6 @@ final class PipelineCoordinator: ObservableObject {
                 previousEntry: pending,
                 aiInsight: currentAIInsight
             )
-
             var updated = pending
             updated.actualResult = number
             updated.predictionOutcome = outcome
@@ -191,33 +214,15 @@ final class PipelineCoordinator: ObservableObject {
         lastPendingEntry = entry
         historyManager.append(entry)
 
-        decisionTimerRemaining = DartConstants.decisionWindowSeconds
-        processingState = "✓ \(number) → комбинация: \(prediction.combination.formatted)"
-
-        DebugLogger.shared.logThrowDetected(
-            number: number,
-            timeMs: (CFAbsoluteTimeGetCurrent() - startTime) * 1000
-        )
-    }
-
-    private func startStatusRefresh() {
-        statusTimer = Timer.publish(every: 2.0, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
-                guard let self, self.isRunning else { return }
-                self.captureFrames = self.captureManager.framesCaptured
-                self.lastCropSize = self.captureManager.lastCropSize
-                if self.captureManager.framesCaptured == 0 {
-                    self.processingState = "⚠ Нет кадров — проверьте разрешение «Запись экрана»"
-                }
-            }
+        processingState = "Прогноз: \(prediction.combination.formatted)"
+        DebugLogger.shared.logThrowDetected(number: number, timeMs: (CFAbsoluteTimeGetCurrent() - startTime) * 1000)
     }
 
     private func startDecisionTimer() {
         timerCancellable = Timer.publish(every: 0.1, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
-                guard let self else { return }
+                guard let self, self.bettingSecondsOnScreen == nil else { return }
                 if self.decisionTimerRemaining > 0 {
                     self.decisionTimerRemaining -= 0.1
                 }
