@@ -257,7 +257,7 @@ struct ZoneOverlayView: View {
             let fit = aspectFit ?? PreviewAspectFit(containerSize: geo.size, imageSize: geo.size)
             zoneBox(zones.playerZone, color: .green, label: "Игрок", fit: fit, dashed: false)
             playerAnalysisHint(zones: zones, fit: fit)
-            for (idx, ignored) in zones.ignoredZones.enumerated() {
+            ForEach(Array(zones.ignoredZones.enumerated()), id: \.offset) { idx, ignored in
                 ignoredZoneBox(ignored, label: idx == 0 ? "overlay" : "часы", fit: fit)
             }
             zoneBox(zones.resultsZone, color: .red, label: "Результаты", fit: fit, dashed: false)
