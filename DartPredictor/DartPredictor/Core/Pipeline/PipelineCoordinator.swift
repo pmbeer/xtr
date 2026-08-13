@@ -65,6 +65,8 @@ final class PipelineCoordinator: ObservableObject {
     private var lastCaptureCount = 0
     private var staleCaptureSeconds = 0
     private var analysisInFlight = false
+    private var lastPredictionHistory: [Int] = []
+    private var lastLivePredictionAt: Date = .distantPast
 
     func start() async {
         guard !isRunning else { return }
@@ -315,6 +317,45 @@ final class PipelineCoordinator: ObservableObject {
 
         if let newThrow = snapshot.confirmedResult {
             Task { await handleConfirmedThrow(newThrow) }
+        } else {
+            refreshLivePrediction(snapshot: snapshot)
+        }
+    }
+
+    /// Обновляет TOP-4 в online без ожидания подтверждённого броска
+    private func refreshLivePrediction(snapshot: GameSnapshot) {
+        let profile = profileManager.activeProfile
+        let ocrHistory = snapshot.resultHistory
+        let history: [Int] = ocrHistory.count >= 1 ? ocrHistory : profile.throwHistory
+
+        let historyChanged = history != lastPredictionHistory
+        let interval = Date().timeIntervalSince(lastLivePredictionAt)
+        let timerTick = interval >= 0.9
+        let bettingActive = snapshot.phase == .bettingWindow || snapshot.bettingSeconds != nil
+
+        guard historyChanged || timerTick || bettingActive else { return }
+
+        lastPredictionHistory = history
+        lastLivePredictionAt = Date()
+
+        let prediction = learningEngine.makePrediction(
+            history: history,
+            features: currentFeatures,
+            profile: profile,
+            aiInsight: currentAIInsight
+        )
+        currentPrediction = prediction
+        currentCombination = prediction.combination
+    }
+
+    func onZonesUpdated() {
+        gameAI.reset()
+        lastPredictionHistory = []
+        lastLivePredictionAt = .distantPast
+        if isRunning, latestFrame != nil {
+            runLiveAnalysis()
+        } else if let window = SettingsManager.shared.selectedCaptureWindow {
+            Task { await testCapturePreview() }
         }
     }
 
@@ -382,6 +423,8 @@ final class PipelineCoordinator: ObservableObject {
         )
         currentPrediction = prediction
         currentCombination = prediction.combination
+        lastPredictionHistory = profile.throwHistory
+        lastLivePredictionAt = Date()
 
         let entry = PredictionEntry(
             previousResults: history,

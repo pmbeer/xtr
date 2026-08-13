@@ -129,7 +129,7 @@ struct NormalizedRect: Codable, Equatable {
 
 /// Три зоны fon.bet: результаты (красная), игрок (зелёная), доска (синяя)
 struct GameWindowZones: Codable, Equatable {
-    /// Красная — история бросков и счёт (нижний правый блок)
+    /// Красная — история бросков и счёт
     var resultsZone: NormalizedRect
     /// Зелёная — видео игрока
     var playerZone: NormalizedRect
@@ -149,6 +149,30 @@ struct GameWindowZones: Codable, Equatable {
         // Поле ставок 1–20 (центр, не для результатов)
         bettingZone: NormalizedRect(x: 0.075, y: 0.495, width: 0.415, height: 0.225)
     )
+}
+
+enum EditableZoneKind: String, CaseIterable, Identifiable {
+    case results = "Результаты"
+    case player = "Игрок"
+    case dartboard = "Доска"
+
+    var id: String { rawValue }
+
+    func rect(in zones: GameWindowZones) -> NormalizedRect {
+        switch self {
+        case .results: return zones.resultsZone
+        case .player: return zones.playerZone
+        case .dartboard: return zones.dartboardZone
+        }
+    }
+
+    func setRect(_ rect: NormalizedRect, in zones: inout GameWindowZones) {
+        switch self {
+        case .results: zones.resultsZone = rect
+        case .player: zones.playerZone = rect
+        case .dartboard: zones.dartboardZone = rect
+        }
+    }
 }
 
 struct CaptureRegion: Codable, Equatable {

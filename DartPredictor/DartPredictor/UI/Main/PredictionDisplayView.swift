@@ -1,22 +1,72 @@
 import SwiftUI
 import AppKit
 
+/// Геометрия aspect-fit для превью окна
+struct PreviewAspectFit {
+    let containerSize: CGSize
+    let imageSize: CGSize
+
+    var fittedRect: CGRect {
+        guard imageSize.width > 0, imageSize.height > 0, containerSize.width > 0, containerSize.height > 0 else {
+            return .zero
+        }
+        let scale = min(containerSize.width / imageSize.width, containerSize.height / imageSize.height)
+        let w = imageSize.width * scale
+        let h = imageSize.height * scale
+        return CGRect(
+            x: (containerSize.width - w) / 2,
+            y: (containerSize.height - h) / 2,
+            width: w,
+            height: h
+        )
+    }
+
+    func normalizedRect(from viewRect: CGRect) -> NormalizedRect {
+        let fit = fittedRect
+        guard fit.width > 0, fit.height > 0 else {
+            return NormalizedRect(x: 0, y: 0, width: 0.1, height: 0.1)
+        }
+        let x = (viewRect.minX - fit.minX) / fit.width
+        let y = (viewRect.minY - fit.minY) / fit.height
+        let w = viewRect.width / fit.width
+        let h = viewRect.height / fit.height
+        return NormalizedRect(
+            x: max(0, min(1, x)),
+            y: max(0, min(1, y)),
+            width: max(0.03, min(1, w)),
+            height: max(0.03, min(1, h))
+        )
+    }
+
+    func viewRect(for zone: NormalizedRect) -> CGRect {
+        let fit = fittedRect
+        return CGRect(
+            x: fit.minX + zone.x * fit.width,
+            y: fit.minY + zone.y * fit.height,
+            width: zone.width * fit.width,
+            height: zone.height * fit.height
+        )
+    }
+}
+
 struct LivePreviewPanel: View {
     let image: CGImage?
     let cropSize: CGSize
     let captureFrames: Int
     var captureBackend: String = "—"
     var windowTitle: String?
-    var zones: GameWindowZones = .fonBetDefault
+    @Binding var zones: GameWindowZones
+    var isCalibrating: Bool = false
+    var selectedZoneKind: EditableZoneKind = .results
     var isAnalyzing: Bool = false
     let error: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Label("Окно игры (live)", systemImage: "macwindow")
+                Label(isCalibrating ? "Калибровка зон" : "Окно игры (live)", systemImage: isCalibrating ? "scope" : "macwindow")
                     .font(.caption.weight(.semibold))
-                if isAnalyzing {
+                if isAnalyzing && !isCalibrating {
                     ProgressView()
                         .controlSize(.small)
                 }
@@ -33,16 +83,39 @@ struct LivePreviewPanel: View {
                     .lineLimit(1)
             }
 
+            if isCalibrating {
+                Text("Выберите зону и выделите её на превью (перетаскивание)")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+            }
+
             if let img = image {
-                Image(decorative: img, scale: 1.0)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxHeight: 140)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .overlay {
-                        ZoneOverlayView(zones: zones)
+                GeometryReader { geo in
+                    let fit = PreviewAspectFit(containerSize: geo.size, imageSize: cropSize)
+
+                    ZStack {
+                        Image(decorative: img, scale: 1.0)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: geo.size.width, height: geo.size.height)
+
+                        if isCalibrating {
+                            InteractiveZoneEditor(
+                                zones: $zones,
+                                selectedKind: selectedZoneKind,
+                                aspectFit: fit
+                            )
+                        } else {
+                            ZoneOverlayView(zones: zones, aspectFit: fit)
+                        }
                     }
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.green.opacity(0.4), lineWidth: 1))
+                }
+                .frame(maxHeight: 180)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(
+                    isCalibrating ? Color.orange.opacity(0.6) : Color.green.opacity(0.4),
+                    lineWidth: isCalibrating ? 2 : 1
+                ))
             } else {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color.secondary.opacity(0.15))
@@ -83,25 +156,120 @@ struct LivePreviewPanel: View {
     }
 }
 
-struct ZoneOverlayView: View {
-    let zones: GameWindowZones
+struct InteractiveZoneEditor: View {
+    @Binding var zones: GameWindowZones
+    let selectedKind: EditableZoneKind
+    let aspectFit: PreviewAspectFit
+
+    @State private var dragStart: CGPoint?
+    @State private var dragCurrent: CGPoint?
 
     var body: some View {
-        GeometryReader { geo in
-            zoneBox(zones.dartboardZone, color: .blue, label: "Доска", in: geo.size)
-            zoneBox(zones.playerZone, color: .green, label: "Игрок", in: geo.size)
-            zoneBox(zones.resultsZone, color: .red, label: "Результаты", in: geo.size)
+        ZStack {
+            ForEach(EditableZoneKind.allCases) { kind in
+                if kind != selectedKind {
+                    zoneOutline(kind: kind, dashed: true)
+                }
+            }
+            zoneOutline(kind: selectedKind, dashed: false)
+
+            Color.clear
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 4)
+                        .onChanged { value in
+                            if dragStart == nil {
+                                dragStart = value.startLocation
+                            }
+                            dragCurrent = value.location
+                        }
+                        .onEnded { value in
+                            applyDrag(from: value.startLocation, to: value.location)
+                            dragStart = nil
+                            dragCurrent = nil
+                        }
+                )
+        }
+    }
+
+    private func zoneOutline(kind: EditableZoneKind, dashed: Bool) -> some View {
+        let rect = aspectFit.viewRect(for: kind.rect(in: zones))
+        let color = zoneColor(kind)
+        return ZStack(alignment: .topLeading) {
+            Rectangle()
+                .strokeBorder(color.opacity(dashed ? 0.45 : 0.95), style: StrokeStyle(lineWidth: dashed ? 1 : 2, dash: dashed ? [4, 3] : []))
+                .background(color.opacity(dashed ? 0.04 : 0.12))
+                .frame(width: max(rect.width, 1), height: max(rect.height, 1))
+                .position(x: rect.midX, y: rect.midY)
+            if !dashed {
+                Text(kind.rawValue)
+                    .font(.system(size: 9, weight: .bold))
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 2)
+                    .background(color.opacity(0.9))
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 3))
+                    .position(x: rect.minX + 40, y: rect.minY + 10)
+            }
         }
         .allowsHitTesting(false)
     }
 
-    private func zoneBox(_ zone: NormalizedRect, color: Color, label: String, in size: CGSize) -> some View {
-        let rect = zone.cgRect(for: size)
+    private func applyDrag(from start: CGPoint, to end: CGPoint) {
+        let fit = aspectFit.fittedRect
+        guard fit.width > 0, fit.height > 0 else { return }
+
+        let clampedStart = clamp(start, to: fit)
+        let clampedEnd = clamp(end, to: fit)
+        let viewRect = CGRect(
+            x: min(clampedStart.x, clampedEnd.x),
+            y: min(clampedStart.y, clampedEnd.y),
+            width: abs(clampedEnd.x - clampedStart.x),
+            height: abs(clampedEnd.y - clampedStart.y)
+        )
+        guard viewRect.width >= 8, viewRect.height >= 8 else { return }
+
+        let normalized = aspectFit.normalizedRect(from: viewRect)
+        selectedKind.setRect(normalized, in: &zones)
+    }
+
+    private func clamp(_ point: CGPoint, to rect: CGRect) -> CGPoint {
+        CGPoint(
+            x: min(max(point.x, rect.minX), rect.maxX),
+            y: min(max(point.y, rect.minY), rect.maxY)
+        )
+    }
+
+    private func zoneColor(_ kind: EditableZoneKind) -> Color {
+        switch kind {
+        case .results: return .red
+        case .player: return .green
+        case .dartboard: return .blue
+        }
+    }
+}
+
+struct ZoneOverlayView: View {
+    let zones: GameWindowZones
+    var aspectFit: PreviewAspectFit?
+
+    var body: some View {
+        GeometryReader { geo in
+            let fit = aspectFit ?? PreviewAspectFit(containerSize: geo.size, imageSize: geo.size)
+            zoneBox(zones.dartboardZone, color: .blue, label: "Доска", fit: fit)
+            zoneBox(zones.playerZone, color: .green, label: "Игрок", fit: fit)
+            zoneBox(zones.resultsZone, color: .red, label: "Результаты", fit: fit)
+        }
+        .allowsHitTesting(false)
+    }
+
+    private func zoneBox(_ zone: NormalizedRect, color: Color, label: String, fit: PreviewAspectFit) -> some View {
+        let rect = fit.viewRect(for: zone)
         return ZStack(alignment: .topLeading) {
             Rectangle()
                 .strokeBorder(color.opacity(0.9), lineWidth: 2)
                 .background(color.opacity(0.1))
-                .frame(width: rect.width, height: rect.height)
+                .frame(width: max(rect.width, 1), height: max(rect.height, 1))
                 .position(x: rect.midX, y: rect.midY)
             Text(label)
                 .font(.system(size: 9, weight: .bold))

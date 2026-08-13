@@ -36,6 +36,18 @@ final class SettingsManager: ObservableObject {
         }
     }
 
+    func setGameWindowZones(_ zones: GameWindowZones) {
+        settings.gameWindowZones = zones
+        settings.zoneLayoutVersion = 3
+        save()
+    }
+
+    func resetGameWindowZonesToDefault() {
+        settings.gameWindowZones = .fonBetDefault
+        settings.zoneLayoutVersion = 2
+        save()
+    }
+
     var monitorRegion: CaptureRegion? {
         if let game = region(for: .gameScreen) { return game }
         if let result = region(for: .result) {
