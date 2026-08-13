@@ -24,7 +24,7 @@ jobs:
           cd DartPredictor
           chmod +x scripts/*.sh
           export ARCH="x86_64 arm64"
-          export DMG_NAME="DartPredictor-1.0.0-macOS-Universal.dmg"
+          export DMG_NAME="DartPredictor-1.0.1-macOS-Universal.dmg"
           ./scripts/build_dmg.sh
 
       - name: Verify build
@@ -36,35 +36,27 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: DartPredictor-macOS-Universal
-          path: DartPredictor/build/DartPredictor-1.0.0-macOS-Universal.dmg
+          path: DartPredictor/build/DartPredictor-1.0.1-macOS-Universal.dmg
           retention-days: 90
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: dart-predictor-v1.0.0
-          name: DartPredictor v1.0.0 — ИИ-анализ экрана + комбинации
+          tag_name: dart-predictor-v1.0.1
+          name: DartPredictor v1.0.1 — fix выделения области
           body: |
-            ## DartPredictor v1.0.0
+            ## DartPredictor v1.0.1
 
-            Нативное macOS-приложение для прогнозирования дартса с ИИ-анализом экрана.
+            ### Исправлено
+            - Enter / Esc при выборе области экрана
+            - Кнопки «Подтвердить» и «Отмена»
+            - Двойной клик для подтверждения выделения
 
             ### Установка
-            1. Скачайте `DartPredictor-1.0.0-macOS-Universal.dmg`
-            2. Откройте DMG и перетащите DartPredictor в Applications
-            3. При первом запуске разрешите **Запись экрана** в Системных настройках
-
-            ### Совместимость
-            - macOS 14.0+
-            - Intel x86_64 и Apple Silicon (Universal)
-            - Оптимизировано для MacBook Pro 2018 (8 GB RAM)
-
-            ### Возможности
-            - Единая область мониторинга экрана
-            - ИИ: поза, замах, бросок, результат
-            - Прогноз комбинации TOP-4
-            - Paper Prediction (без ставок)
-          files: DartPredictor/build/DartPredictor-1.0.0-macOS-Universal.dmg
+            1. Скачайте DMG
+            2. Перетащите DartPredictor в Applications
+            3. Разрешите запис экрана в Системных настройках
+          files: DartPredictor/build/DartPredictor-1.0.1-macOS-Universal.dmg
           draft: false
           prerelease: false
           generate_release_notes: false
