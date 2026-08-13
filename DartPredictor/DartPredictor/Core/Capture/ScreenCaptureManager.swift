@@ -2,6 +2,7 @@ import Foundation
 import ScreenCaptureKit
 import CoreImage
 import CoreGraphics
+import CoreMedia
 import Combine
 
 final class ScreenCaptureManager: NSObject, ObservableObject {
