@@ -15,7 +15,7 @@ final class TimingModel: PredictionModel {
     func score(history: [Int], features: PlayerFeatures) -> [Int: Double] {
         var scores = Dictionary(uniqueKeysWithValues: DartNumber.scoringValues.map { ($0, 0.05) })
 
-        let intervalBucket = bucket(features.intervalSeconds, step: 1.5, max: 12)
+        let intervalBucket = bucket(features.intervalSeconds, step: 1.5, maxBucket: 12)
         if let row = state.intervalBucketToOutcome[intervalBucket] {
             let total = Double(row.values.reduce(0, +))
             if total > 0 {
@@ -25,7 +25,7 @@ final class TimingModel: PredictionModel {
             }
         }
 
-        let prepBucket = bucket(features.prepDuration, step: 0.5, max: 8)
+        let prepBucket = bucket(features.prepDuration, step: 0.5, maxBucket: 8)
         if let row = state.prepBucketToOutcome[prepBucket] {
             let total = Double(row.values.reduce(0, +))
             if total > 0 {
@@ -55,8 +55,8 @@ final class TimingModel: PredictionModel {
     }
 
     func learn(previous: [Int], actual: Int, features: PlayerFeatures, wasInTop4: Bool) {
-        let intervalBucket = bucket(features.intervalSeconds, step: 1.5, max: 12)
-        let prepBucket = bucket(features.prepDuration, step: 0.5, max: 8)
+        let intervalBucket = bucket(features.intervalSeconds, step: 1.5, maxBucket: 12)
+        let prepBucket = bucket(features.prepDuration, step: 0.5, maxBucket: 8)
         state.intervalBucketToOutcome[intervalBucket, default: [:]][actual, default: 0] += 1
         state.prepBucketToOutcome[prepBucket, default: [:]][actual, default: 0] += 1
         state.recentIntervals.append(features.intervalSeconds)
