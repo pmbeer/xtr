@@ -33,7 +33,7 @@ xcodebuild \
   -configuration Release \
   "${ARCH_ARGS[@]}" \
   ONLY_ACTIVE_ARCH=NO \
-  CODE_SIGN_IDENTITY="-"" \
+  CODE_SIGN_IDENTITY="-" \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGNING_REQUIRED=NO \
   -derivedDataPath "$BUILD_DIR/DerivedData" \

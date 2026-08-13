@@ -42,7 +42,7 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name == 'refs/heads/cursor/dart-predictor-macos-f659' && 'dart-predictor-v1.0.0' || github.ref_name }}
+          tag_name: dart-predictor-v1.0.0
           name: DartPredictor v1.0.0 — ИИ-анализ экрана + комбинации
           body: |
             ## DartPredictor v1.0.0
