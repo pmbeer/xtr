@@ -51,6 +51,8 @@ struct MainDashboardView: View {
                 captureFrames: pipeline.captureFrames,
                 captureBackend: pipeline.captureBackend.rawValue,
                 windowTitle: settings.selectedCaptureWindow?.shortLabel,
+                zones: settings.settings.gameWindowZones,
+                isAnalyzing: pipeline.isLiveAnalyzing,
                 error: pipeline.captureError
             )
 
@@ -58,9 +60,11 @@ struct MainDashboardView: View {
                 phase: pipeline.gamePhase,
                 sceneState: pipeline.sceneState,
                 insight: pipeline.aiInsight,
-                detectedNumbers: pipeline.detectedNumbersOnScreen,
+                resultHistory: pipeline.resultHistoryNumbers,
                 bettingSeconds: pipeline.bettingSecondsOnScreen,
-                throwInProgress: pipeline.throwInProgress
+                throwInProgress: pipeline.throwInProgress,
+                dartboardMotion: pipeline.dartboardMotion,
+                playerMotion: pipeline.playerZoneMotion
             )
 
             PredictionDisplayView(

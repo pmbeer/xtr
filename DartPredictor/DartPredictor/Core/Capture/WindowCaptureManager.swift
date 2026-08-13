@@ -20,7 +20,7 @@ final class WindowCaptureManager: NSObject, ObservableObject {
     private let ciContext = CIContext(options: [.useSoftwareRenderer: false])
     private var targetWindowID: UInt32?
 
-    enum WindowCaptureError: LocalizedError {
+    enum WindowCaptureError: LocalizedError, Equatable {
         case windowNotFound
         case permissionDenied
         case snapshotFailed

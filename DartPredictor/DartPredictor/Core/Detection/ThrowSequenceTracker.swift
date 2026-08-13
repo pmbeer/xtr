@@ -1,7 +1,7 @@
 import Foundation
 import CoreGraphics
 
-/// Отслеживает появление нового результата из OCR-потока и движения игрока
+/// Отслеживает новый результат только из красной зоны (история бросков)
 final class ThrowSequenceTracker {
     private var pendingValue: Int?
     private var confirmationCount = 0
@@ -9,7 +9,7 @@ final class ThrowSequenceTracker {
     private var lastConfirmedTime: Date?
     private var historySignature: [Int] = []
     private let minConfirmFrames = 2
-    private let minIntervalBetweenThrows: TimeInterval = 1.2
+    private let minIntervalBetweenThrows: TimeInterval = 1.0
 
     func reset() {
         pendingValue = nil
@@ -19,10 +19,12 @@ final class ThrowSequenceTracker {
         historySignature = []
     }
 
-    /// Возвращает новый подтверждённый результат, если число стабильно распознано
     func process(detectedNumbers: [DetectedNumber], motionReleased: Bool = false) -> Int? {
-        let historyNumbers = extractHistoryStrip(from: detectedNumbers)
-        if let newFromHistory = detectNewFromHistory(historyNumbers) {
+        let strip = detectedNumbers
+            .sorted { $0.boundingBox.origin.x < $1.boundingBox.origin.x }
+            .map(\.value)
+
+        if let newFromHistory = detectNewFromHistory(strip) {
             return registerConfirmed(newFromHistory)
         }
 
@@ -45,9 +47,7 @@ final class ThrowSequenceTracker {
     }
 
     private func registerConfirmed(_ value: Int) -> Int? {
-        if value == lastConfirmed {
-            return nil
-        }
+        if value == lastConfirmed { return nil }
 
         if let lastTime = lastConfirmedTime,
            Date().timeIntervalSince(lastTime) < minIntervalBetweenThrows {
@@ -58,61 +58,43 @@ final class ThrowSequenceTracker {
         lastConfirmedTime = Date()
         pendingValue = nil
         confirmationCount = 0
+        historySignature.append(value)
 
         return value
     }
 
-    /// История бросков fon.bet — нижняя полоса окна, новый результат справа
-    private func extractHistoryStrip(from numbers: [DetectedNumber]) -> [Int] {
-        let bottom = numbers.filter { $0.boundingBox.midY < 0.38 }
-        let sorted = bottom.sorted { $0.boundingBox.origin.x < $1.boundingBox.origin.x }
-        return sorted.map(\.value)
-    }
-
     private func detectNewFromHistory(_ strip: [Int]) -> Int? {
-        guard strip.count >= 2 else {
+        guard strip.count >= 1 else {
             historySignature = strip
             return nil
         }
 
-        if strip == historySignature {
-            return nil
-        }
+        if strip == historySignature { return nil }
 
         if strip.count > historySignature.count {
             historySignature = strip
             return strip.last
         }
 
-        if strip.last != historySignature.last {
+        if let last = strip.last, last != historySignature.last {
             historySignature = strip
-            return strip.last
+            return last
         }
 
         historySignature = strip
         return nil
     }
 
+    /// В красной зоне — самый правый результат в истории
     private func selectBestCandidate(from numbers: [DetectedNumber]) -> DetectedNumber? {
         guard !numbers.isEmpty else { return nil }
-
-        // Нижняя история (fon.bet) — правый край
-        let bottom = numbers.filter { $0.boundingBox.midY < 0.38 }
-        if let newest = bottom.max(by: { $0.boundingBox.origin.x < $1.boundingBox.origin.x }),
-           newest.confidence > 0.12 {
-            return newest
-        }
-
-        // Центральная зона — крупный текст
-        return numbers.max { a, b in
-            let areaA = a.boundingBox.width * a.boundingBox.height
-            let areaB = b.boundingBox.width * b.boundingBox.height
-            if areaA != areaB { return areaA < areaB }
-            return a.confidence < b.confidence
-        }
+        return numbers
+            .filter { $0.confidence > 0.1 }
+            .max { a, b in
+                if a.boundingBox.origin.x != b.boundingBox.origin.x {
+                    return a.boundingBox.origin.x < b.boundingBox.origin.x
+                }
+                return a.confidence < b.confidence
+            }
     }
-}
-
-private extension CGRect {
-    var midY: CGFloat { origin.y + height / 2 }
 }

@@ -7,6 +7,8 @@ struct LivePreviewPanel: View {
     let captureFrames: Int
     var captureBackend: String = "—"
     var windowTitle: String?
+    var zones: GameWindowZones = .fonBetDefault
+    var isAnalyzing: Bool = false
     let error: String?
 
     var body: some View {
@@ -14,8 +16,12 @@ struct LivePreviewPanel: View {
             HStack {
                 Label("Окно игры (live)", systemImage: "macwindow")
                     .font(.caption.weight(.semibold))
+                if isAnalyzing {
+                    ProgressView()
+                        .controlSize(.small)
+                }
                 Spacer()
-                Text("\(captureBackend) · \(captureFrames) кадров · \(Int(cropSize.width))×\(Int(cropSize.height))")
+                Text("\(captureBackend) · \(captureFrames) fps · \(Int(cropSize.width))×\(Int(cropSize.height))")
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
@@ -31,19 +37,29 @@ struct LivePreviewPanel: View {
                 Image(decorative: img, scale: 1.0)
                     .resizable()
                     .scaledToFit()
-                    .frame(maxHeight: 120)
+                    .frame(maxHeight: 140)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.green.opacity(0.5), lineWidth: 1))
+                    .overlay {
+                        ZoneOverlayView(zones: zones)
+                    }
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.green.opacity(0.4), lineWidth: 1))
             } else {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color.secondary.opacity(0.15))
-                    .frame(height: 80)
+                    .frame(height: 100)
                     .overlay {
                         Text("Нет кадра — выберите окно Safari с fon.bet")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
             }
+
+            HStack(spacing: 8) {
+                zoneLegend(color: .red, label: "Результаты")
+                zoneLegend(color: .green, label: "Игрок")
+                zoneLegend(color: .blue, label: "Доска")
+            }
+            .font(.caption2)
 
             if let error {
                 Text(error)
@@ -55,19 +71,53 @@ struct LivePreviewPanel: View {
         .background(Color.secondary.opacity(0.06))
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
+
+    private func zoneLegend(color: Color, label: String) -> some View {
+        HStack(spacing: 4) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(color.opacity(0.7))
+                .frame(width: 10, height: 10)
+            Text(label)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+struct ZoneOverlayView: View {
+    let zones: GameWindowZones
+
+    var body: some View {
+        GeometryReader { geo in
+            zoneBox(zones.dartboardZone, color: .blue, in: geo.size)
+            zoneBox(zones.playerZone, color: .green, in: geo.size)
+            zoneBox(zones.resultsZone, color: .red, in: geo.size)
+        }
+        .allowsHitTesting(false)
+    }
+
+    private func zoneBox(_ zone: NormalizedRect, color: Color, in size: CGSize) -> some View {
+        let rect = zone.cgRect(for: size)
+        return Rectangle()
+            .strokeBorder(color.opacity(0.85), lineWidth: 2)
+            .background(color.opacity(0.08))
+            .frame(width: rect.width, height: rect.height)
+            .position(x: rect.midX, y: rect.midY)
+    }
 }
 
 struct AIStatusPanel: View {
     let phase: GamePhase
     let sceneState: GameSceneState
     let insight: AIActionInsight
-    let detectedNumbers: [Int]
+    let resultHistory: [Int]
     let bettingSeconds: Double?
     let throwInProgress: Bool
+    let dartboardMotion: Double
+    let playerMotion: Double
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("ИИ-анализ", systemImage: "brain.head.profile")
+            Label("ИИ-анализ (online)", systemImage: "brain.head.profile")
                 .font(.subheadline.weight(.semibold))
 
             HStack(spacing: 10) {
@@ -91,15 +141,31 @@ struct AIStatusPanel: View {
             Text(insight.aiDescription)
                 .font(.caption)
                 .foregroundStyle(.secondary)
-                .lineLimit(2)
+                .lineLimit(3)
 
-            if !detectedNumbers.isEmpty {
-                Text("Результаты на экране: \(detectedNumbers.map(String.init).joined(separator: ", "))")
-                    .font(.caption.monospacedDigit())
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text("🔴 История бросков:")
+                        .font(.caption2.weight(.semibold))
+                    Text(resultHistory.isEmpty ? "—" : resultHistory.map(String.init).joined(separator: " → "))
+                        .font(.caption.monospacedDigit())
+                }
+                HStack {
+                    Text("🟢 Игрок:")
+                        .font(.caption2.weight(.semibold))
+                    Text("\(insight.detectedAction.rawValue) · движение \(Int(playerMotion * 100))%")
+                        .font(.caption2)
+                }
+                HStack {
+                    Text("🔵 Доска:")
+                        .font(.caption2.weight(.semibold))
+                    Text(motionLabel(dartboardMotion))
+                        .font(.caption2)
+                }
             }
 
             ProgressView(value: insight.throwPhaseProgress) {
-                Text("Фаза броска · \(insight.detectedAction.rawValue)")
+                Text("Фаза броска")
                     .font(.caption2)
             }
             .tint(.orange)
@@ -116,6 +182,12 @@ struct AIStatusPanel: View {
         case .resultShown: return .green
         default: return .secondary
         }
+    }
+
+    private func motionLabel(_ motion: Double) -> String {
+        if motion > 0.18 { return "бросок! \(Int(motion * 100))%" }
+        if motion > 0.08 { return "движение \(Int(motion * 100))%" }
+        return "стабильна \(Int(motion * 100))%"
     }
 }
 

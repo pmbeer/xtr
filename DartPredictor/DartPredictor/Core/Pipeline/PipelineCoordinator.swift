@@ -27,6 +27,10 @@ final class PipelineCoordinator: ObservableObject {
         numbers: [], individualProbabilities: [], jointProbability: 0, combinationScore: 0
     )
     @Published var detectedNumbersOnScreen: [Int] = []
+    @Published var resultHistoryNumbers: [Int] = []
+    @Published var dartboardMotion: Double = 0
+    @Published var playerZoneMotion: Double = 0
+    @Published var isLiveAnalyzing = false
     @Published var bettingSecondsOnScreen: Double?
     @Published var throwInProgress = false
     @Published var framesProcessed: Int = 0
@@ -134,14 +138,15 @@ final class PipelineCoordinator: ObservableObject {
             captureBackend = .windowCapture
             processingState = "Окно выбрано — превью обновлено. Нажмите «Запустить»"
 
-            gameAI.analyze(image: image) { [weak self] snapshot in
+            gameAI.analyze(image: image, zones: SettingsManager.shared.settings.gameWindowZones) { [weak self] snapshot in
                 Task { @MainActor in
                     self?.applySnapshot(snapshot, analyzeOnly: true)
                 }
             }
         } catch {
             captureError = error.localizedDescription
-            if (error as? WindowCaptureManager.WindowCaptureError) == .windowNotFound {
+            if let wcError = error as? WindowCaptureManager.WindowCaptureError,
+               wcError == .windowNotFound {
                 processingState = "Окно закрыто — выберите окно снова"
             }
         }
@@ -179,8 +184,10 @@ final class PipelineCoordinator: ObservableObject {
         livePreviewImage = image
         captureError = windowCapture.lastError
         needsScreenPermission = !regionCapture.hasScreenPermission
+        isLiveAnalyzing = true
 
-        gameAI.analyze(image: image) { [weak self] snapshot in
+        let zones = SettingsManager.shared.settings.gameWindowZones
+        gameAI.analyze(image: image, zones: zones) { [weak self] snapshot in
             Task { @MainActor in
                 self?.applySnapshot(snapshot)
             }
@@ -189,13 +196,17 @@ final class PipelineCoordinator: ObservableObject {
 
     private func applySnapshot(_ snapshot: GameSnapshot, analyzeOnly: Bool = false) {
         framesProcessed += 1
+        isLiveAnalyzing = false
         gamePhase = snapshot.phase
         sceneState = snapshot.aiInsight.sceneState
         aiInsight = snapshot.aiInsight
         currentAIInsight = snapshot.aiInsight
         lastPlayerFeatures = snapshot.playerFeatures
         currentFeatures = snapshot.playerFeatures
-        detectedNumbersOnScreen = snapshot.detectedNumbers.map(\.value)
+        resultHistoryNumbers = snapshot.resultHistory
+        detectedNumbersOnScreen = snapshot.resultHistory
+        dartboardMotion = snapshot.dartboardMotion
+        playerZoneMotion = snapshot.playerMotion
         bettingSecondsOnScreen = snapshot.bettingSeconds
         throwInProgress = snapshot.throwInProgress
 
@@ -203,17 +214,17 @@ final class PipelineCoordinator: ObservableObject {
             decisionTimerRemaining = sec
         }
 
-        let nums = detectedNumbersOnScreen.map(String.init).joined(separator: ", ")
-        var status = "Фаза: \(snapshot.phase.rawValue)"
-        if !nums.isEmpty { status += " · Числа: \(nums)" }
+        let history = resultHistoryNumbers.map(String.init).joined(separator: " → ")
+        var status = "LIVE · Фаза: \(snapshot.phase.rawValue)"
+        if !history.isEmpty { status += " · История: \(history)" }
         if let sec = snapshot.bettingSeconds {
             status += " · Таймер: \(String(format: "%.1f", sec))с"
         }
         if snapshot.forecastsAccepted {
-            status += " · Прогнозы приняты"
+            status += " · Ставки закрыты"
         }
         if snapshot.throwInProgress { status += " · БРОСОК" }
-        status += " · \(snapshot.aiInsight.detectedAction.rawValue)"
+        status += " · Доска \(Int(snapshot.dartboardMotion * 100))%"
         if !analyzeOnly {
             processingState = status
         }

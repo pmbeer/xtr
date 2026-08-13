@@ -17,6 +17,7 @@
 		B77AD4D0779340D8B732385E /* CaptureGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C1D786C7844AA186C26BE5 /* CaptureGeometry.swift */; };
 		BD56C945F76B4B83A92C6E35 /* RegionFrameCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = C95F50E58A8E4E44890EBB95 /* RegionFrameCapture.swift */; };
 		A1B2C3D4E5F6789012345679 /* WindowCaptureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6789012345678 /* WindowCaptureManager.swift */; };
+		A1B2C3D4E5F6789012345683 /* WindowZoneCropper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6789012345682 /* WindowZoneCropper.swift */; };
 		016A41C8700841F4902BC308 /* ScreenCaptureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0503739BAC9046E0AFCCD62A /* ScreenCaptureManager.swift */; };
 		5361FE211A934D9EA511E4E9 /* ThrowDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C8980A621784B999B39AAB6 /* ThrowDetector.swift */; };
 		734A235C02A1451FA8A08584 /* ThrowSequenceTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E48855080B0451D81EED20D /* ThrowSequenceTracker.swift */; };
@@ -66,6 +67,7 @@
 		66C1D786C7844AA186C26BE5 /* CaptureGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CaptureGeometry.swift; path = DartPredictor/Core/Capture/CaptureGeometry.swift; sourceTree = SOURCE_ROOT; };
 		C95F50E58A8E4E44890EBB95 /* RegionFrameCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RegionFrameCapture.swift; path = DartPredictor/Core/Capture/RegionFrameCapture.swift; sourceTree = SOURCE_ROOT; };
 		A1B2C3D4E5F6789012345678 /* WindowCaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WindowCaptureManager.swift; path = DartPredictor/Core/Capture/WindowCaptureManager.swift; sourceTree = SOURCE_ROOT; };
+		A1B2C3D4E5F6789012345682 /* WindowZoneCropper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WindowZoneCropper.swift; path = DartPredictor/Core/Capture/WindowZoneCropper.swift; sourceTree = SOURCE_ROOT; };
 		0503739BAC9046E0AFCCD62A /* ScreenCaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ScreenCaptureManager.swift; path = DartPredictor/Core/Capture/ScreenCaptureManager.swift; sourceTree = SOURCE_ROOT; };
 		9C8980A621784B999B39AAB6 /* ThrowDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ThrowDetector.swift; path = DartPredictor/Core/Detection/ThrowDetector.swift; sourceTree = SOURCE_ROOT; };
 		3E48855080B0451D81EED20D /* ThrowSequenceTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ThrowSequenceTracker.swift; path = DartPredictor/Core/Detection/ThrowSequenceTracker.swift; sourceTree = SOURCE_ROOT; };
@@ -121,6 +123,7 @@
 			66C1D786C7844AA186C26BE5 /* CaptureGeometry.swift */,
 		C95F50E58A8E4E44890EBB95 /* RegionFrameCapture.swift */,
 		A1B2C3D4E5F6789012345678 /* WindowCaptureManager.swift */,
+		A1B2C3D4E5F6789012345682 /* WindowZoneCropper.swift */,
 		0503739BAC9046E0AFCCD62A /* ScreenCaptureManager.swift */,
 			9C8980A621784B999B39AAB6 /* ThrowDetector.swift */,
 			3E48855080B0451D81EED20D /* ThrowSequenceTracker.swift */,
@@ -151,6 +154,7 @@
 			7153FFA561AA476DBD1F460C /* OnboardingView.swift */,
 			5CC8E8B78DC143FBA5A6DB71 /* PredictionOverlay.swift */,
 			CE7D783C169947A4BFF69782 /* RegionSelector.swift */,
+			A1B2C3D4E5F6789012345681 /* WindowPickerView.swift */,
 			5B628A430A1F4C8E9F9CE7F4 /* Assets.xcassets */,
 			CCEA328E46C34CBD86C3AFB0 /* DartPredictor.entitlements */,
 			E85E8E1E6E2B448CA48A5CB7 /* Info.plist */,
@@ -217,6 +221,7 @@
 			B77AD4D0779340D8B732385E /* CaptureGeometry.swift in Sources */,
 			BD56C945F76B4B83A92C6E35 /* RegionFrameCapture.swift in Sources */,
 			A1B2C3D4E5F6789012345679 /* WindowCaptureManager.swift in Sources */,
+			A1B2C3D4E5F6789012345683 /* WindowZoneCropper.swift in Sources */,
 			016A41C8700841F4902BC308 /* ScreenCaptureManager.swift in Sources */,
 			5361FE211A934D9EA511E4E9 /* ThrowDetector.swift in Sources */,
 			734A235C02A1451FA8A08584 /* ThrowSequenceTracker.swift in Sources */,

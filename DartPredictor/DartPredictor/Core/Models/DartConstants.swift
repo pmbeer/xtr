@@ -109,6 +109,44 @@ struct CaptureWindowInfo: Codable, Equatable, Identifiable {
     }
 }
 
+/// Нормализованная зона внутри окна (0…1, origin сверху-слева)
+struct NormalizedRect: Codable, Equatable {
+    var x: Double
+    var y: Double
+    var width: Double
+    var height: Double
+
+    func cgRect(for size: CGSize) -> CGRect {
+        let rect = CGRect(
+            x: x * size.width,
+            y: y * size.height,
+            width: width * size.width,
+            height: height * size.height
+        )
+        return rect.intersection(CGRect(origin: .zero, size: size))
+    }
+}
+
+/// Три зоны fon.bet: результаты (красная), игрок (зелёная), доска (синяя)
+struct GameWindowZones: Codable, Equatable {
+    /// Красная — история бросков и счёт (нижний правый блок)
+    var resultsZone: NormalizedRect
+    /// Зелёная — видео игрока
+    var playerZone: NormalizedRect
+    /// Синяя — мишень / доска
+    var dartboardZone: NormalizedRect
+    /// Поле ставок 1–20 (исключаем из OCR результатов)
+    var bettingZone: NormalizedRect
+
+    /// Калибровка для fon.bet (Safari, типичная раскладка)
+    static let fonBetDefault = GameWindowZones(
+        resultsZone: NormalizedRect(x: 0.52, y: 0.60, width: 0.46, height: 0.34),
+        playerZone: NormalizedRect(x: 0.44, y: 0.17, width: 0.42, height: 0.40),
+        dartboardZone: NormalizedRect(x: 0.06, y: 0.17, width: 0.38, height: 0.40),
+        bettingZone: NormalizedRect(x: 0.10, y: 0.52, width: 0.40, height: 0.22)
+    )
+}
+
 struct CaptureRegion: Codable, Equatable {
     let type: CaptureRegionType
     var rect: CGRect
@@ -302,6 +340,7 @@ struct PlayerProfile: Codable, Identifiable, Equatable {
 struct AppSettings: Codable, Equatable {
     var regions: [CaptureRegion] = []
     var selectedCaptureWindow: CaptureWindowInfo?
+    var gameWindowZones: GameWindowZones = .fonBetDefault
     var isPaperPredictionMode: Bool = true
     var hasCompletedOnboarding: Bool = false
     var showFloatingOverlay: Bool = true

@@ -89,6 +89,7 @@ struct AIActionInsight: Codable, Equatable {
 struct GameSnapshot: Equatable {
     let timestamp: Date
     let detectedNumbers: [DetectedNumber]
+    let resultHistory: [Int]
     let bettingSeconds: Double?
     let phase: GamePhase
     let aiInsight: AIActionInsight
@@ -97,6 +98,8 @@ struct GameSnapshot: Equatable {
     let throwCompleted: Bool
     let confirmedResult: Int?
     let forecastsAccepted: Bool
+    let dartboardMotion: Double
+    let playerMotion: Double
     let processingTimeMs: Double
 }
 
