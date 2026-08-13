@@ -24,7 +24,7 @@ jobs:
           cd DartPredictor
           chmod +x scripts/*.sh
           export ARCH="x86_64 arm64"
-          export DMG_NAME="DartPredictor-1.0.6-macOS-Universal.dmg"
+          export DMG_NAME="DartPredictor-1.0.7-macOS-Universal.dmg"
           ./scripts/build_dmg.sh
 
       - name: Verify build
@@ -36,23 +36,22 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: DartPredictor-macOS-Universal
-          path: DartPredictor/build/DartPredictor-1.0.6-macOS-Universal.dmg
+          path: DartPredictor/build/DartPredictor-1.0.7-macOS-Universal.dmg
           retention-days: 90
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: dart-predictor-v1.0.6
-          name: DartPredictor v1.0.6 — зоны fon.bet (результаты / игрок / доска)
+          tag_name: dart-predictor-v1.0.7
+          name: DartPredictor v1.0.7 — live online + точные зоны fon.bet
           body: |
-            ## DartPredictor v1.0.6 — раздельный анализ зон fon.bet
+            ## DartPredictor v1.0.7
 
-            - 🔴 **Красная зона** — только история бросков (не путается с полем ставок)
-            - 🟢 **Зелёная зона** — игрок и таймер
-            - 🔵 **Синяя зона** — доска / движение дротика
-            - Live preview с цветными рамками зон
-            - Online статус: история, движение доски, фаза броска
-          files: DartPredictor/build/DartPredictor-1.0.6-macOS-Universal.dmg
+            - **Live online**: захват и ИИ разделены — данные обновляются каждые 0.33с без Stop/Start
+            - **Зоны перекалиброваны** по fon.bet: доска слева, игрок справа, результаты снизу-справа
+            - Автопереподключение захвата если кадры остановились
+            - Подписи на рамках зон в превью
+          files: DartPredictor/build/DartPredictor-1.0.7-macOS-Universal.dmg
           draft: false
           prerelease: false
           generate_release_notes: false
