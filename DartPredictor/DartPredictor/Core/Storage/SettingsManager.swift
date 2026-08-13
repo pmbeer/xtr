@@ -24,7 +24,7 @@ final class SettingsManager: ObservableObject {
               let decoded = try? decoder.decode(AppSettings.self, from: data) else { return }
         settings = decoded
         migrateLegacyRegions()
-        DebugLogger.shared.configure(enabled: decoded.debugLoggingEnabled)
+        DebugLogger.shared.configure(enabled: settings.debugLoggingEnabled)
     }
 
     var monitorRegion: CaptureRegion? {
