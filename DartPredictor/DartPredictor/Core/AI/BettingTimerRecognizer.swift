@@ -8,13 +8,13 @@ final class BettingTimerRecognizer {
     private var lastSeconds: Double?
     private var stableCount = 0
 
-    func recognize(from image: CGImage) -> Double? {
+    func recognize(from image: CGImage, timerOnly: Bool = false) -> Double? {
         let texts = VisionTextScanner.scan(image: image)
         var candidates: [Double] = []
 
         for item in texts {
             let t = item.text
-            // 10.0, 9.5, 10,0
+            // 10.0, 9.5, 10,0 — типичный формат таймера
             if let regex = try? NSRegularExpression(pattern: #"(\d{1,2})[.,](\d)"#) {
                 let range = NSRange(t.startIndex..., in: t)
                 if let m = regex.firstMatch(in: t, range: range),
@@ -26,7 +26,10 @@ final class BettingTimerRecognizer {
                     if sec >= 0 && sec <= 60 { candidates.append(sec) }
                 }
             }
-            // целые секунды 6-15
+
+            if timerOnly { continue }
+
+            // целые секунды 3–30 (legacy, не в зоне игрока)
             if let regex = try? NSRegularExpression(pattern: #"\b(\d{1,2})\b"#) {
                 let range = NSRange(t.startIndex..., in: t)
                 let matches = regex.matches(in: t, range: range)

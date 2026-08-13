@@ -22,7 +22,7 @@ jobs:
             VERSION="${GITHUB_REF_NAME#dart-predictor-v}"
             TAG_NAME="${GITHUB_REF_NAME}"
           else
-            VERSION="1.0.10"
+            VERSION="1.0.11"
             TAG_NAME="dart-predictor-v${VERSION}"
           fi
           echo "VERSION=${VERSION}" >> "$GITHUB_ENV"

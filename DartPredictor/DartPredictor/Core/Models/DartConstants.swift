@@ -149,6 +149,31 @@ struct GameWindowZones: Codable, Equatable {
         // Поле ставок 1–20 (центр, не для результатов)
         bettingZone: NormalizedRect(x: 0.075, y: 0.495, width: 0.415, height: 0.225)
     )
+
+    /// Верхняя полоса зоны игрока (таймер) — не анализируется ИИ-позой
+    static let playerTimerStripFraction: Double = 0.26
+
+    /// Зона тела игрока без таймера (для позы, движения, ИИ)
+    func playerBodyZone() -> NormalizedRect {
+        let strip = playerZone.height * GameWindowZones.playerTimerStripFraction
+        return NormalizedRect(
+            x: playerZone.x,
+            y: playerZone.y + strip,
+            width: playerZone.width,
+            height: max(0.05, playerZone.height - strip)
+        )
+    }
+
+    /// Полоса таймера в верхней части зоны игрока (только OCR таймера)
+    func playerTimerStripZone() -> NormalizedRect {
+        let strip = playerZone.height * GameWindowZones.playerTimerStripFraction
+        return NormalizedRect(
+            x: playerZone.x,
+            y: playerZone.y,
+            width: playerZone.width,
+            height: max(0.03, strip)
+        )
+    }
 }
 
 enum EditableZoneKind: String, CaseIterable, Identifiable {
@@ -289,6 +314,7 @@ struct EnsemblePrediction: Equatable {
     let confidenceScore: Double
     let modelContributions: [PredictionModelType: [Int]]
     let processingTimeMs: Double
+    let rationale: String
 
     static let empty = EnsemblePrediction(
         predictions: [],
@@ -296,7 +322,8 @@ struct EnsemblePrediction: Equatable {
         confidence: .low,
         confidenceScore: 0,
         modelContributions: [:],
-        processingTimeMs: 0
+        processingTimeMs: 0,
+        rationale: ""
     )
 }
 

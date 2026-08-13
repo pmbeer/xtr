@@ -23,6 +23,7 @@
 		734A235C02A1451FA8A08584 /* ThrowSequenceTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E48855080B0451D81EED20D /* ThrowSequenceTracker.swift */; };
 		5EE8B9E9A6B3405EBBE4F92D /* CombinationPredictor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA72D82ACFC64818BD4FD36A /* CombinationPredictor.swift */; };
 		B77A60E4763C43BC94245CF7 /* EnsemblePredictor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5823C57AAD104EF2A475A63C /* EnsemblePredictor.swift */; };
+		C1D2E3F4A5B6478990ABCDEF /* ThrowHistoryMerger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D2E3F4A5B6478990ABCDE0 /* ThrowHistoryMerger.swift */; };
 		F1D1E2985D5F4719AD90D50A /* LearningEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B1291FA56A64D0EBD68B932 /* LearningEngine.swift */; };
 		2655AAE704084CFDB866DAD5 /* PlayerProfileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 185D6CF5CD9A4D79B9CC8036 /* PlayerProfileManager.swift */; };
 		E7AB45C5E5E4440DAAB57571 /* DebugLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC7D40FFDB954E82930D729A /* DebugLogger.swift */; };
@@ -73,6 +74,7 @@
 		3E48855080B0451D81EED20D /* ThrowSequenceTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ThrowSequenceTracker.swift; path = DartPredictor/Core/Detection/ThrowSequenceTracker.swift; sourceTree = SOURCE_ROOT; };
 		DA72D82ACFC64818BD4FD36A /* CombinationPredictor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CombinationPredictor.swift; path = DartPredictor/Core/Learning/CombinationPredictor.swift; sourceTree = SOURCE_ROOT; };
 		5823C57AAD104EF2A475A63C /* EnsemblePredictor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EnsemblePredictor.swift; path = DartPredictor/Core/Learning/EnsemblePredictor.swift; sourceTree = SOURCE_ROOT; };
+		C1D2E3F4A5B6478990ABCDE0 /* ThrowHistoryMerger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ThrowHistoryMerger.swift; path = DartPredictor/Core/Learning/ThrowHistoryMerger.swift; sourceTree = SOURCE_ROOT; };
 		1B1291FA56A64D0EBD68B932 /* LearningEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LearningEngine.swift; path = DartPredictor/Core/Learning/LearningEngine.swift; sourceTree = SOURCE_ROOT; };
 		185D6CF5CD9A4D79B9CC8036 /* PlayerProfileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PlayerProfileManager.swift; path = DartPredictor/Core/Learning/PlayerProfileManager.swift; sourceTree = SOURCE_ROOT; };
 		BC7D40FFDB954E82930D729A /* DebugLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DebugLogger.swift; path = DartPredictor/Core/Logging/DebugLogger.swift; sourceTree = SOURCE_ROOT; };
@@ -129,6 +131,7 @@
 			3E48855080B0451D81EED20D /* ThrowSequenceTracker.swift */,
 			DA72D82ACFC64818BD4FD36A /* CombinationPredictor.swift */,
 			5823C57AAD104EF2A475A63C /* EnsemblePredictor.swift */,
+			C1D2E3F4A5B6478990ABCDE0 /* ThrowHistoryMerger.swift */,
 			1B1291FA56A64D0EBD68B932 /* LearningEngine.swift */,
 			185D6CF5CD9A4D79B9CC8036 /* PlayerProfileManager.swift */,
 			BC7D40FFDB954E82930D729A /* DebugLogger.swift */,
@@ -227,6 +230,7 @@
 			734A235C02A1451FA8A08584 /* ThrowSequenceTracker.swift in Sources */,
 			5EE8B9E9A6B3405EBBE4F92D /* CombinationPredictor.swift in Sources */,
 			B77A60E4763C43BC94245CF7 /* EnsemblePredictor.swift in Sources */,
+			C1D2E3F4A5B6478990ABCDEF /* ThrowHistoryMerger.swift in Sources */,
 			F1D1E2985D5F4719AD90D50A /* LearningEngine.swift in Sources */,
 			2655AAE704084CFDB866DAD5 /* PlayerProfileManager.swift in Sources */,
 			E7AB45C5E5E4440DAAB57571 /* DebugLogger.swift in Sources */,

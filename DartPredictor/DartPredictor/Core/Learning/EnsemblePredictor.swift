@@ -20,6 +20,11 @@ final class EnsemblePredictor {
         aiInsight: AIActionInsight = .empty
     ) -> EnsemblePrediction {
         let start = CFAbsoluteTimeGetCurrent()
+        let adaptiveWeights = self.adaptiveWeights(
+            base: weights,
+            historyCount: history.count,
+            aiInsight: aiInsight
+        )
 
         var combinedScores: [Int: Double] = [:]
         var contributions: [PredictionModelType: [Int]] = [:]
@@ -31,13 +36,16 @@ final class EnsemblePredictor {
             } else {
                 modelScores = model.predict(history: history, features: features)
             }
-            let weight = weights[model.type] ?? 0.1
+            let weight = adaptiveWeights[model.type] ?? 0.1
             contributions[model.type] = topNumbers(from: modelScores, count: 4)
 
             for (num, score) in modelScores {
                 combinedScores[num, default: 0] += score * weight
             }
         }
+
+        applyHistoryPatternBoost(scores: &combinedScores, history: history)
+        applyFollowUpBoost(scores: &combinedScores, history: history)
 
         let normalized = normalize(combinedScores)
         let top4 = topNumbers(from: normalized, count: DartConstants.topPredictionCount)
@@ -49,8 +57,23 @@ final class EnsemblePredictor {
             : topProbs
 
         let predictions = zip(top4, finalProbs).map { TopPrediction(number: $0, probability: $1) }
-        let combination = combinationPredictor.buildCombination(from: predictions)
-        let confidence = computeConfidence(predictions: predictions, historyCount: history.count, aiInsight: aiInsight)
+        let combination = combinationPredictor.findBestWinningCombination(
+            scores: normalized,
+            history: history,
+            fallback: predictions
+        )
+        let confidence = computeConfidence(
+            predictions: predictions,
+            historyCount: history.count,
+            aiInsight: aiInsight
+        )
+        let rationale = buildRationale(
+            history: history,
+            aiInsight: aiInsight,
+            features: features,
+            combination: combination,
+            contributions: contributions
+        )
 
         let elapsed = (CFAbsoluteTimeGetCurrent() - start) * 1000
 
@@ -60,7 +83,8 @@ final class EnsemblePredictor {
             confidence: confidence.level,
             confidenceScore: confidence.score,
             modelContributions: contributions,
-            processingTimeMs: elapsed
+            processingTimeMs: elapsed,
+            rationale: rationale
         )
     }
 
@@ -75,6 +99,90 @@ final class EnsemblePredictor {
             let hit = modelHits[model.type] ?? false
             model.update(actual: actual, history: history, features: features, wasCorrect: hit)
         }
+    }
+
+    private func adaptiveWeights(
+        base: [PredictionModelType: Double],
+        historyCount: Int,
+        aiInsight: AIActionInsight
+    ) -> [PredictionModelType: Double] {
+        var w = base.isEmpty ? DartConstants.defaultModelWeights : base
+
+        if historyCount >= 8 {
+            w[.sequence] = (w[.sequence] ?? 0.15) * 1.45
+            w[.transition] = (w[.transition] ?? 0.15) * 1.35
+            w[.frequency] = (w[.frequency] ?? 0.10) * 1.25
+        }
+        if historyCount >= 20 {
+            w[.playerBehavior] = (w[.playerBehavior] ?? 0.20) * 1.2
+        }
+        if aiInsight.playerDetected {
+            w[.playerBehavior] = (w[.playerBehavior] ?? 0.20) * 1.35
+            if !aiInsight.numberScores.isEmpty {
+                w[.aiAction] = (w[.aiAction] ?? 0.30) * 1.55
+            }
+        }
+
+        let total = w.values.reduce(0, +)
+        guard total > 0 else { return DartConstants.defaultModelWeights }
+        return w.mapValues { $0 / total }
+    }
+
+    private func applyHistoryPatternBoost(scores: inout [Int: Double], history: [Int]) {
+        guard history.count >= 3 else { return }
+
+        let recent = Array(history.suffix(5))
+        var recentCounts: [Int: Int] = [:]
+        for n in recent { recentCounts[n, default: 0] += 1 }
+
+        for num in DartConstants.validNumbers {
+            let count = recentCounts[num] ?? 0
+            let coldBonus = count == 0 ? 0.06 : 0
+            let hotPenalty = count >= 2 ? -0.04 * Double(count - 1) : 0
+            scores[num, default: 0] += coldBonus + hotPenalty
+        }
+    }
+
+    private func applyFollowUpBoost(scores: inout [Int: Double], history: [Int]) {
+        let followUp = ThrowHistoryMerger.followUpScores(from: history, depth: 6)
+        for (num, prob) in followUp {
+            scores[num, default: 0] += prob * 0.22
+        }
+    }
+
+    private func buildRationale(
+        history: [Int],
+        aiInsight: AIActionInsight,
+        features: PlayerFeatures,
+        combination: PredictedCombination,
+        contributions: [PredictionModelType: [Int]]
+    ) -> String {
+        var parts: [String] = []
+
+        if history.count >= 3 {
+            let tail = history.suffix(6).map(String.init).joined(separator: "→")
+            parts.append("история \(tail)")
+        }
+
+        if aiInsight.playerDetected {
+            parts.append("поза: \(aiInsight.detectedAction.rawValue)")
+            if features.armHeight > 0.1 {
+                parts.append("стойка \(Int(features.armHeight * 100))%")
+            }
+        }
+
+        if !aiInsight.numberScores.isEmpty {
+            let aiTop = aiInsight.numberScores.sorted { $0.value > $1.value }.prefix(2).map { "\($0.key)" }
+            parts.append("ИИ-числа: \(aiTop.joined(separator: ","))")
+        }
+
+        if let nums = contributions[.sequence], !nums.isEmpty {
+            let seq = nums.prefix(2).map(String.init).joined(separator: ",")
+            parts.append("паттерн: \(seq)")
+        }
+
+        parts.append("комбо \(Int(combination.jointProbability))%")
+        return parts.joined(separator: " · ")
     }
 
     private func topNumbers(from scores: [Int: Double], count: Int) -> [Int] {
@@ -101,15 +209,15 @@ final class EnsemblePredictor {
         let spread = predictions.map(\.probability)
         let topProb = top.probability
         let avgSpread = spread.reduce(0, +) / Double(spread.count)
-        let dataFactor = min(Double(historyCount) / 100.0, 1.0)
-        let aiFactor = aiInsight.actionConfidence * 0.2
+        let dataFactor = min(Double(historyCount) / 80.0, 1.0)
+        let aiFactor = aiInsight.actionConfidence * 0.25 + (aiInsight.playerDetected ? 0.1 : 0)
 
-        let score = (topProb / 100.0 * 0.4 + dataFactor * 0.25 + (topProb - avgSpread) / 100.0 * 0.15 + aiFactor) * 100
+        let score = (topProb / 100.0 * 0.35 + dataFactor * 0.3 + (topProb - avgSpread) / 100.0 * 0.15 + aiFactor) * 100
         let clamped = min(max(score, 0), 100)
 
         let level: ConfidenceLevel
-        if clamped >= 60 && historyCount >= 50 { level = .high }
-        else if clamped >= 35 && historyCount >= 20 { level = .medium }
+        if clamped >= 58 && historyCount >= 40 { level = .high }
+        else if clamped >= 32 && historyCount >= 12 { level = .medium }
         else { level = .low }
 
         return (level, clamped)

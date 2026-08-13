@@ -258,6 +258,7 @@ struct ZoneOverlayView: View {
             let fit = aspectFit ?? PreviewAspectFit(containerSize: geo.size, imageSize: geo.size)
             zoneBox(zones.dartboardZone, color: .blue, label: "Доска", fit: fit)
             zoneBox(zones.playerZone, color: .green, label: "Игрок", fit: fit)
+            timerStripOverlay(zones: zones, fit: fit)
             zoneBox(zones.resultsZone, color: .red, label: "Результаты", fit: fit)
         }
         .allowsHitTesting(false)
@@ -279,6 +280,22 @@ struct ZoneOverlayView: View {
                 .foregroundStyle(.white)
                 .clipShape(RoundedRectangle(cornerRadius: 3))
                 .position(x: rect.minX + 36, y: rect.minY + 10)
+        }
+    }
+
+    private func timerStripOverlay(zones: GameWindowZones, fit: PreviewAspectFit) -> some View {
+        let strip = zones.playerTimerStripZone()
+        let rect = fit.viewRect(for: strip)
+        return ZStack {
+            Rectangle()
+                .strokeBorder(Color.gray.opacity(0.7), style: StrokeStyle(lineWidth: 1, dash: [3, 2]))
+                .background(Color.black.opacity(0.25))
+                .frame(width: max(rect.width, 1), height: max(rect.height, 1))
+                .position(x: rect.midX, y: rect.midY)
+            Text("таймер")
+                .font(.system(size: 8, weight: .medium))
+                .foregroundStyle(.white.opacity(0.9))
+                .position(x: rect.midX, y: rect.midY)
         }
     }
 }
@@ -398,6 +415,7 @@ struct PredictionDisplayView: View {
     let combination: PredictedCombination
     let confidence: ConfidenceLevel
     let confidenceScore: Double
+    var rationale: String = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -406,6 +424,13 @@ struct PredictionDisplayView: View {
                 .foregroundStyle(.secondary)
 
             CombinationDisplayView(combination: combination)
+
+            if !rationale.isEmpty {
+                Text(rationale)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+            }
 
             HStack(alignment: .top, spacing: 24) {
                 VStack(alignment: .leading, spacing: 8) {

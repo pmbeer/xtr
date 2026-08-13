@@ -53,9 +53,10 @@ final class GameAIAnalyzer {
         let scaled = scaleForAnalysis(image)
 
         let resultsCrop = WindowZoneCropper.crop(image: scaled, zone: zones.resultsZone)
-        let playerCrop = WindowZoneCropper.crop(image: scaled, zone: zones.playerZone)
+        let playerBodyCrop = WindowZoneCropper.crop(image: scaled, zone: zones.playerBodyZone())
         let dartboardCrop = WindowZoneCropper.crop(image: scaled, zone: zones.dartboardZone)
         let bettingCrop = WindowZoneCropper.crop(image: scaled, zone: zones.bettingZone)
+        let timerStripCrop = WindowZoneCropper.crop(image: scaled, zone: zones.playerTimerStripZone())
 
         // Live: только fast OCR в зонах результатов и ставок
         let resultTexts = scanCrop(resultsCrop, accurate: false)
@@ -65,11 +66,19 @@ final class GameAIAnalyzer {
         let bettingTexts = scanCrop(bettingCrop, accurate: false)
         let forecastsAccepted = detectForecastsAccepted(from: bettingTexts)
 
-        let playerTimerCrop = playerCrop ?? scaled
-        let bettingSeconds = forecastsAccepted ? nil : self.timerRecognizer.recognize(from: playerTimerCrop)
+        // Таймер: поле ставок или верхняя полоса игрока — НЕ вся зона игрока (там поза)
+        var bettingSeconds: Double? = nil
+        if !forecastsAccepted {
+            if let bettingCrop {
+                bettingSeconds = timerRecognizer.recognize(from: bettingCrop, timerOnly: true)
+            }
+            if bettingSeconds == nil, let timerStripCrop {
+                bettingSeconds = timerRecognizer.recognize(from: timerStripCrop, timerOnly: true)
+            }
+        }
 
         let dartMotion = WindowZoneCropper.computeMotion(image: dartboardCrop, previousBytes: &prevDartboardBytes)
-        let playerMotion = WindowZoneCropper.computeMotion(image: playerCrop, previousBytes: &prevPlayerBytes)
+        let playerMotion = WindowZoneCropper.computeMotion(image: playerBodyCrop, previousBytes: &prevPlayerBytes)
         let combinedMotion = max(dartMotion * 1.4, playerMotion)
 
         if combinedMotion > 0.14 {
@@ -90,16 +99,16 @@ final class GameAIAnalyzer {
         var playerInsight = AIActionInsight.empty
         var playerFeatures = PlayerFeatures.zero
 
-        if includePose, let playerCrop {
+        if includePose, let playerBodyCrop {
             let semaphore = DispatchSemaphore(value: 0)
-            aiAction.analyzeFrame(playerCrop) { insight, features in
+            aiAction.analyzeFrame(playerBodyCrop) { insight, features in
                 playerInsight = insight
                 playerFeatures = features
                 semaphore.signal()
             }
             _ = semaphore.wait(timeout: .now() + 1.2)
-        } else if let playerCrop {
-            playerInsight.aiDescription = "Игрок: движение \(Int(playerMotion * 100))%"
+        } else if let playerBodyCrop {
+            playerInsight.aiDescription = "Игрок (без таймера): движение \(Int(playerMotion * 100))%"
             playerInsight.motionIntensity = playerMotion
         } else {
             playerInsight.aiDescription = "Зона игрока не видна"
@@ -171,7 +180,7 @@ final class GameAIAnalyzer {
     ) -> String {
         var parts: [String] = []
         parts.append("Доска: \(motionLabel(dartMotion))")
-        parts.append("Игрок: \(playerInsight.detectedAction.rawValue)")
+        parts.append("Игрок: \(playerInsight.detectedAction.rawValue) (поза без таймера)")
         if forecastsAccepted { parts.append("ставки закрыты") }
         if !resultHistory.isEmpty {
             parts.append("история: \(resultHistory.map(String.init).joined(separator: "→"))")

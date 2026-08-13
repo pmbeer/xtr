@@ -114,7 +114,8 @@ struct MainDashboardView: View {
                 predictions: pipeline.currentPrediction.predictions,
                 combination: pipeline.currentCombination,
                 confidence: pipeline.currentPrediction.confidence,
-                confidenceScore: pipeline.currentPrediction.confidenceScore
+                confidenceScore: pipeline.currentPrediction.confidenceScore,
+                rationale: pipeline.predictionRationale
             )
 
             Divider()

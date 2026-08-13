@@ -42,6 +42,7 @@ final class PipelineCoordinator: ObservableObject {
     @Published var captureError: String?
     @Published var needsScreenPermission = false
     @Published var captureBackend: CaptureBackend = .none
+    @Published var predictionRationale: String = ""
 
     private let regionCapture = RegionFrameCapture.shared
     private let windowCapture = WindowCaptureManager.shared
@@ -67,6 +68,7 @@ final class PipelineCoordinator: ObservableObject {
     private var analysisInFlight = false
     private var lastPredictionHistory: [Int] = []
     private var lastLivePredictionAt: Date = .distantPast
+    private var lastPoseSignature: String = ""
 
     func start() async {
         guard !isRunning else { return }
@@ -325,36 +327,43 @@ final class PipelineCoordinator: ObservableObject {
     /// Обновляет TOP-4 в online без ожидания подтверждённого броска
     private func refreshLivePrediction(snapshot: GameSnapshot) {
         let profile = profileManager.activeProfile
-        let ocrHistory = snapshot.resultHistory
-        let history: [Int] = ocrHistory.count >= 1 ? ocrHistory : profile.throwHistory
+        let mergedHistory = ThrowHistoryMerger.merge(
+            stored: profile.throwHistory,
+            liveOCR: snapshot.resultHistory
+        )
 
-        let historyChanged = history != lastPredictionHistory
+        let historyChanged = mergedHistory != lastPredictionHistory
         let interval = Date().timeIntervalSince(lastLivePredictionAt)
-        let timerTick = interval >= 0.9
+        let timerTick = interval >= 0.85
         let bettingActive = snapshot.phase == .bettingWindow || snapshot.bettingSeconds != nil
+        let poseSignature = "\(snapshot.aiInsight.detectedAction.rawValue)-\(Int(snapshot.playerFeatures.armHeight * 100))-\(Int(snapshot.playerFeatures.bodyTilt * 100))"
+        let poseChanged = snapshot.aiInsight.playerDetected && poseSignature != lastPoseSignature
 
-        guard historyChanged || timerTick || bettingActive else { return }
+        guard historyChanged || timerTick || bettingActive || poseChanged else { return }
 
-        lastPredictionHistory = history
+        lastPredictionHistory = mergedHistory
         lastLivePredictionAt = Date()
+        if poseChanged { lastPoseSignature = poseSignature }
 
         let prediction = learningEngine.makePrediction(
-            history: history,
+            history: mergedHistory,
             features: currentFeatures,
             profile: profile,
             aiInsight: currentAIInsight
         )
         currentPrediction = prediction
         currentCombination = prediction.combination
+        predictionRationale = prediction.rationale
     }
 
     func onZonesUpdated() {
         gameAI.reset()
         lastPredictionHistory = []
         lastLivePredictionAt = .distantPast
+        lastPoseSignature = ""
         if isRunning, latestFrame != nil {
             runLiveAnalysis()
-        } else if let window = SettingsManager.shared.selectedCaptureWindow {
+        } else if SettingsManager.shared.selectedCaptureWindow != nil {
             Task { await testCapturePreview() }
         }
     }
@@ -369,6 +378,7 @@ final class PipelineCoordinator: ObservableObject {
         )
         currentPrediction = prediction
         currentCombination = prediction.combination
+        predictionRationale = prediction.rationale
     }
 
     private func handleConfirmedThrow(_ number: Int) async {
@@ -423,6 +433,7 @@ final class PipelineCoordinator: ObservableObject {
         )
         currentPrediction = prediction
         currentCombination = prediction.combination
+        predictionRationale = prediction.rationale
         lastPredictionHistory = profile.throwHistory
         lastLivePredictionAt = Date()
 
