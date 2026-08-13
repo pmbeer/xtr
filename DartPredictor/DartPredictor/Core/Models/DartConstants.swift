@@ -137,34 +137,85 @@ struct GameWindowZones: Codable, Equatable {
     var dartboardZone: NormalizedRect
     /// Поле ставок 1–20 (исключаем из OCR результатов)
     var bettingZone: NormalizedRect
+    /// Зоны, которые ИИ полностью игнорирует (таймеры, overlay ставок)
+    var ignoredZones: [NormalizedRect]
 
-    /// Калибровка fon.bet — Safari, окно с игрой (видео сверху, результаты снизу-справа)
+    init(
+        resultsZone: NormalizedRect,
+        playerZone: NormalizedRect,
+        dartboardZone: NormalizedRect,
+        bettingZone: NormalizedRect,
+        ignoredZones: [NormalizedRect] = []
+    ) {
+        self.resultsZone = resultsZone
+        self.playerZone = playerZone
+        self.dartboardZone = dartboardZone
+        self.bettingZone = bettingZone
+        self.ignoredZones = ignoredZones
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        resultsZone = try c.decode(NormalizedRect.self, forKey: .resultsZone)
+        playerZone = try c.decode(NormalizedRect.self, forKey: .playerZone)
+        dartboardZone = try c.decode(NormalizedRect.self, forKey: .dartboardZone)
+        bettingZone = try c.decode(NormalizedRect.self, forKey: .bettingZone)
+        ignoredZones = try c.decodeIfPresent([NormalizedRect].self, forKey: .ignoredZones) ?? []
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case resultsZone, playerZone, dartboardZone, bettingZone, ignoredZones
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(resultsZone, forKey: .resultsZone)
+        try c.encode(playerZone, forKey: .playerZone)
+        try c.encode(dartboardZone, forKey: .dartboardZone)
+        try c.encode(bettingZone, forKey: .bettingZone)
+        try c.encode(ignoredZones, forKey: .ignoredZones)
+    }
+
+    /// fon.bet live — только результаты + игрок; overlay и часы игнорируются
     static let fonBetDefault = GameWindowZones(
-        // 🔴 Красная: нижний правый блок — счёт матча + кружки истории бросков
-        resultsZone: NormalizedRect(x: 0.50, y: 0.735, width: 0.48, height: 0.24),
-        // 🟢 Зелёная: правое видео (игрок), только верхняя панель стрима
-        playerZone: NormalizedRect(x: 0.395, y: 0.115, width: 0.355, height: 0.315),
-        // 🔵 Синяя: левое видео (мишень / доска)
-        dartboardZone: NormalizedRect(x: 0.045, y: 0.115, width: 0.345, height: 0.315),
-        // Поле ставок 1–20 (центр, не для результатов)
-        bettingZone: NormalizedRect(x: 0.075, y: 0.495, width: 0.415, height: 0.225)
+        // 🔴 Серия / кружки истории + счёт (нижний правый блок)
+        resultsZone: NormalizedRect(x: 0.52, y: 0.66, width: 0.46, height: 0.30),
+        // 🟢 Правое видео — поведение игрока (без overlay)
+        playerZone: NormalizedRect(x: 0.52, y: 0.11, width: 0.46, height: 0.38),
+        // Не анализируется в v1.0.12+ (оставлено для совместимости)
+        dartboardZone: NormalizedRect(x: 0.02, y: 0.11, width: 0.48, height: 0.38),
+        // Только детект «прогнозы приняты», не таймер
+        bettingZone: NormalizedRect(x: 0.04, y: 0.50, width: 0.92, height: 0.14),
+        ignoredZones: [
+            // Центральный overlay: зелёный таймер SEC + кнопки 50/100/200…
+            NormalizedRect(x: 0.28, y: 0.27, width: 0.44, height: 0.22),
+            // Часы матча справа сверху (05:58:12)
+            NormalizedRect(x: 0.74, y: 0.09, width: 0.24, height: 0.06)
+        ]
     )
 
-    /// Верхняя полоса зоны игрока (таймер) — не анализируется ИИ-позой
-    static let playerTimerStripFraction: Double = 0.26
+    /// Верхняя полоса зоны игрока — не анализируется
+    static let playerTimerStripFraction: Double = 0.14
 
-    /// Зона тела игрока без таймера (для позы, движения, ИИ)
-    func playerBodyZone() -> NormalizedRect {
-        let strip = playerZone.height * GameWindowZones.playerTimerStripFraction
+    /// Нижняя часть зоны игрока — overlay таймера/ставок
+    static let playerOverlayStripFraction: Double = 0.40
+
+    /// Зона анализа поведения игрока (без таймеров и overlay)
+    func playerAnalysisZone() -> NormalizedRect {
+        let topSkip = playerZone.height * GameWindowZones.playerTimerStripFraction
+        let bottomSkip = playerZone.height * GameWindowZones.playerOverlayStripFraction
         return NormalizedRect(
             x: playerZone.x,
-            y: playerZone.y + strip,
+            y: playerZone.y + topSkip,
             width: playerZone.width,
-            height: max(0.05, playerZone.height - strip)
+            height: max(0.05, playerZone.height - topSkip - bottomSkip)
         )
     }
 
-    /// Полоса таймера в верхней части зоны игрока (только OCR таймера)
+    func playerBodyZone() -> NormalizedRect {
+        playerAnalysisZone()
+    }
+
     func playerTimerStripZone() -> NormalizedRect {
         let strip = playerZone.height * GameWindowZones.playerTimerStripFraction
         return NormalizedRect(
@@ -179,7 +230,6 @@ struct GameWindowZones: Codable, Equatable {
 enum EditableZoneKind: String, CaseIterable, Identifiable {
     case results = "Результаты"
     case player = "Игрок"
-    case dartboard = "Доска"
 
     var id: String { rawValue }
 
@@ -187,7 +237,6 @@ enum EditableZoneKind: String, CaseIterable, Identifiable {
         switch self {
         case .results: return zones.resultsZone
         case .player: return zones.playerZone
-        case .dartboard: return zones.dartboardZone
         }
     }
 
@@ -195,7 +244,6 @@ enum EditableZoneKind: String, CaseIterable, Identifiable {
         switch self {
         case .results: zones.resultsZone = rect
         case .player: zones.playerZone = rect
-        case .dartboard: zones.dartboardZone = rect
         }
     }
 }
@@ -396,7 +444,7 @@ struct AppSettings: Codable, Equatable {
     var regions: [CaptureRegion] = []
     var selectedCaptureWindow: CaptureWindowInfo?
     var gameWindowZones: GameWindowZones = .fonBetDefault
-    var zoneLayoutVersion: Int = 2
+    var zoneLayoutVersion: Int = 4
     var isPaperPredictionMode: Bool = true
     var hasCompletedOnboarding: Bool = false
     var showFloatingOverlay: Bool = true

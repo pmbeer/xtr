@@ -181,7 +181,7 @@ final class EnsemblePredictor {
             parts.append("паттерн: \(seq)")
         }
 
-        parts.append("комбо \(Int(combination.jointProbability))%")
+        parts.append("след. ставка \(Int(combination.jointProbability))%")
         return parts.joined(separator: " · ")
     }
 

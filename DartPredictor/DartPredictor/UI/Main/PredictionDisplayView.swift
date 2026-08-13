@@ -130,7 +130,7 @@ struct LivePreviewPanel: View {
             HStack(spacing: 8) {
                 zoneLegend(color: .red, label: "Результаты")
                 zoneLegend(color: .green, label: "Игрок")
-                zoneLegend(color: .blue, label: "Доска")
+                zoneLegend(color: .blue.opacity(0.5), label: "Игнор")
             }
             .font(.caption2)
 
@@ -244,7 +244,6 @@ struct InteractiveZoneEditor: View {
         switch kind {
         case .results: return .red
         case .player: return .green
-        case .dartboard: return .blue
         }
     }
 }
@@ -256,20 +255,22 @@ struct ZoneOverlayView: View {
     var body: some View {
         GeometryReader { geo in
             let fit = aspectFit ?? PreviewAspectFit(containerSize: geo.size, imageSize: geo.size)
-            zoneBox(zones.dartboardZone, color: .blue, label: "Доска", fit: fit)
-            zoneBox(zones.playerZone, color: .green, label: "Игрок", fit: fit)
-            timerStripOverlay(zones: zones, fit: fit)
-            zoneBox(zones.resultsZone, color: .red, label: "Результаты", fit: fit)
+            zoneBox(zones.playerZone, color: .green, label: "Игрок", fit: fit, dashed: false)
+            playerAnalysisHint(zones: zones, fit: fit)
+            for (idx, ignored) in zones.ignoredZones.enumerated() {
+                ignoredZoneBox(ignored, label: idx == 0 ? "overlay" : "часы", fit: fit)
+            }
+            zoneBox(zones.resultsZone, color: .red, label: "Результаты", fit: fit, dashed: false)
         }
         .allowsHitTesting(false)
     }
 
-    private func zoneBox(_ zone: NormalizedRect, color: Color, label: String, fit: PreviewAspectFit) -> some View {
+    private func zoneBox(_ zone: NormalizedRect, color: Color, label: String, fit: PreviewAspectFit, dashed: Bool) -> some View {
         let rect = fit.viewRect(for: zone)
         return ZStack(alignment: .topLeading) {
             Rectangle()
-                .strokeBorder(color.opacity(0.9), lineWidth: 2)
-                .background(color.opacity(0.1))
+                .strokeBorder(color.opacity(0.9), style: StrokeStyle(lineWidth: 2, dash: dashed ? [4, 3] : []))
+                .background(color.opacity(dashed ? 0.04 : 0.1))
                 .frame(width: max(rect.width, 1), height: max(rect.height, 1))
                 .position(x: rect.midX, y: rect.midY)
             Text(label)
@@ -283,18 +284,29 @@ struct ZoneOverlayView: View {
         }
     }
 
-    private func timerStripOverlay(zones: GameWindowZones, fit: PreviewAspectFit) -> some View {
-        let strip = zones.playerTimerStripZone()
-        let rect = fit.viewRect(for: strip)
+    private func playerAnalysisHint(zones: GameWindowZones, fit: PreviewAspectFit) -> some View {
+        let analysis = zones.playerAnalysisZone()
+        let rect = fit.viewRect(for: analysis)
+        return Rectangle()
+            .strokeBorder(Color.green.opacity(0.5), style: StrokeStyle(lineWidth: 1, dash: [2, 2]))
+            .frame(width: max(rect.width, 1), height: max(rect.height, 1))
+            .position(x: rect.midX, y: rect.midY)
+    }
+
+    private func ignoredZoneBox(_ zone: NormalizedRect, label: String, fit: PreviewAspectFit) -> some View {
+        let rect = fit.viewRect(for: zone)
         return ZStack {
             Rectangle()
-                .strokeBorder(Color.gray.opacity(0.7), style: StrokeStyle(lineWidth: 1, dash: [3, 2]))
-                .background(Color.black.opacity(0.25))
+                .strokeBorder(Color.blue.opacity(0.85), style: StrokeStyle(lineWidth: 2, dash: [5, 3]))
+                .background(Color.blue.opacity(0.22))
                 .frame(width: max(rect.width, 1), height: max(rect.height, 1))
                 .position(x: rect.midX, y: rect.midY)
-            Text("таймер")
-                .font(.system(size: 8, weight: .medium))
-                .foregroundStyle(.white.opacity(0.9))
+            Text("игнор: \(label)")
+                .font(.system(size: 8, weight: .bold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 4)
+                .background(Color.blue.opacity(0.75))
+                .clipShape(RoundedRectangle(cornerRadius: 3))
                 .position(x: rect.midX, y: rect.midY)
         }
     }
@@ -346,15 +358,9 @@ struct AIStatusPanel: View {
                         .font(.caption.monospacedDigit())
                 }
                 HStack {
-                    Text("🟢 Игрок:")
+                    Text("🟢 Поведение:")
                         .font(.caption2.weight(.semibold))
                     Text("\(insight.detectedAction.rawValue) · движение \(Int(playerMotion * 100))%")
-                        .font(.caption2)
-                }
-                HStack {
-                    Text("🔵 Доска:")
-                        .font(.caption2.weight(.semibold))
-                    Text(motionLabel(dartboardMotion))
                         .font(.caption2)
                 }
             }
@@ -419,7 +425,7 @@ struct PredictionDisplayView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("СЛЕДУЮЩИЙ ПРОГНОЗ")
+            Text("СЛЕДУЮЩАЯ СТАВКА · TOP-4")
                 .font(.headline)
                 .foregroundStyle(.secondary)
 

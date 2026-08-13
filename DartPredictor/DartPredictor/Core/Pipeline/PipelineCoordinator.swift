@@ -336,10 +336,11 @@ final class PipelineCoordinator: ObservableObject {
         let interval = Date().timeIntervalSince(lastLivePredictionAt)
         let timerTick = interval >= 0.85
         let bettingActive = snapshot.phase == .bettingWindow || snapshot.bettingSeconds != nil
+        let nextBetPhase = snapshot.phase == .bettingWindow || snapshot.phase == .playerPreparing
         let poseSignature = "\(snapshot.aiInsight.detectedAction.rawValue)-\(Int(snapshot.playerFeatures.armHeight * 100))-\(Int(snapshot.playerFeatures.bodyTilt * 100))"
         let poseChanged = snapshot.aiInsight.playerDetected && poseSignature != lastPoseSignature
 
-        guard historyChanged || timerTick || bettingActive || poseChanged else { return }
+        guard historyChanged || timerTick || bettingActive || nextBetPhase || poseChanged else { return }
 
         lastPredictionHistory = mergedHistory
         lastLivePredictionAt = Date()

@@ -10,6 +10,44 @@ enum WindowZoneCropper {
         return image.cropping(to: rect)
     }
 
+    /// Обрезка зоны с маскировкой игнорируемых областей (чёрная заливка)
+    static func cropMaskingIgnored(
+        image: CGImage,
+        zone: NormalizedRect,
+        ignoredZones: [NormalizedRect]
+    ) -> CGImage? {
+        let size = CGSize(width: image.width, height: image.height)
+        let cropRect = zone.cgRect(for: size)
+        guard cropRect.width >= 20, cropRect.height >= 20,
+              let cropped = image.cropping(to: cropRect) else { return nil }
+
+        let masks = ignoredZones
+            .map { $0.cgRect(for: size).intersection(cropRect) }
+            .filter { !$0.isNull && $0.width > 2 && $0.height > 2 }
+
+        guard !masks.isEmpty else { return cropped }
+
+        let w = Int(cropRect.width)
+        let h = Int(cropRect.height)
+        guard let ctx = CGContext(
+            data: nil,
+            width: w,
+            height: h,
+            bitsPerComponent: 8,
+            bytesPerRow: w * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return cropped }
+
+        ctx.draw(cropped, in: CGRect(x: 0, y: 0, width: cropRect.width, height: cropRect.height))
+        ctx.setFillColor(CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 1))
+        for mask in masks {
+            let local = mask.offsetBy(dx: -cropRect.origin.x, dy: -cropRect.origin.y)
+            ctx.fill(local)
+        }
+        return ctx.makeImage() ?? cropped
+    }
+
     static func computeMotion(image: CGImage?, previousBytes: inout [UInt8]?) -> Double {
         guard let image,
               let data = image.dataProvider?.data,
