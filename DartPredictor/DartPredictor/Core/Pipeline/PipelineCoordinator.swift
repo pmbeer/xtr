@@ -3,7 +3,8 @@ import Combine
 import CoreGraphics
 
 enum CaptureBackend: String {
-    case screenCaptureKit = "ScreenCaptureKit"
+    case windowCapture = "Окно"
+    case screenCaptureKit = "Дисплей"
     case regionFrame = "RegionCapture"
     case none = "—"
 }
@@ -37,6 +38,7 @@ final class PipelineCoordinator: ObservableObject {
     @Published var captureBackend: CaptureBackend = .none
 
     private let regionCapture = RegionFrameCapture.shared
+    private let windowCapture = WindowCaptureManager.shared
     private let screenCapture = ScreenCaptureManager.shared
     private let gameAI = GameAIAnalyzer.shared
     private let learningEngine = LearningEngine.shared
@@ -55,13 +57,8 @@ final class PipelineCoordinator: ObservableObject {
     func start() async {
         guard !isRunning else { return }
 
-        guard let region = SettingsManager.shared.monitorRegion else {
-            processingState = "Сначала выберите область игры"
-            return
-        }
-
-        guard CaptureGeometry.isValidRegion(region.rect) else {
-            processingState = "Область слишком мала — выберите область заново"
+        guard let window = SettingsManager.shared.selectedCaptureWindow else {
+            processingState = "Сначала выберите окно с игрой (Safari / fon.bet)"
             return
         }
 
@@ -75,11 +72,6 @@ final class PipelineCoordinator: ObservableObject {
 
         needsScreenPermission = false
         profileManager.load()
-
-        let fps = SettingsManager.shared.settings.captureFrameRate
-        let normalized = CaptureGeometry.normalizeRegion(region.rect)
-        SettingsManager.shared.setMonitorRegion(normalized)
-
         await stopCaptureInternal()
 
         let frameHandler: (CGImage) -> Void = { [weak self] image in
@@ -88,28 +80,17 @@ final class PipelineCoordinator: ObservableObject {
             }
         }
 
-        // ScreenCaptureKit — основной путь на macOS 14+
-        screenCapture.configureMonitorRegion(normalized)
         do {
-            try await screenCapture.startCapture(handler: frameHandler)
-            activeBackend = .screenCaptureKit
-            captureBackend = .screenCaptureKit
+            try await windowCapture.startCapture(windowID: window.windowID, handler: frameHandler)
+            activeBackend = .windowCapture
+            captureBackend = .windowCapture
             isRunning = true
-            processingState = "ИИ анализирует область игры (SCK)..."
-            DebugLogger.shared.log("Capture backend: ScreenCaptureKit", category: "capture")
+            processingState = "ИИ анализирует окно «\(window.shortLabel)»..."
+            DebugLogger.shared.log("Capture backend: Window SCK \(window.displayTitle)", category: "capture")
         } catch {
-            DebugLogger.shared.logCaptureError("SCK failed: \(error.localizedDescription), fallback to RegionCapture")
-            regionCapture.configure(region: normalized)
-            regionCapture.startCapture(fps: fps, handler: frameHandler)
-            activeBackend = regionCapture.isCapturing ? .regionFrame : .none
-            captureBackend = activeBackend
-            isRunning = regionCapture.isCapturing
-            if isRunning {
-                processingState = "ИИ анализирует область игры..."
-            } else {
-                captureError = regionCapture.lastError
-                processingState = regionCapture.lastError ?? "Не удалось запустить захват"
-            }
+            captureError = error.localizedDescription
+            processingState = error.localizedDescription
+            DebugLogger.shared.logCaptureError("Window capture failed: \(error.localizedDescription)")
         }
 
         if isRunning {
@@ -135,9 +116,9 @@ final class PipelineCoordinator: ObservableObject {
         startPermissionPolling()
     }
 
-    /// Тестовый снимок после выбора области — показывает, что программа «видит» экран
+    /// Снимок окна после выбора — проверка что программа видит игру
     func testCapturePreview() async {
-        guard let region = SettingsManager.shared.monitorRegion else { return }
+        guard let window = SettingsManager.shared.selectedCaptureWindow else { return }
 
         if !regionCapture.checkScreenRecordingPermission() {
             needsScreenPermission = true
@@ -145,25 +126,31 @@ final class PipelineCoordinator: ObservableObject {
             return
         }
 
-        let normalized = CaptureGeometry.normalizeRegion(region.rect)
-
-        if let image = regionCapture.captureSingleFrame(region: normalized) {
+        do {
+            let image = try await windowCapture.captureSnapshot(windowID: window.windowID)
             livePreviewImage = image
             lastCropSize = CGSize(width: image.width, height: image.height)
             captureError = nil
-            processingState = "Область выбрана — превью обновлено. Нажмите «Запустить»"
+            captureBackend = .windowCapture
+            processingState = "Окно выбрано — превью обновлено. Нажмите «Запустить»"
+
             gameAI.analyze(image: image) { [weak self] snapshot in
                 Task { @MainActor in
                     self?.applySnapshot(snapshot, analyzeOnly: true)
                 }
             }
-        } else {
-            captureError = "Не удалось снять экран — разрешите «Запись экрана» и попробуйте снова"
-            needsScreenPermission = true
+        } catch {
+            captureError = error.localizedDescription
+            if (error as? WindowCaptureManager.WindowCaptureError) == .windowNotFound {
+                processingState = "Окно закрыто — выберите окно снова"
+            }
         }
     }
 
     private func stopCaptureInternal() async {
+        if windowCapture.isCapturing {
+            await windowCapture.stopCapture()
+        }
         if screenCapture.isCapturing {
             await screenCapture.stopCapture()
         }
@@ -187,15 +174,10 @@ final class PipelineCoordinator: ObservableObject {
     }
 
     private func handleFrame(_ image: CGImage) {
-        if activeBackend == .screenCaptureKit {
-            captureFrames = screenCapture.framesCaptured
-            lastCropSize = screenCapture.lastCropSize
-        } else {
-            captureFrames = regionCapture.framesCaptured
-            lastCropSize = CGSize(width: image.width, height: image.height)
-        }
+        captureFrames = windowCapture.framesCaptured
+        lastCropSize = windowCapture.lastCropSize
         livePreviewImage = image
-        captureError = regionCapture.lastError
+        captureError = windowCapture.lastError
         needsScreenPermission = !regionCapture.hasScreenPermission
 
         gameAI.analyze(image: image) { [weak self] snapshot in
@@ -226,6 +208,9 @@ final class PipelineCoordinator: ObservableObject {
         if !nums.isEmpty { status += " · Числа: \(nums)" }
         if let sec = snapshot.bettingSeconds {
             status += " · Таймер: \(String(format: "%.1f", sec))с"
+        }
+        if snapshot.forecastsAccepted {
+            status += " · Прогнозы приняты"
         }
         if snapshot.throwInProgress { status += " · БРОСОК" }
         status += " · \(snapshot.aiInsight.detectedAction.rawValue)"

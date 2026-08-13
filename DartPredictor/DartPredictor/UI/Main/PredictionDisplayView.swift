@@ -6,17 +6,25 @@ struct LivePreviewPanel: View {
     let cropSize: CGSize
     let captureFrames: Int
     var captureBackend: String = "—"
+    var windowTitle: String?
     let error: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Label("Область игры (live)", systemImage: "rectangle.dashed.badge.record")
+                Label("Окно игры (live)", systemImage: "macwindow")
                     .font(.caption.weight(.semibold))
                 Spacer()
                 Text("\(captureBackend) · \(captureFrames) кадров · \(Int(cropSize.width))×\(Int(cropSize.height))")
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(.secondary)
+            }
+
+            if let windowTitle {
+                Text(windowTitle)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
 
             if let img = image {
@@ -31,7 +39,7 @@ struct LivePreviewPanel: View {
                     .fill(Color.secondary.opacity(0.15))
                     .frame(height: 80)
                     .overlay {
-                        Text("Нет кадра — проверьте область и разрешение")
+                        Text("Нет кадра — выберите окно Safari с fon.bet")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

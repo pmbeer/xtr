@@ -16,6 +16,7 @@
 		F3222F573193412890D52DAD /* AccuracyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D0734816409457A8A8AFD84 /* AccuracyManager.swift */; };
 		B77AD4D0779340D8B732385E /* CaptureGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C1D786C7844AA186C26BE5 /* CaptureGeometry.swift */; };
 		BD56C945F76B4B83A92C6E35 /* RegionFrameCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = C95F50E58A8E4E44890EBB95 /* RegionFrameCapture.swift */; };
+		A1B2C3D4E5F6789012345679 /* WindowCaptureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6789012345678 /* WindowCaptureManager.swift */; };
 		016A41C8700841F4902BC308 /* ScreenCaptureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0503739BAC9046E0AFCCD62A /* ScreenCaptureManager.swift */; };
 		5361FE211A934D9EA511E4E9 /* ThrowDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C8980A621784B999B39AAB6 /* ThrowDetector.swift */; };
 		734A235C02A1451FA8A08584 /* ThrowSequenceTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E48855080B0451D81EED20D /* ThrowSequenceTracker.swift */; };
@@ -46,6 +47,7 @@
 		06491A5D412044D4968A6D78 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7153FFA561AA476DBD1F460C /* OnboardingView.swift */; };
 		D5422BC4C95E4656B20003D6 /* PredictionOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CC8E8B78DC143FBA5A6DB71 /* PredictionOverlay.swift */; };
 		C9248B15CA924BE9B4E75119 /* RegionSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7D783C169947A4BFF69782 /* RegionSelector.swift */; };
+		A1B2C3D4E5F6789012345680 /* WindowPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6789012345681 /* WindowPickerView.swift */; };
 		F92B9050E0BB407C8F4D88A4 /* PredictionModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D81A170C5538445391197CAB /* PredictionModelsTests.swift */; };
 		3A74AE723F8A41468972D82A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5B628A430A1F4C8E9F9CE7F4 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
@@ -63,6 +65,7 @@
 		9D0734816409457A8A8AFD84 /* AccuracyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AccuracyManager.swift; path = DartPredictor/Core/Accuracy/AccuracyManager.swift; sourceTree = SOURCE_ROOT; };
 		66C1D786C7844AA186C26BE5 /* CaptureGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CaptureGeometry.swift; path = DartPredictor/Core/Capture/CaptureGeometry.swift; sourceTree = SOURCE_ROOT; };
 		C95F50E58A8E4E44890EBB95 /* RegionFrameCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RegionFrameCapture.swift; path = DartPredictor/Core/Capture/RegionFrameCapture.swift; sourceTree = SOURCE_ROOT; };
+		A1B2C3D4E5F6789012345678 /* WindowCaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WindowCaptureManager.swift; path = DartPredictor/Core/Capture/WindowCaptureManager.swift; sourceTree = SOURCE_ROOT; };
 		0503739BAC9046E0AFCCD62A /* ScreenCaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ScreenCaptureManager.swift; path = DartPredictor/Core/Capture/ScreenCaptureManager.swift; sourceTree = SOURCE_ROOT; };
 		9C8980A621784B999B39AAB6 /* ThrowDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ThrowDetector.swift; path = DartPredictor/Core/Detection/ThrowDetector.swift; sourceTree = SOURCE_ROOT; };
 		3E48855080B0451D81EED20D /* ThrowSequenceTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ThrowSequenceTracker.swift; path = DartPredictor/Core/Detection/ThrowSequenceTracker.swift; sourceTree = SOURCE_ROOT; };
@@ -93,6 +96,7 @@
 		7153FFA561AA476DBD1F460C /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OnboardingView.swift; path = DartPredictor/UI/Onboarding/OnboardingView.swift; sourceTree = SOURCE_ROOT; };
 		5CC8E8B78DC143FBA5A6DB71 /* PredictionOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PredictionOverlay.swift; path = DartPredictor/UI/Overlay/PredictionOverlay.swift; sourceTree = SOURCE_ROOT; };
 		CE7D783C169947A4BFF69782 /* RegionSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RegionSelector.swift; path = DartPredictor/UI/RegionSelector/RegionSelector.swift; sourceTree = SOURCE_ROOT; };
+		A1B2C3D4E5F6789012345681 /* WindowPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WindowPickerView.swift; path = DartPredictor/UI/WindowPicker/WindowPickerView.swift; sourceTree = SOURCE_ROOT; };
 		D81A170C5538445391197CAB /* PredictionModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PredictionModelsTests.swift; path = DartPredictorTests/PredictionModelsTests.swift; sourceTree = SOURCE_ROOT; };
 		5B628A430A1F4C8E9F9CE7F4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = DartPredictor/Resources/Assets.xcassets; sourceTree = SOURCE_ROOT; };
 		CCEA328E46C34CBD86C3AFB0 /* DartPredictor.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DartPredictor/DartPredictor.entitlements; sourceTree = SOURCE_ROOT; };
@@ -115,8 +119,9 @@
 			97BEA4F0F2174A3AA505A988 /* VisionTextScanner.swift */,
 			9D0734816409457A8A8AFD84 /* AccuracyManager.swift */,
 			66C1D786C7844AA186C26BE5 /* CaptureGeometry.swift */,
-			C95F50E58A8E4E44890EBB95 /* RegionFrameCapture.swift */,
-			0503739BAC9046E0AFCCD62A /* ScreenCaptureManager.swift */,
+		C95F50E58A8E4E44890EBB95 /* RegionFrameCapture.swift */,
+		A1B2C3D4E5F6789012345678 /* WindowCaptureManager.swift */,
+		0503739BAC9046E0AFCCD62A /* ScreenCaptureManager.swift */,
 			9C8980A621784B999B39AAB6 /* ThrowDetector.swift */,
 			3E48855080B0451D81EED20D /* ThrowSequenceTracker.swift */,
 			DA72D82ACFC64818BD4FD36A /* CombinationPredictor.swift */,
@@ -211,6 +216,7 @@
 			F3222F573193412890D52DAD /* AccuracyManager.swift in Sources */,
 			B77AD4D0779340D8B732385E /* CaptureGeometry.swift in Sources */,
 			BD56C945F76B4B83A92C6E35 /* RegionFrameCapture.swift in Sources */,
+			A1B2C3D4E5F6789012345679 /* WindowCaptureManager.swift in Sources */,
 			016A41C8700841F4902BC308 /* ScreenCaptureManager.swift in Sources */,
 			5361FE211A934D9EA511E4E9 /* ThrowDetector.swift in Sources */,
 			734A235C02A1451FA8A08584 /* ThrowSequenceTracker.swift in Sources */,
@@ -241,6 +247,7 @@
 			06491A5D412044D4968A6D78 /* OnboardingView.swift in Sources */,
 			D5422BC4C95E4656B20003D6 /* PredictionOverlay.swift in Sources */,
 			C9248B15CA924BE9B4E75119 /* RegionSelector.swift in Sources */,
+			A1B2C3D4E5F6789012345680 /* WindowPickerView.swift in Sources */,
 		); runOnlyForDeploymentPostprocessing = 0; };
 		A10000000000000000000009 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (
 			F92B9050E0BB407C8F4D88A4 /* PredictionModelsTests.swift in Sources */,

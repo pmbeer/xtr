@@ -7,6 +7,7 @@ final class ThrowSequenceTracker {
     private var confirmationCount = 0
     private var lastConfirmed: Int?
     private var lastConfirmedTime: Date?
+    private var historySignature: [Int] = []
     private let minConfirmFrames = 2
     private let minIntervalBetweenThrows: TimeInterval = 1.2
 
@@ -15,10 +16,16 @@ final class ThrowSequenceTracker {
         confirmationCount = 0
         lastConfirmed = nil
         lastConfirmedTime = nil
+        historySignature = []
     }
 
     /// Возвращает новый подтверждённый результат, если число стабильно распознано
     func process(detectedNumbers: [DetectedNumber], motionReleased: Bool = false) -> Int? {
+        let historyNumbers = extractHistoryStrip(from: detectedNumbers)
+        if let newFromHistory = detectNewFromHistory(historyNumbers) {
+            return registerConfirmed(newFromHistory)
+        }
+
         guard let candidate = selectBestCandidate(from: detectedNumbers) else {
             return nil
         }
@@ -34,7 +41,11 @@ final class ThrowSequenceTracker {
 
         guard confirmationCount >= requiredFrames else { return nil }
 
-        if candidate.value == lastConfirmed {
+        return registerConfirmed(candidate.value)
+    }
+
+    private func registerConfirmed(_ value: Int) -> Int? {
+        if value == lastConfirmed {
             return nil
         }
 
@@ -43,23 +54,56 @@ final class ThrowSequenceTracker {
             return nil
         }
 
-        lastConfirmed = candidate.value
+        lastConfirmed = value
         lastConfirmedTime = Date()
         pendingValue = nil
         confirmationCount = 0
 
-        return candidate.value
+        return value
     }
 
-  /// Выбор числа: приоритет — крайнее левое (обычно последний результат), затем крупный текст
+    /// История бросков fon.bet — нижняя полоса окна, новый результат справа
+    private func extractHistoryStrip(from numbers: [DetectedNumber]) -> [Int] {
+        let bottom = numbers.filter { $0.boundingBox.midY < 0.38 }
+        let sorted = bottom.sorted { $0.boundingBox.origin.x < $1.boundingBox.origin.x }
+        return sorted.map(\.value)
+    }
+
+    private func detectNewFromHistory(_ strip: [Int]) -> Int? {
+        guard strip.count >= 2 else {
+            historySignature = strip
+            return nil
+        }
+
+        if strip == historySignature {
+            return nil
+        }
+
+        if strip.count > historySignature.count {
+            historySignature = strip
+            return strip.last
+        }
+
+        if strip.last != historySignature.last {
+            historySignature = strip
+            return strip.last
+        }
+
+        historySignature = strip
+        return nil
+    }
+
     private func selectBestCandidate(from numbers: [DetectedNumber]) -> DetectedNumber? {
         guard !numbers.isEmpty else { return nil }
 
-        let byLeft = numbers.sorted { $0.boundingBox.origin.x < $1.boundingBox.origin.x }
-        if let left = byLeft.first, left.confidence > 0.15 {
-            return left
+        // Нижняя история (fon.bet) — правый край
+        let bottom = numbers.filter { $0.boundingBox.midY < 0.38 }
+        if let newest = bottom.max(by: { $0.boundingBox.origin.x < $1.boundingBox.origin.x }),
+           newest.confidence > 0.12 {
+            return newest
         }
 
+        // Центральная зона — крупный текст
         return numbers.max { a, b in
             let areaA = a.boundingBox.width * a.boundingBox.height
             let areaB = b.boundingBox.width * b.boundingBox.height
@@ -67,4 +111,8 @@ final class ThrowSequenceTracker {
             return a.confidence < b.confidence
         }
     }
+}
+
+private extension CGRect {
+    var midY: CGFloat { origin.y + height / 2 }
 }

@@ -85,6 +85,30 @@ enum CaptureRegionType: String, Codable, CaseIterable {
     }
 }
 
+/// Выбранное окно для мониторинга (Safari, Chrome и т.д.)
+struct CaptureWindowInfo: Codable, Equatable, Identifiable {
+    var windowID: UInt32
+    var title: String
+    var appName: String
+    var width: Int
+    var height: Int
+
+    var id: UInt32 { windowID }
+
+    var displayTitle: String {
+        if title.isEmpty {
+            return appName
+        }
+        return "\(appName) — \(title)"
+    }
+
+    var shortLabel: String {
+        if title.isEmpty { return appName }
+        if title.count > 48 { return String(title.prefix(45)) + "…" }
+        return title
+    }
+}
+
 struct CaptureRegion: Codable, Equatable {
     let type: CaptureRegionType
     var rect: CGRect
@@ -277,6 +301,7 @@ struct PlayerProfile: Codable, Identifiable, Equatable {
 
 struct AppSettings: Codable, Equatable {
     var regions: [CaptureRegion] = []
+    var selectedCaptureWindow: CaptureWindowInfo?
     var isPaperPredictionMode: Bool = true
     var hasCompletedOnboarding: Bool = false
     var showFloatingOverlay: Bool = true

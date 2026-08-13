@@ -48,9 +48,10 @@ final class GameAIAnalyzer {
                 let mergedTexts = VisionTextScanner.merge(fastTexts, accurateTexts)
                 let numbers = VisionTextScanner.extractDartNumbers(from: mergedTexts)
                 let bettingSeconds = self.timerRecognizer.recognize(from: ocrImage)
+                let forecastsAccepted = self.detectForecastsAccepted(from: mergedTexts)
 
                 let motion = insight.motionIntensity
-                if motion > 0.18 {
+                if motion > 0.15 {
                     self.throwMotionDetected = true
                 } else if motion < 0.06 && self.throwMotionDetected {
                     self.motionReleased = true
@@ -69,20 +70,27 @@ final class GameAIAnalyzer {
                     insight: insight,
                     numbers: numbers,
                     bettingSeconds: bettingSeconds,
+                    forecastsAccepted: forecastsAccepted,
                     throwMotion: self.throwMotionDetected,
                     confirmedResult: confirmed
                 )
 
+                var enrichedInsight = insight
+                if forecastsAccepted && !insight.aiDescription.contains("приняты") {
+                    enrichedInsight.aiDescription = "ИИ: прогнозы приняты, ожидание броска · \(insight.aiDescription)"
+                }
+
                 let snapshot = GameSnapshot(
                     timestamp: Date(),
                     detectedNumbers: numbers,
-                    bettingSeconds: bettingSeconds,
+                    bettingSeconds: forecastsAccepted ? nil : bettingSeconds,
                     phase: phase,
-                    aiInsight: insight,
+                    aiInsight: enrichedInsight,
                     playerFeatures: features,
                     throwInProgress: insight.detectedAction == .throwMotion || insight.detectedAction == .release || self.throwMotionDetected,
                     throwCompleted: confirmed != nil,
                     confirmedResult: confirmed,
+                    forecastsAccepted: forecastsAccepted,
                     processingTimeMs: (CFAbsoluteTimeGetCurrent() - start) * 1000
                 )
 
@@ -97,10 +105,24 @@ final class GameAIAnalyzer {
         }
     }
 
+    private func detectForecastsAccepted(from texts: [VisionTextItem]) -> Bool {
+        for item in texts {
+            let upper = item.text.uppercased()
+            if upper.contains("ПРОГНОЗЫ ПРИНЯТЫ") || upper.contains("ПРОГНОЗЫПРИНЯТЫ") {
+                return true
+            }
+            if upper.contains("ПРИНЯТЫ") && upper.contains("ПРОГНОЗ") {
+                return true
+            }
+        }
+        return false
+    }
+
     private func classifyPhase(
         insight: AIActionInsight,
         numbers: [DetectedNumber],
         bettingSeconds: Double?,
+        forecastsAccepted: Bool,
         throwMotion: Bool,
         confirmedResult: Int?
     ) -> GamePhase {
@@ -110,13 +132,16 @@ final class GameAIAnalyzer {
         if confirmedResult != nil {
             return .resultShown
         }
-        if let sec = bettingSeconds, sec > 0 && sec <= 20 {
+        if forecastsAccepted {
+            return .watchingResults
+        }
+        if let sec = bettingSeconds, sec > 0 && sec <= 25 {
             return .bettingWindow
         }
         if insight.playerDetected && (insight.detectedAction == .aim || insight.detectedAction == .stance) {
             return .playerPreparing
         }
-        if insight.playerDetected {
+        if insight.playerDetected || insight.motionIntensity > 0.08 {
             return .playerVisible
         }
         if !numbers.isEmpty {
@@ -126,7 +151,7 @@ final class GameAIAnalyzer {
     }
 
     private func scaleForAnalysis(_ image: CGImage) -> CGImage {
-        let minWidth: CGFloat = 640
+        let minWidth: CGFloat = 800
         if CGFloat(image.width) >= minWidth { return image }
         let scale = minWidth / CGFloat(image.width)
         let w = Int(CGFloat(image.width) * scale)

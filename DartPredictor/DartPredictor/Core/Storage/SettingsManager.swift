@@ -35,6 +35,19 @@ final class SettingsManager: ObservableObject {
         return nil
     }
 
+    var selectedCaptureWindow: CaptureWindowInfo? {
+        settings.selectedCaptureWindow
+    }
+
+    var hasCaptureTarget: Bool {
+        selectedCaptureWindow != nil || monitorRegion != nil
+    }
+
+    func setSelectedCaptureWindow(_ window: CaptureWindowInfo) {
+        settings.selectedCaptureWindow = window
+        save()
+    }
+
     func setMonitorRegion(_ rect: CGRect) {
         setRegion(CaptureRegion(type: .gameScreen, rect: CaptureGeometry.normalizeRegion(rect)))
     }

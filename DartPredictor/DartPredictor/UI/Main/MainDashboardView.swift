@@ -4,6 +4,7 @@ struct MainDashboardView: View {
     @ObservedObject var pipeline = PipelineCoordinator.shared
     @ObservedObject var accuracy = AccuracyManager.shared
     @ObservedObject var settings = SettingsManager.shared
+    @Binding var showWindowPicker: Bool
 
     var body: some View {
         VStack(spacing: 14) {
@@ -28,11 +29,28 @@ struct MainDashboardView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
 
+            if settings.selectedCaptureWindow == nil {
+                HStack {
+                    Image(systemName: "macwindow.badge.plus")
+                        .foregroundStyle(.blue)
+                    Text("Выберите окно Safari с fon.bet — ИИ будет смотреть это окно")
+                        .font(.caption)
+                    Spacer()
+                    Button("Выбрать окно") { showWindowPicker = true }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                }
+                .padding(8)
+                .background(Color.blue.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+
             LivePreviewPanel(
                 image: pipeline.livePreviewImage,
                 cropSize: pipeline.lastCropSize,
                 captureFrames: pipeline.captureFrames,
                 captureBackend: pipeline.captureBackend.rawValue,
+                windowTitle: settings.selectedCaptureWindow?.shortLabel,
                 error: pipeline.captureError
             )
 
@@ -63,7 +81,7 @@ struct MainDashboardView: View {
             Text(pipeline.processingState)
                 .font(.caption)
                 .foregroundStyle(.secondary)
-                .lineLimit(3)
+                .lineLimit(4)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             HStack {
@@ -77,17 +95,14 @@ struct MainDashboardView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(settings.selectedCaptureWindow == nil)
 
-                Button("Выбрать область игры") {
-                    NotificationCenter.default.post(name: .showRegionSetup, object: nil)
+                Button("Выбрать окно") {
+                    showWindowPicker = true
                 }
                 .buttonStyle(.bordered)
             }
         }
         .padding()
     }
-}
-
-extension Notification.Name {
-    static let showRegionSetup = Notification.Name("showRegionSetup")
 }

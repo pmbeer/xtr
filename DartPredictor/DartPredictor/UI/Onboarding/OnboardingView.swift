@@ -3,6 +3,7 @@ import SwiftUI
 struct OnboardingView: View {
     @ObservedObject var settings = SettingsManager.shared
     @State private var step = 0
+    @State private var showWindowPicker = false
 
     let onComplete: () -> Void
 
@@ -46,13 +47,19 @@ struct OnboardingView: View {
         }
         .padding(40)
         .frame(minWidth: 580, minHeight: 440)
+        .sheet(isPresented: $showWindowPicker) {
+            WindowPickerView { window in
+                settings.setSelectedCaptureWindow(window)
+                Task { await PipelineCoordinator.shared.testCapturePreview() }
+            }
+        }
     }
 
     private var stepTitle: String {
         switch step {
-        case 0: return "ИИ наблюдает ваш экран"
+        case 0: return "ИИ наблюдает окно с игрой"
         case 1: return "Разрешение на запис экрана"
-        case 2: return "Выбор области игры"
+        case 2: return "Выбор окна с игрой"
         case 3: return "Как работает ИИ"
         case 4: return "Paper Prediction"
         default: return ""
@@ -61,10 +68,10 @@ struct OnboardingView: View {
 
     private var stepDescription: String {
         switch step {
-        case 0: return "Выделите область экрана с игрой в дартс. ИИ анализирует всё: кто бросает, как бросает, результаты. Формирует комбинацию 4 чисел для следующего броска."
+        case 0: return "Откройте fon.bet в Safari. DartPredictor будет смотреть это окно и анализировать: игрок, мишень, результаты, таймер. Формирует комбинацию 4 чисел."
         case 1: return "Откройте Системные настройки → Конфиденциальность → Запись экрана и включите DartPredictor."
-        case 2: return "Выделите область, где видны игрок, мишень/стрим и результаты бросков."
-        case 3: return "ИИ использует Vision (поза, движение) и нейросеть на CPU. Распознаёт фазы: подготовка → замах → бросок → результат. Обучается после каждого броска."
+        case 2: return "Выберите окно Safari с игрой (fon.bet). ИИ анализирует всё окно автоматически."
+        case 3: return "ИИ использует Vision (поза, движение) и OCR. Распознаёт фазы: подготовка → замах → бросок → результат. Обучается после каждого броска."
         case 4: return "Paper Prediction — прогнозы только на экране, без ставок. Накопите статистику без риска."
         default: return ""
         }
@@ -81,23 +88,19 @@ struct OnboardingView: View {
             }
             .buttonStyle(.bordered)
         case 2:
-            Button("Выбрать область экрана") {
-                RegionSelectionCoordinator.shared.present(for: .gameScreen) { rect in
-                    if let rect {
-                        settings.setMonitorRegion(rect)
-                    }
-                }
+            Button("Выбрать окно Safari / fon.bet") {
+                showWindowPicker = true
             }
             .buttonStyle(.borderedProminent)
-            if let region = settings.monitorRegion {
-                Text("Выбрано: \(Int(region.rect.width))×\(Int(region.rect.height)) px")
+            if let window = settings.selectedCaptureWindow {
+                Text("Выбрано: \(window.displayTitle)")
                     .font(.caption)
             }
         case 3:
             VStack(alignment: .leading, spacing: 6) {
+                Label("Захват окна браузера", systemImage: "macwindow")
                 Label("Распознавание игрока и позы", systemImage: "figure.handball")
-                Label("Анализ замаха и броска", systemImage: "arrow.up.forward")
-                Label("OCR результатов на экране", systemImage: "number")
+                Label("OCR результатов и таймера", systemImage: "number")
                 Label("Прогноз комбинации TOP-4", systemImage: "brain")
             }
             .font(.caption)
@@ -113,7 +116,7 @@ struct OnboardingView: View {
 
     private var canProceed: Bool {
         switch step {
-        case 2: return settings.monitorRegion != nil
+        case 2: return settings.selectedCaptureWindow != nil
         default: return true
         }
     }

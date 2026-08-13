@@ -96,6 +96,7 @@ struct GameSnapshot: Equatable {
     let throwInProgress: Bool
     let throwCompleted: Bool
     let confirmedResult: Int?
+    let forecastsAccepted: Bool
     let processingTimeMs: Double
 }
 

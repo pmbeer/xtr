@@ -3,7 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @ObservedObject var settings = SettingsManager.shared
     @State private var selectedTab = 0
-    @State private var showMonitorSelector = false
+    @State private var showWindowPicker = false
 
     var body: some View {
         Group {
@@ -21,25 +21,20 @@ struct ContentView: View {
             PlayerProfileManager.shared.load()
             AccuracyManager.shared.update(from: PlayerProfileManager.shared.activeProfile)
         }
-        .onReceive(NotificationCenter.default.publisher(for: .showRegionSetup)) { _ in
-            showMonitorSelector = true
+        .onReceive(NotificationCenter.default.publisher(for: .showWindowPicker)) { _ in
+            showWindowPicker = true
         }
-        .background {
-            if showMonitorSelector {
-                RegionSelectorBridge(regionType: .gameScreen) { rect in
-                    showMonitorSelector = false
-                    if let rect {
-                        settings.setMonitorRegion(rect)
-                        Task { await PipelineCoordinator.shared.testCapturePreview() }
-                    }
-                }
+        .sheet(isPresented: $showWindowPicker) {
+            WindowPickerView { window in
+                settings.setSelectedCaptureWindow(window)
+                Task { await PipelineCoordinator.shared.testCapturePreview() }
             }
         }
     }
 
     private var mainContent: some View {
         TabView(selection: $selectedTab) {
-            MainDashboardView()
+            MainDashboardView(showWindowPicker: $showWindowPicker)
                 .tabItem { Label("Прогноз", systemImage: "target") }
                 .tag(0)
 
@@ -51,7 +46,7 @@ struct ContentView: View {
                 .tabItem { Label("Обучение", systemImage: "brain") }
                 .tag(2)
 
-            SettingsTabView(showMonitorSelector: $showMonitorSelector)
+            SettingsTabView(showWindowPicker: $showWindowPicker)
                 .tabItem { Label("Настройки", systemImage: "gear") }
                 .tag(3)
         }
@@ -61,18 +56,27 @@ struct ContentView: View {
 
 struct SettingsTabView: View {
     @ObservedObject var settings = SettingsManager.shared
-    @Binding var showMonitorSelector: Bool
+    @Binding var showWindowPicker: Bool
 
     var body: some View {
         Form {
-            Section("Область мониторинга") {
-                Text("Выделите область экрана с игрой — ИИ будет анализировать игрока, броски и результаты.")
+            Section("Окно с игрой") {
+                Text("Выберите окно браузера с игрой (например Safari + fon.bet). ИИ анализирует всё окно: игрок, мишень, результаты, таймер.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Button("Выбрать игровой экран") { showMonitorSelector = true }
-                if let region = settings.monitorRegion {
-                    Text("Область: \(Int(region.rect.width))×\(Int(region.rect.height)) px")
-                        .font(.caption)
+                Button("Выбрать окно") { showWindowPicker = true }
+                if let window = settings.selectedCaptureWindow {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(window.appName)
+                            .font(.subheadline.weight(.semibold))
+                        if !window.title.isEmpty {
+                            Text(window.title)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Text("\(window.width)×\(window.height)")
+                            .font(.caption2.monospacedDigit())
+                    }
                 }
             }
 
@@ -95,7 +99,7 @@ struct SettingsTabView: View {
             Section("ИИ") {
                 Text("Vision Framework + нейросеть на CPU")
                     .font(.caption)
-                Text("Анализ: поза, замах, бросок, результат, игрок")
+                Text("Анализ окна: поза, замах, бросок, OCR результатов, таймер ставки")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -113,4 +117,8 @@ struct SettingsTabView: View {
         }
         .padding()
     }
+}
+
+extension Notification.Name {
+    static let showWindowPicker = Notification.Name("showWindowPicker")
 }
