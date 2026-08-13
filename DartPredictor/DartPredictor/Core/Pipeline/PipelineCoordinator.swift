@@ -321,10 +321,9 @@ final class PipelineCoordinator: ObservableObject {
         }
 
         if let newThrow = snapshot.confirmedResult {
-            Task { await handleConfirmedThrow(newThrow) }
-        } else {
-            refreshLivePrediction(snapshot: snapshot)
+            Task { await handleConfirmedThrow(newThrow, snapshot: snapshot) }
         }
+        refreshLivePrediction(snapshot: snapshot)
     }
 
     /// Обновляет TOP-4 на каждый ход по истории попаданий + ИИ
@@ -403,7 +402,7 @@ final class PipelineCoordinator: ObservableObject {
         predictionRationale = prediction.rationale
     }
 
-    private func handleConfirmedThrow(_ number: Int) async {
+    private func handleConfirmedThrow(_ number: Int, snapshot: GameSnapshot) async {
         let startTime = CFAbsoluteTimeGetCurrent()
         processingState = "✓ Результат \(number) → ИИ обучается..."
 
@@ -447,8 +446,15 @@ final class PipelineCoordinator: ObservableObject {
         lastResult = number
         lastOutcome = outcome
 
+        let liveOCR = snapshot.resultHistory
+        let mergedForPrediction = ThrowHistoryMerger.merge(
+            stored: profile.throwHistory,
+            liveOCR: liveOCR
+        )
+        let predictionHistory: [Int] = liveOCR.count >= 1 ? liveOCR : mergedForPrediction
+
         let prediction = learningEngine.makePrediction(
-            history: profile.throwHistory,
+            history: predictionHistory,
             features: currentFeatures,
             profile: profile,
             aiInsight: currentAIInsight
@@ -456,7 +462,9 @@ final class PipelineCoordinator: ObservableObject {
         currentPrediction = prediction
         currentCombination = prediction.combination
         predictionRationale = prediction.rationale
-        lastPredictionHistory = profile.throwHistory
+        lastPredictionHistory = predictionHistory
+        lastOcrStrip = liveOCR
+        lastComboNumbers = prediction.combination.numbers
         lastLivePredictionAt = Date()
 
         let entry = PredictionEntry(

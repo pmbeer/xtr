@@ -19,12 +19,12 @@ final class ThrowSequenceTracker {
         historySignature = []
     }
 
-    func process(detectedNumbers: [DetectedNumber], motionReleased: Bool = false) -> Int? {
-        let strip = detectedNumbers
-            .sorted { $0.boundingBox.origin.x < $1.boundingBox.origin.x }
-            .map(\.value)
-
-        if let newFromHistory = detectNewFromHistory(strip) {
+    func process(
+        historyStrip: [Int],
+        detectedNumbers: [DetectedNumber],
+        motionReleased: Bool = false
+    ) -> Int? {
+        if let newFromHistory = detectNewFromHistory(historyStrip) {
             return registerConfirmed(newFromHistory)
         }
 

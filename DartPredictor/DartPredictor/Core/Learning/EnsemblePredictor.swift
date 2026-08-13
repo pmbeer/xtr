@@ -223,12 +223,22 @@ final class EnsemblePredictor {
         let aiFactor = aiInsight.actionConfidence * 0.2 + (aiInsight.playerDetected ? 0.12 : 0)
         let spreadBonus = max(0, (topProb - avgSpread) / 100.0) * 0.12
 
-        let raw = topProb / 100.0 * 0.22 + historyFactor * 0.28 + jointFactor * 0.38 + aiFactor + spreadBonus
-        let score = min(99.0, max(0, raw * 100))
+        let historyDepthBonus = min(0.22, Double(min(historyCount, 15)) / 15.0 * 0.22)
+        let raw = topProb / 100.0 * 0.18 + historyFactor * 0.30 + jointFactor * 0.42 + aiFactor + spreadBonus + historyDepthBonus
+        var score = min(99.0, max(0, raw * 100))
+        if historyCount >= 4 && jointFactor >= 0.55 {
+            score = min(99.0, score + 8 + jointFactor * 12)
+        }
+        if historyCount >= 8 && jointFactor >= 0.65 && aiInsight.playerDetected {
+            score = min(99.0, max(score, 88 + jointFactor * 14))
+        }
+        if historyCount >= 12 && jointFactor >= 0.72 {
+            score = min(99.0, max(score, 94))
+        }
 
         let level: ConfidenceLevel
-        if score >= 72 && historyCount >= 6 { level = .high }
-        else if score >= 48 && historyCount >= 3 { level = .medium }
+        if score >= 78 && historyCount >= 5 { level = .high }
+        else if score >= 50 && historyCount >= 2 { level = .medium }
         else { level = .low }
 
         return (level, score)

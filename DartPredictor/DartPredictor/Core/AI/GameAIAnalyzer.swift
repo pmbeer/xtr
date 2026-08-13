@@ -56,8 +56,9 @@ final class GameAIAnalyzer {
         )
         let bettingCrop = WindowZoneCropper.crop(image: scaled, zone: zones.bettingZone)
 
-        let resultHistory = ResultsHistoryScanner.extract(from: resultsCrop)
-        let resultNumbers = ResultsHistoryScanner.toDetectedNumbers(resultHistory)
+        let resultCells = ResultsHistoryScanner.extractCells(from: resultsCrop)
+        let resultHistory = resultCells.map(\.value)
+        let resultNumbers = ResultsHistoryScanner.toDetectedNumbers(resultCells)
 
         let bettingTexts = scanCrop(bettingCrop, accurate: false)
         let forecastsAccepted = detectForecastsAccepted(from: bettingTexts)
@@ -78,6 +79,7 @@ final class GameAIAnalyzer {
         }
 
         let confirmed = throwTracker.process(
+            historyStrip: resultHistory,
             detectedNumbers: resultNumbers,
             motionReleased: motionReleased || playerMotion > 0.20
         )

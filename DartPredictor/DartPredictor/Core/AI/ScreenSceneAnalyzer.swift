@@ -23,7 +23,13 @@ final class ScreenSceneAnalyzer {
             guard let self else { return }
             self.processingQueue.async {
                 let numbers = self.detectNumbersInScene(ocrImage)
-                let confirmed = self.throwTracker.process(detectedNumbers: numbers)
+                let strip = numbers
+                    .sorted { $0.boundingBox.origin.x < $1.boundingBox.origin.x }
+                    .map(\.value)
+                let confirmed = self.throwTracker.process(
+                    historyStrip: strip,
+                    detectedNumbers: numbers
+                )
 
                 let result = SceneAnalysisResult(
                     timestamp: Date(),
