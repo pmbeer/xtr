@@ -30,6 +30,7 @@ struct ContentView: View {
                     showMonitorSelector = false
                     if let rect {
                         settings.setMonitorRegion(rect)
+                        Task { await PipelineCoordinator.shared.testCapturePreview() }
                     }
                 }
             }

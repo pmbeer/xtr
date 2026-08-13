@@ -32,6 +32,7 @@ struct MainDashboardView: View {
                 image: pipeline.livePreviewImage,
                 cropSize: pipeline.lastCropSize,
                 captureFrames: pipeline.captureFrames,
+                captureBackend: pipeline.captureBackend.rawValue,
                 error: pipeline.captureError
             )
 

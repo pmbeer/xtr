@@ -2,6 +2,12 @@ import Foundation
 import Combine
 import CoreGraphics
 
+enum CaptureBackend: String {
+    case screenCaptureKit = "ScreenCaptureKit"
+    case regionFrame = "RegionCapture"
+    case none = "—"
+}
+
 @MainActor
 final class PipelineCoordinator: ObservableObject {
     static let shared = PipelineCoordinator()
@@ -28,8 +34,10 @@ final class PipelineCoordinator: ObservableObject {
     @Published var livePreviewImage: CGImage?
     @Published var captureError: String?
     @Published var needsScreenPermission = false
+    @Published var captureBackend: CaptureBackend = .none
 
     private let regionCapture = RegionFrameCapture.shared
+    private let screenCapture = ScreenCaptureManager.shared
     private let gameAI = GameAIAnalyzer.shared
     private let learningEngine = LearningEngine.shared
     private let historyManager = HistoryManager.shared
@@ -38,9 +46,11 @@ final class PipelineCoordinator: ObservableObject {
     private let store = PredictionStore.shared
 
     private var timerCancellable: AnyCancellable?
+    private var permissionCancellable: AnyCancellable?
     private var lastPendingEntry: PredictionEntry?
     private var currentFeatures: PlayerFeatures = .zero
     private var currentAIInsight: AIActionInsight = .empty
+    private var activeBackend: CaptureBackend = .none
 
     func start() async {
         guard !isRunning else { return }
@@ -50,51 +60,140 @@ final class PipelineCoordinator: ObservableObject {
             return
         }
 
+        guard CaptureGeometry.isValidRegion(region.rect) else {
+            processingState = "Область слишком мала — выберите область заново"
+            return
+        }
+
         if !regionCapture.checkScreenRecordingPermission() {
             needsScreenPermission = true
             processingState = "Нужно разрешение «Запись экрана»"
             regionCapture.requestScreenRecordingPermission()
+            startPermissionPolling()
             return
         }
 
+        needsScreenPermission = false
         profileManager.load()
-        regionCapture.configure(region: region.rect)
 
         let fps = SettingsManager.shared.settings.captureFrameRate
-        regionCapture.startCapture(fps: fps) { [weak self] image in
+        let normalized = CaptureGeometry.normalizeRegion(region.rect)
+        SettingsManager.shared.setMonitorRegion(normalized)
+
+        await stopCaptureInternal()
+
+        let frameHandler: (CGImage) -> Void = { [weak self] image in
             Task { @MainActor in
                 self?.handleFrame(image)
             }
         }
 
-        isRunning = regionCapture.isCapturing
+        // ScreenCaptureKit — основной путь на macOS 14+
+        screenCapture.configureMonitorRegion(normalized)
+        do {
+            try await screenCapture.startCapture(handler: frameHandler)
+            activeBackend = .screenCaptureKit
+            captureBackend = .screenCaptureKit
+            isRunning = true
+            processingState = "ИИ анализирует область игры (SCK)..."
+            DebugLogger.shared.log("Capture backend: ScreenCaptureKit", category: "capture")
+        } catch {
+            DebugLogger.shared.logCaptureError("SCK failed: \(error.localizedDescription), fallback to RegionCapture")
+            regionCapture.configure(region: normalized)
+            regionCapture.startCapture(fps: fps, handler: frameHandler)
+            activeBackend = regionCapture.isCapturing ? .regionFrame : .none
+            captureBackend = activeBackend
+            isRunning = regionCapture.isCapturing
+            if isRunning {
+                processingState = "ИИ анализирует область игры..."
+            } else {
+                captureError = regionCapture.lastError
+                processingState = regionCapture.lastError ?? "Не удалось запустить захват"
+            }
+        }
+
         if isRunning {
-            processingState = "ИИ анализирует область игры..."
             startDecisionTimer()
             publishInitialPrediction()
-        } else {
-            captureError = regionCapture.lastError
-            processingState = regionCapture.lastError ?? "Не удалось запустить захват"
         }
     }
 
     func stop() {
-        regionCapture.stopCapture()
+        Task { await stopCaptureInternal() }
         gameAI.reset()
         isRunning = false
         processingState = "Остановлен"
         timerCancellable?.cancel()
-        livePreviewImage = nil
+        permissionCancellable?.cancel()
+        captureBackend = .none
+        activeBackend = .none
     }
 
     func requestPermission() {
         regionCapture.requestScreenRecordingPermission()
         needsScreenPermission = false
+        startPermissionPolling()
+    }
+
+    /// Тестовый снимок после выбора области — показывает, что программа «видит» экран
+    func testCapturePreview() async {
+        guard let region = SettingsManager.shared.monitorRegion else { return }
+
+        if !regionCapture.checkScreenRecordingPermission() {
+            needsScreenPermission = true
+            captureError = "Нужно разрешение «Запись экрана»"
+            return
+        }
+
+        let normalized = CaptureGeometry.normalizeRegion(region.rect)
+
+        if let image = regionCapture.captureSingleFrame(region: normalized) {
+            livePreviewImage = image
+            lastCropSize = CGSize(width: image.width, height: image.height)
+            captureError = nil
+            processingState = "Область выбрана — превью обновлено. Нажмите «Запустить»"
+            gameAI.analyze(image: image) { [weak self] snapshot in
+                Task { @MainActor in
+                    self?.applySnapshot(snapshot, analyzeOnly: true)
+                }
+            }
+        } else {
+            captureError = "Не удалось снять экран — разрешите «Запись экрана» и попробуйте снова"
+            needsScreenPermission = true
+        }
+    }
+
+    private func stopCaptureInternal() async {
+        if screenCapture.isCapturing {
+            await screenCapture.stopCapture()
+        }
+        regionCapture.stopCapture()
+    }
+
+    private func startPermissionPolling() {
+        permissionCancellable?.cancel()
+        permissionCancellable = Timer.publish(every: 2.0, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                guard let self else { return }
+                if regionCapture.checkScreenRecordingPermission() {
+                    self.needsScreenPermission = false
+                    self.permissionCancellable?.cancel()
+                    if !self.isRunning {
+                        Task { await self.start() }
+                    }
+                }
+            }
     }
 
     private func handleFrame(_ image: CGImage) {
-        captureFrames = regionCapture.framesCaptured
-        lastCropSize = CGSize(width: image.width, height: image.height)
+        if activeBackend == .screenCaptureKit {
+            captureFrames = screenCapture.framesCaptured
+            lastCropSize = screenCapture.lastCropSize
+        } else {
+            captureFrames = regionCapture.framesCaptured
+            lastCropSize = CGSize(width: image.width, height: image.height)
+        }
         livePreviewImage = image
         captureError = regionCapture.lastError
         needsScreenPermission = !regionCapture.hasScreenPermission
@@ -106,7 +205,7 @@ final class PipelineCoordinator: ObservableObject {
         }
     }
 
-    private func applySnapshot(_ snapshot: GameSnapshot) {
+    private func applySnapshot(_ snapshot: GameSnapshot, analyzeOnly: Bool = false) {
         framesProcessed += 1
         gamePhase = snapshot.phase
         sceneState = snapshot.aiInsight.sceneState
@@ -130,7 +229,9 @@ final class PipelineCoordinator: ObservableObject {
         }
         if snapshot.throwInProgress { status += " · БРОСОК" }
         status += " · \(snapshot.aiInsight.detectedAction.rawValue)"
-        processingState = status
+        if !analyzeOnly {
+            processingState = status
+        }
 
         if let newThrow = snapshot.confirmedResult {
             Task { await handleConfirmedThrow(newThrow) }

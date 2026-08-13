@@ -60,7 +60,7 @@ final class RegionSelectionWindowController: NSWindowController {
     init(regionType: CaptureRegionType) {
         self.regionType = regionType
 
-        let screenFrame = NSScreen.main?.frame ?? CGRect(x: 0, y: 0, width: 1920, height: 1080)
+        let screenFrame = CaptureGeometry.unionOfAllScreens()
         let window = KeyableOverlayWindow(
             contentRect: screenFrame,
             styleMask: [.borderless],
@@ -313,7 +313,7 @@ final class RegionSelectionView: NSView {
     private func confirmSelection(rect: CGRect) {
         guard let window else { return }
         let windowRect = convert(rect, to: nil)
-        let screenRect = window.convertToScreen(windowRect)
+        let screenRect = CaptureGeometry.normalizeRegion(window.convertToScreen(windowRect))
         onConfirm?(screenRect)
     }
 

@@ -5,6 +5,7 @@ struct LivePreviewPanel: View {
     let image: CGImage?
     let cropSize: CGSize
     let captureFrames: Int
+    var captureBackend: String = "—"
     let error: String?
 
     var body: some View {
@@ -13,7 +14,7 @@ struct LivePreviewPanel: View {
                 Label("Область игры (live)", systemImage: "rectangle.dashed.badge.record")
                     .font(.caption.weight(.semibold))
                 Spacer()
-                Text("\(captureFrames) кадров · \(Int(cropSize.width))×\(Int(cropSize.height))")
+                Text("\(captureBackend) · \(captureFrames) кадров · \(Int(cropSize.width))×\(Int(cropSize.height))")
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(.secondary)
             }

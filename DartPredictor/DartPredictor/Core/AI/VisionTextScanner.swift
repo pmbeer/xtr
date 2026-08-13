@@ -10,12 +10,12 @@ struct VisionTextItem {
 
 /// Общий OCR сканер для Vision
 enum VisionTextScanner {
-    static func scan(image: CGImage) -> [VisionTextItem] {
+    static func scan(image: CGImage, fast: Bool = false) -> [VisionTextItem] {
         let request = VNRecognizeTextRequest()
-        request.recognitionLevel = .accurate
+        request.recognitionLevel = fast ? .fast : .accurate
         request.usesLanguageCorrection = false
         request.recognitionLanguages = ["en-US", "ru-RU"]
-        request.minimumTextHeight = 0.006
+        request.minimumTextHeight = fast ? 0.003 : 0.005
 
         let handler = VNImageRequestHandler(cgImage: image, options: [:])
         do { try handler.perform([request]) } catch { return [] }
@@ -28,6 +28,22 @@ enum VisionTextScanner {
             guard !text.isEmpty else { return nil }
             return VisionTextItem(text: text, boundingBox: obs.boundingBox, confidence: c.confidence)
         }
+    }
+
+    /// Объединить результаты fast + accurate, приоритет — выше confidence
+    static func merge(_ a: [VisionTextItem], _ b: [VisionTextItem]) -> [VisionTextItem] {
+        var byText: [String: VisionTextItem] = [:]
+        for item in a + b {
+            let key = item.text.lowercased()
+            if let existing = byText[key] {
+                if item.confidence > existing.confidence {
+                    byText[key] = item
+                }
+            } else {
+                byText[key] = item
+            }
+        }
+        return Array(byText.values)
     }
 
     static func extractDartNumbers(from items: [VisionTextItem]) -> [DetectedNumber] {

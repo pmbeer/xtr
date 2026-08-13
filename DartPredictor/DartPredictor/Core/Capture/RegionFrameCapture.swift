@@ -2,8 +2,7 @@ import Foundation
 import CoreGraphics
 import AppKit
 
-/// Надёжный захват выбранной области экрана (Intel Mac / Retina).
-/// Использует CGWindowListCreateImage — стабильнее ScreenCaptureKit для region-only.
+/// Захват выбранной области экрана через CGWindowListCreateImage (fallback / тестовый снимок).
 final class RegionFrameCapture: ObservableObject {
     static let shared = RegionFrameCapture()
 
@@ -34,15 +33,23 @@ final class RegionFrameCapture: ObservableObject {
     }
 
     func configure(region: CGRect) {
-        captureRegion = region
+        let normalized = CaptureGeometry.normalizeRegion(region)
+        captureRegion = normalized
         DebugLogger.shared.log(
-            "Region capture: x=\(Int(region.origin.x)) y=\(Int(region.origin.y)) w=\(Int(region.width)) h=\(Int(region.height))",
+            "Region capture: x=\(Int(normalized.origin.x)) y=\(Int(normalized.origin.y)) w=\(Int(normalized.width)) h=\(Int(normalized.height))",
             category: "capture"
         )
     }
 
+    /// Одиночный снимок области — для проверки после выбора региона
+    func captureSingleFrame(region: CGRect) -> CGImage? {
+        guard checkScreenRecordingPermission() else { return nil }
+        let normalized = CaptureGeometry.normalizeRegion(region)
+        return grabImage(for: normalized)
+    }
+
     func startCapture(fps: Int, handler: @escaping (CGImage) -> Void) {
-        guard captureRegion != nil else {
+        guard let region = captureRegion else {
             lastError = "Область не выбрана"
             return
         }
@@ -82,12 +89,7 @@ final class RegionFrameCapture: ObservableObject {
     private func grabFrame() {
         guard let region = captureRegion, let handler = frameHandler else { return }
 
-        guard let image = CGWindowListCreateImage(
-            region,
-            .optionOnScreenOnly,
-            kCGNullWindowID,
-            [.bestResolution, .boundsIgnoreFraming]
-        ) else {
+        guard let image = grabImage(for: region) else {
             DispatchQueue.main.async {
                 self.lastError = "Не удалось снять экран — проверьте разрешение «Запись экрана»"
                 self.hasScreenPermission = false
@@ -102,5 +104,14 @@ final class RegionFrameCapture: ObservableObject {
             self.hasScreenPermission = true
         }
         handler(image)
+    }
+
+    private func grabImage(for region: CGRect) -> CGImage? {
+        CGWindowListCreateImage(
+            region,
+            .optionOnScreenOnly,
+            kCGNullWindowID,
+            [.bestResolution, .boundsIgnoreFraming]
+        )
     }
 }

@@ -1,14 +1,14 @@
 import Foundation
 import CoreGraphics
 
-/// Отслеживает появление нового результата из OCR-потока
+/// Отслеживает появление нового результата из OCR-потока и движения игрока
 final class ThrowSequenceTracker {
     private var pendingValue: Int?
     private var confirmationCount = 0
     private var lastConfirmed: Int?
     private var lastConfirmedTime: Date?
     private let minConfirmFrames = 2
-    private let minIntervalBetweenThrows: TimeInterval = 1.5
+    private let minIntervalBetweenThrows: TimeInterval = 1.2
 
     func reset() {
         pendingValue = nil
@@ -18,10 +18,12 @@ final class ThrowSequenceTracker {
     }
 
     /// Возвращает новый подтверждённый результат, если число стабильно распознано
-    func process(detectedNumbers: [DetectedNumber]) -> Int? {
+    func process(detectedNumbers: [DetectedNumber], motionReleased: Bool = false) -> Int? {
         guard let candidate = selectBestCandidate(from: detectedNumbers) else {
             return nil
         }
+
+        let requiredFrames = motionReleased ? 1 : minConfirmFrames
 
         if candidate.value == pendingValue {
             confirmationCount += 1
@@ -30,7 +32,7 @@ final class ThrowSequenceTracker {
             confirmationCount = 1
         }
 
-        guard confirmationCount >= minConfirmFrames else { return nil }
+        guard confirmationCount >= requiredFrames else { return nil }
 
         if candidate.value == lastConfirmed {
             return nil
@@ -49,13 +51,12 @@ final class ThrowSequenceTracker {
         return candidate.value
     }
 
-    /// Выбор числа: приоритет — крайнее левое (обычно последний результат), затем крупный текст
+  /// Выбор числа: приоритет — крайнее левое (обычно последний результат), затем крупный текст
     private func selectBestCandidate(from numbers: [DetectedNumber]) -> DetectedNumber? {
         guard !numbers.isEmpty else { return nil }
 
-        // Сортировка по X (Vision: 0=left) — самое левое часто = последний бросок
         let byLeft = numbers.sorted { $0.boundingBox.origin.x < $1.boundingBox.origin.x }
-        if let left = byLeft.first, left.confidence > 0.2 {
+        if let left = byLeft.first, left.confidence > 0.15 {
             return left
         }
 

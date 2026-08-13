@@ -36,7 +36,7 @@ final class SettingsManager: ObservableObject {
     }
 
     func setMonitorRegion(_ rect: CGRect) {
-        setRegion(CaptureRegion(type: .gameScreen, rect: rect))
+        setRegion(CaptureRegion(type: .gameScreen, rect: CaptureGeometry.normalizeRegion(rect)))
     }
 
     private func migrateLegacyRegions() {

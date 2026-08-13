@@ -10,11 +10,32 @@ final class GameAIAnalyzer {
     private let throwTracker = ThrowSequenceTracker()
     private let processingQueue = DispatchQueue(label: "com.dartpredictor.gameai", qos: .userInteractive)
     private var isProcessing = false
-    private var lastMotionPeak = 0.0
+    private var latestImage: CGImage?
+    private var pendingCompletion: ((GameSnapshot) -> Void)?
     private var throwMotionDetected = false
+    private var motionReleased = false
 
     func analyze(image: CGImage, completion: @escaping (GameSnapshot) -> Void) {
+        latestImage = image
+        pendingCompletion = completion
         guard !isProcessing else { return }
+        drainQueue()
+    }
+
+    func reset() {
+        throwTracker.reset()
+        timerRecognizer.reset()
+        aiAction.reset()
+        throwMotionDetected = false
+        motionReleased = false
+        isProcessing = false
+        latestImage = nil
+        pendingCompletion = nil
+    }
+
+    private func drainQueue() {
+        guard let image = latestImage, let completion = pendingCompletion else { return }
+        latestImage = nil
         isProcessing = true
         let start = CFAbsoluteTimeGetCurrent()
         let ocrImage = scaleForAnalysis(image)
@@ -22,19 +43,28 @@ final class GameAIAnalyzer {
         aiAction.analyzeFrame(image) { [weak self] insight, features in
             guard let self else { return }
             self.processingQueue.async {
-                let textItems = VisionTextScanner.scan(image: ocrImage)
-                let numbers = VisionTextScanner.extractDartNumbers(from: textItems)
+                let fastTexts = VisionTextScanner.scan(image: ocrImage, fast: true)
+                let accurateTexts = VisionTextScanner.scan(image: ocrImage, fast: false)
+                let mergedTexts = VisionTextScanner.merge(fastTexts, accurateTexts)
+                let numbers = VisionTextScanner.extractDartNumbers(from: mergedTexts)
                 let bettingSeconds = self.timerRecognizer.recognize(from: ocrImage)
 
                 let motion = insight.motionIntensity
                 if motion > 0.18 {
                     self.throwMotionDetected = true
-                    self.lastMotionPeak = motion
                 } else if motion < 0.06 && self.throwMotionDetected {
+                    self.motionReleased = true
                     self.throwMotionDetected = false
                 }
 
-                let confirmed = self.throwTracker.process(detectedNumbers: numbers)
+                let confirmed = self.throwTracker.process(
+                    detectedNumbers: numbers,
+                    motionReleased: self.motionReleased
+                )
+                if confirmed != nil {
+                    self.motionReleased = false
+                }
+
                 let phase = self.classifyPhase(
                     insight: insight,
                     numbers: numbers,
@@ -59,17 +89,12 @@ final class GameAIAnalyzer {
                 self.isProcessing = false
                 DispatchQueue.main.async {
                     completion(snapshot)
+                    if self.latestImage != nil {
+                        self.drainQueue()
+                    }
                 }
             }
         }
-    }
-
-    func reset() {
-        throwTracker.reset()
-        timerRecognizer.reset()
-        aiAction.reset()
-        throwMotionDetected = false
-        isProcessing = false
     }
 
     private func classifyPhase(
@@ -101,7 +126,7 @@ final class GameAIAnalyzer {
     }
 
     private func scaleForAnalysis(_ image: CGImage) -> CGImage {
-        let minWidth: CGFloat = 480
+        let minWidth: CGFloat = 640
         if CGFloat(image.width) >= minWidth { return image }
         let scale = minWidth / CGFloat(image.width)
         let w = Int(CGFloat(image.width) * scale)
