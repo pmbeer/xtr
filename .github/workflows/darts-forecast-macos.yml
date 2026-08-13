@@ -1,0 +1,58 @@
+name: Build Darts Forecast macOS
+
+on:
+  push:
+    branches: [main, 'cursor/**']
+    paths:
+      - 'DartsForecast/**'
+      - '.github/workflows/darts-forecast-macos.yml'
+  pull_request:
+    paths:
+      - 'DartsForecast/**'
+  workflow_dispatch:
+
+jobs:
+  build-installer:
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: DartsForecast
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer || true
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Logic smoke tests
+        run: python3 Tests/logic_smoke_test.py
+
+      - name: Build app and DMG
+        run: |
+          chmod +x build-installer.sh scripts/*.sh
+          ./build-installer.sh
+
+      - name: Verify binary
+        run: |
+          file build/DartsForecast.app/Contents/MacOS/DartsForecast
+          lipo -info build/DartsForecast.app/Contents/MacOS/DartsForecast || true
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartsForecast-macOS-Installer
+          path: DartsForecast/dist/*.dmg
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Upload APP
+        uses: actions/upload-artifact@v4
+        with:
+          name: DartsForecast-macOS-App
+          path: DartsForecast/build/DartsForecast.app
+          retention-days: 30
+          if-no-files-found: error
